@@ -1,0 +1,54 @@
+node_id: {{ nodeId }}
+
+service:
+  host: {{ host }}
+  port: {{ port }}
+
+jwt_key: {{ jwt_key }}
+
+mysqls:
+  - host: 127.0.0.1
+    port: 3306
+    username: {{ user }}
+    password: {{ password }}
+    max_idle_conns: 10
+    max_open_conns: 100
+    database: live
+    conn_max_life_time: 5
+    default: live
+
+  - host: 127.0.0.1
+    port: 3306
+    username: {{ user }}
+    password: {{ password }}
+    max_idle_conns: 10
+    max_open_conns: 100
+    database: live
+    conn_max_life_time: 5
+    default: live
+    read_only: true
+
+mac_config:
+  enable: true
+  access_key: ak
+  secret_key: sk
+
+im_config:
+  app_id: {{ im_app_id }}
+  endpoint: {{ im_endpoint }}
+  token: {{ im_admin_token }}
+
+rtc_config:
+  app_id: {{ app_id }}
+  access_key: {{ ak }}
+  secret_key: {{ ak }}
+  room_token_expire_s: 3600
+  publish_key: {{ publish_key }}
+  playback_url: https://{{xxx}}-playback.com
+  hub: {{ 直播hub }}
+  stream_pattern: qn_live_kit-%s
+  publish_url: rtmp://{{xxx}}-publish.com
+  publish_domain: {{xxx}}-publish.com
+  rtmp_play_url: rtmp://{{xxx}}-rtmp.com
+  flv_play_url: https://{{xxx}}-hdl.com
+  hls_play_url: https://{{xxx}}-hls.com
