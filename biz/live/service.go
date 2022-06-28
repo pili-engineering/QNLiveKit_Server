@@ -5,13 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/qbox/livekit/common/api"
-
-	"github.com/qbox/livekit/common/im"
-
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
+	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/common/rtc"
 	"github.com/qbox/livekit/utils/logger"
@@ -20,7 +18,7 @@ import (
 )
 
 type IService interface {
-	CreateLive(context context.Context, req *CreateLiveRequest, anchorId string) (live *model.LiveEntity, err error)
+	CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error)
 
 	DeleteLive(context context.Context, liveId string, anchorId string) (err error)
 
@@ -70,20 +68,21 @@ func GetService() IService {
 }
 
 type CreateLiveRequest struct {
+	AnchorId string        `json:"anchor_id"`
 	Title    string        `json:"title"`
 	Notice   string        `json:"notice"`
 	CoverUrl string        `json:"cover_url"`
 	Extends  model.Extends `json:"extends"`
 }
 
-func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest, anchorId string) (live *model.LiveEntity, err error) {
+func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveId := uuid.Gen()
 
-	liveUser, err := user.GetService().FindUser(context, anchorId)
+	liveUser, err := user.GetService().FindUser(context, req.AnchorId)
 	if err != nil {
-		log.Errorf("create live failed, user not found, userId: %s, err: %v", anchorId, err)
+		log.Errorf("create live failed, user not found, userId: %s, err: %v", req.AnchorId, err)
 		return
 	}
 	rtcClient := rtc.GetService()
@@ -99,7 +98,7 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest, an
 		Notice:      req.Notice,
 		CoverUrl:    req.CoverUrl,
 		Extends:     req.Extends,
-		AnchorId:    anchorId,
+		AnchorId:    req.AnchorId,
 		Status:      model.LiveStatusPrepare,
 		PkId:        "",
 		OnlineCount: 0,
@@ -118,7 +117,7 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest, an
 func (s *Service) DeleteLive(context context.Context, liveId string, anchorId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	err = db.Delete(&model.LiveEntity{}, "live_id = ? and anchor_id = ? and status = ?", liveId, anchorId, model.LiveStatusOn).Error
+	err = db.Delete(&model.LiveEntity{}, "live_id = ? and anchor_id = ? ", liveId, anchorId).Error
 	return
 }
 
@@ -132,7 +131,7 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 		log.Errorf("LiveInfo error:%v", err)
 		return
 	}
-	if live.Status != model.LiveStatusPrepare {
+	if live.Status == model.LiveStatusOff {
 		err = errors.New("live status error")
 		return
 	}
@@ -141,7 +140,7 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 		return
 	}
 
-	////判断主播不在其他直播间
+	//判断主播不在其他直播间
 	liveUser, err := s.getOrCreateLiveRoomUser(context, anchorId)
 	if err != nil {
 		return "", err

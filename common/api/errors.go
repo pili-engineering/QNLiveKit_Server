@@ -53,6 +53,8 @@ const (
 	ErrorCodeBadStatus      = 601
 	ErrorCodeDatabase       = 602
 	ErrorCodeTokenExpired   = 499
+
+	ErrorCodeUserAlreadyExisted = 10001 //用户已经存在
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}

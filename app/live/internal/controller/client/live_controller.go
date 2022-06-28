@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/qbox/livekit/app/live/internal/dto"
+
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
@@ -45,50 +47,18 @@ type liveController struct {
 
 var LiveController = &liveController{}
 
-type LiveInfo struct {
-	LiveId     string        `json:"live_id"`
-	Title      string        `json:"title"`
-	Notice     string        `json:"notice"`
-	CoverUrl   string        `json:"cover_url"`
-	Extends    model.Extends `json:"extends"`
-	AnchorInfo struct {
-		UserId     string        `json:"user_id"`
-		ImUserId   int64         `json:"im_userid"`
-		ImUsername string        `json:"im_username"`
-		Nick       string        `json:"nick"`
-		Avatar     string        `json:"avatar"`
-		Extends    model.Extends `json:"extends"`
-	} `json:"anchor_info"`
-	AnchorStatus model.LiveRoomUserStatus
-	RoomToken    string `json:"room_token"`
-	PkId         string `json:"pk_id"`
-	OnlineCount  int    `json:"online_count"`
-	StartTime    int64  `json:"start_time"`
-	EndTime      int64  `json:"end_time"`
-	ChatId       int64  `json:"chat_id"`
-	PushUrl      string `json:"push_url"`
-	HlsUrl       string `json:"hls_url"`
-	RtmpUrl      string `json:"rtmp_url"`
-	FlvUrl       string `json:"flv_url"`
-	Pv           int    `json:"pv"`
-	Uv           int    `json:"uv"`
-	TotalCount   int    `json:"total_count"`
-	TotalMics    int    `json:"total_mics"`
-	LiveStatus   int    `json:"live_status"`
-}
-
 type LiveResponse struct {
 	api.Response
-	Data LiveInfo `json:"data"`
+	Data dto.LiveInfoDto `json:"data"`
 }
 
 type LiveListResponse struct {
 	api.Response
 	Data struct {
-		TotalCount int        `json:"total_count"`
-		PageTotal  int        `json:"page_total"`
-		EndPage    bool       `json:"end_page"`
-		List       []LiveInfo `json:"list"`
+		TotalCount int               `json:"total_count"`
+		PageTotal  int               `json:"page_total"`
+		EndPage    bool              `json:"end_page"`
+		List       []dto.LiveInfoDto `json:"list"`
 	} `json:"data"`
 }
 
@@ -104,7 +74,8 @@ func (*liveController) CreateLive(context *gin.Context) {
 		})
 		return
 	}
-	liveEntity, err := live.GetService().CreateLive(context, request, userInfo.UserId)
+	request.AnchorId = userInfo.UserId
+	liveEntity, err := live.GetService().CreateLive(context, request)
 	if err != nil {
 		log.Errorf("create liveEntity failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -134,8 +105,7 @@ func (*liveController) CreateLive(context *gin.Context) {
 	response.Data.CoverUrl = liveEntity.CoverUrl
 	response.Data.Extends = liveEntity.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -229,8 +199,7 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -333,8 +302,7 @@ func (*liveController) StartLive(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -427,7 +395,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 	response.Data.TotalCount = totalCount1 + totalCount2 + totalCount3
 	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
 	response.Data.EndPage = endPage
-	list := make([]LiveInfo, len(liveList), len(liveList))
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
 	for i := range liveList {
 		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
 		if err != nil {
@@ -448,8 +416,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].CoverUrl = liveInfo.CoverUrl
 		list[i].Extends = liveInfo.Extends
 		list[i].AnchorInfo.UserId = user.UserId
-		list[i].AnchorInfo.ImUserId = user.ImUserid
-		list[i].AnchorInfo.ImUsername = user.ImUsername
+		list[i].AnchorInfo.ImUserid = user.ImUserid
 		list[i].AnchorInfo.Nick = user.Nick
 		list[i].AnchorInfo.Avatar = user.Avatar
 		list[i].AnchorInfo.Extends = user.Extends
@@ -519,8 +486,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -597,7 +563,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 	response.Data.TotalCount = totalCount
 	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
 	response.Data.EndPage = endPage
-	list := make([]LiveInfo, len(liveList), len(liveList))
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
 	for i := range liveList {
 		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
 		if err != nil {
@@ -619,8 +585,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].CoverUrl = liveInfo.CoverUrl
 		list[i].Extends = liveInfo.Extends
 		list[i].AnchorInfo.UserId = user.UserId
-		list[i].AnchorInfo.ImUserId = user.ImUserid
-		list[i].AnchorInfo.ImUsername = user.ImUsername
+		list[i].AnchorInfo.ImUserid = user.ImUserid
 		list[i].AnchorInfo.Nick = user.Nick
 		list[i].AnchorInfo.Avatar = user.Avatar
 		list[i].AnchorInfo.Extends = user.Extends

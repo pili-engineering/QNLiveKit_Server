@@ -126,7 +126,7 @@ func (s *UserService) CreateUser(ctx context.Context, user *model.LiveUserEntity
 	old, err := s.findUser(ctx, user.UserId)
 	if err != nil && !api.IsNotFoundError(err) {
 		log.Errorf("find user error %v", err)
-		return err
+		return api.ErrDatabase
 	}
 
 	if old != nil {
@@ -210,7 +210,7 @@ func (s *UserService) createUser(ctx context.Context, user *model.LiveUserEntity
 	result := db.Create(user)
 	if result.Error != nil {
 		log.Errorf("create user %+v, error %+v", result.Error)
-		return nil, result.Error
+		return nil, api.ErrDatabase
 	}
 
 	user1, err := s.createImUser(ctx, user)
