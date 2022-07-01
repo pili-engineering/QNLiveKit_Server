@@ -17,6 +17,8 @@ func RegisterRoute(engine *gin.Engine) {
 	serverGroup := engine.Group("/server", qiniumac.NewAuthMiddleware(config.AppConfig.MacConfig).HandleFunc())
 
 	RegisterAuthRoutes(serverGroup)
+	RegisterUserRoutes(serverGroup)
+	RegisterLiveRoutes(serverGroup)
 
 	engine.GET("status", StatusCheckController.CheckStatus)
 }

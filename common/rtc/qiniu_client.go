@@ -36,7 +36,9 @@ type QiniuClient struct {
 	AppId            string
 	Ak               string
 	Sk               string
+	securityType     string //expiry, expiry_sk, none
 	publishKey       string // 七牛RTC生成推流地址需要验算公共Key
+	publishExpireS   int64  // 推流地址过期时间，秒
 	client           *http.Client
 }
 
@@ -66,7 +68,9 @@ func NewQiniuClient(conf Config) *QiniuClient {
 			Transport: tr,
 			Timeout:   3 * time.Second,
 		},
-		publishKey: conf.PublishKey,
+		securityType:   conf.SecurityType,
+		publishKey:     conf.PublishKey,
+		publishExpireS: conf.PublishExpireS,
 	}
 	return c
 }
@@ -120,9 +124,9 @@ func (c *QiniuClient) signToken(roomAccess interface{}) string {
 
 func (c *QiniuClient) StreamPubURL(roomId string) (url string) {
 	rtmp := pili.RTMPPublishURL(c.Hub, c.PublishDomain, c.streamName(roomId))
-	expireAt := time.Now().Add(time.Hour * 1).Unix()
+	expireAt := time.Now().Add(time.Second * time.Duration(c.publishExpireS)).Unix()
 	url, _ = pili.SignPublishURL(rtmp, pili.SignPublishURLArgs{
-		SecurityType: "expiry",
+		SecurityType: c.securityType,
 		PublishKey:   c.publishKey,
 		ExpireAt:     expireAt,
 		Nonce:        0,

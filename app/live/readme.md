@@ -65,9 +65,11 @@ rtc_config:
   access_key: {{ ak }}
   secret_key: {{ ak }}
   room_token_expire_s: 3600
-  publish_key: {{ publish_key }}
-  playback_url: https://{{xxx}}-playback.com
   hub: {{ 直播hub }} 
+  security_type: none
+  publish_key: {{ publish_key }}
+  publish_expire_s: 3600
+  playback_url: https://{{xxx}}-playback.com
   stream_pattern: qn_live_kit-%s
   publish_url: rtmp://{{xxx}}-publish.com
   publish_domain: {{xxx}}-publish.com
