@@ -20,5 +20,5 @@ func RegisterRoute(engine *gin.Engine) {
 	RegisterUserRoutes(serverGroup)
 	RegisterLiveRoutes(serverGroup)
 
-	engine.GET("status", StatusCheckController.CheckStatus)
+	engine.Any("status", StatusCheckController.CheckStatus)
 }
