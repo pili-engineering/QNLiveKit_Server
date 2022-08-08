@@ -22,6 +22,7 @@ POST /server/live
 | cover_url     | string  |  否 | 用户头像，URL 地址       |  https://xxx.com/avator.png |
  | start_at     | string  |  否 | 预计直播开始时间          | 2022-08-01 10:30:00      |
  | end_at       | string  |  否 | 预计直播结束时间          | 2022-08-01 12:30:00    |
+ | publish_expire_at | string | 否 | 推流过期时间          | 2022-08-01 12:30:00 |
 | extends       | map[string]string |  否 | 扩展信息，key value 结构 |  |
 
 举例如下
@@ -32,6 +33,7 @@ POST /server/live
     "notice":"直播预告",
     "cover_url":"http;//xxx.png",
     "start_at": "2022-08-01 10:30:00",
+    "publish_expire_at":"2021-12-02 11:11:11",
     "end_at": "2022-08-01 12:30:00",
     "extends": {
         "age":"18"

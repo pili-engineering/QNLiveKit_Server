@@ -68,13 +68,14 @@ func GetService() IService {
 }
 
 type CreateLiveRequest struct {
-	AnchorId string              `json:"anchor_id"`
-	Title    string              `json:"title"`
-	Notice   string              `json:"notice"`
-	CoverUrl string              `json:"cover_url"`
-	StartAt  timestamp.Timestamp `json:"start_at"`
-	EndAt    timestamp.Timestamp `json:"end_at"`
-	Extends  model.Extends       `json:"extends"`
+	AnchorId        string               `json:"anchor_id"`
+	Title           string               `json:"title"`
+	Notice          string               `json:"notice"`
+	CoverUrl        string               `json:"cover_url"`
+	StartAt         timestamp.Timestamp  `json:"start_at"`
+	EndAt           timestamp.Timestamp  `json:"end_at"`
+	PublishExpireAt *timestamp.Timestamp `json:"publish_expire_at"`
+	Extends         model.Extends        `json:"extends"`
 }
 
 func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
@@ -103,6 +104,14 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		endAt = req.EndAt
 	}
 
+	exp := req.PublishExpireAt
+	var url string
+	if exp != nil && exp.After(time.Now()) {
+		url = rtcClient.StreamPubURL(liveId, &exp.Time)
+	} else {
+		url = rtcClient.StreamPubURL(liveId, nil)
+	}
+
 	live = &model.LiveEntity{
 		LiveId:      liveId,
 		Title:       req.Title,
@@ -116,7 +125,7 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		StartAt:     startAt,
 		EndAt:       endAt,
 		ChatId:      chatroom,
-		PushUrl:     rtcClient.StreamPubURL(liveId),
+		PushUrl:     url,
 		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),
 		FlvPlayUrl:  rtcClient.StreamFlvPlayURL(liveId),
 		HlsPlayUrl:  rtcClient.StreamHlsPlayURL(liveId),
