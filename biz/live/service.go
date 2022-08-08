@@ -68,11 +68,13 @@ func GetService() IService {
 }
 
 type CreateLiveRequest struct {
-	AnchorId string        `json:"anchor_id"`
-	Title    string        `json:"title"`
-	Notice   string        `json:"notice"`
-	CoverUrl string        `json:"cover_url"`
-	Extends  model.Extends `json:"extends"`
+	AnchorId string              `json:"anchor_id"`
+	Title    string              `json:"title"`
+	Notice   string              `json:"notice"`
+	CoverUrl string              `json:"cover_url"`
+	StartAt  timestamp.Timestamp `json:"start_at"`
+	EndAt    timestamp.Timestamp `json:"end_at"`
+	Extends  model.Extends       `json:"extends"`
 }
 
 func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
@@ -92,6 +94,15 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		log.Errorf("create chatroom failed, err: %v", err)
 		return
 	}
+	startAt := timestamp.Now()
+	endAt := timestamp.Now()
+	if req.StartAt.After(time.Now()) {
+		startAt = req.StartAt
+	}
+	if req.EndAt.After(time.Now()) {
+		endAt = req.EndAt
+	}
+
 	live = &model.LiveEntity{
 		LiveId:      liveId,
 		Title:       req.Title,
@@ -102,8 +113,8 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		Status:      model.LiveStatusPrepare,
 		PkId:        "",
 		OnlineCount: 0,
-		StartAt:     timestamp.Now(),
-		EndAt:       timestamp.Now(),
+		StartAt:     startAt,
+		EndAt:       endAt,
 		ChatId:      chatroom,
 		PushUrl:     rtcClient.StreamPubURL(liveId),
 		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),

@@ -85,8 +85,8 @@ func (c *liveController) PostLiveCreate(ctx *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.UnixMilli()
-	response.Data.EndTime = liveEntity.EndAt.UnixMilli()
+	response.Data.StartTime = liveEntity.StartAt.Unix()
+	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
 	response.Data.HlsUrl = liveEntity.HlsPlayUrl
@@ -140,8 +140,8 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.UnixMilli()
-	response.Data.EndTime = liveEntity.EndAt.UnixMilli()
+	response.Data.StartTime = liveEntity.StartAt.Unix()
+	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
 	response.Data.HlsUrl = liveEntity.HlsPlayUrl
