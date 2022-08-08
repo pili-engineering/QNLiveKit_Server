@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"errors"
+	"github.com/qbox/livekit/biz/callback"
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
@@ -68,11 +69,14 @@ func GetService() IService {
 }
 
 type CreateLiveRequest struct {
-	AnchorId string        `json:"anchor_id"`
-	Title    string        `json:"title"`
-	Notice   string        `json:"notice"`
-	CoverUrl string        `json:"cover_url"`
-	Extends  model.Extends `json:"extends"`
+	AnchorId        string               `json:"anchor_id"`
+	Title           string               `json:"title"`
+	Notice          string               `json:"notice"`
+	CoverUrl        string               `json:"cover_url"`
+	StartAt         timestamp.Timestamp  `json:"start_at"`
+	EndAt           timestamp.Timestamp  `json:"end_at"`
+	PublishExpireAt *timestamp.Timestamp `json:"publish_expire_at"`
+	Extends         model.Extends        `json:"extends"`
 }
 
 func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
@@ -92,6 +96,23 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		log.Errorf("create chatroom failed, err: %v", err)
 		return
 	}
+	startAt := timestamp.Now()
+	endAt := timestamp.Now()
+	if req.StartAt.After(time.Now()) {
+		startAt = req.StartAt
+	}
+	if req.EndAt.After(time.Now()) {
+		endAt = req.EndAt
+	}
+
+	exp := req.PublishExpireAt
+	var url string
+	if exp != nil && exp.After(time.Now()) {
+		url = rtcClient.StreamPubURL(liveId, &exp.Time)
+	} else {
+		url = rtcClient.StreamPubURL(liveId, nil)
+	}
+
 	live = &model.LiveEntity{
 		LiveId:      liveId,
 		Title:       req.Title,
@@ -102,15 +123,18 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		Status:      model.LiveStatusPrepare,
 		PkId:        "",
 		OnlineCount: 0,
-		StartAt:     timestamp.Now(),
-		EndAt:       timestamp.Now(),
+		StartAt:     startAt,
+		EndAt:       endAt,
 		ChatId:      chatroom,
-		PushUrl:     rtcClient.StreamPubURL(liveId),
+		PushUrl:     url,
 		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),
 		FlvPlayUrl:  rtcClient.StreamFlvPlayURL(liveId),
 		HlsPlayUrl:  rtcClient.StreamHlsPlayURL(liveId),
 	}
 	err = db.Create(live).Error
+	if err == nil {
+		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
+	}
 	return
 }
 
@@ -118,6 +142,12 @@ func (s *Service) DeleteLive(context context.Context, liveId string, anchorId st
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err = db.Delete(&model.LiveEntity{}, "live_id = ? and anchor_id = ? ", liveId, anchorId).Error
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveDeleted, body)
+	}
 	return
 }
 
@@ -160,6 +190,10 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 	liveUser.HeartBeatAt = &now
 
 	db.Save(liveUser)
+	body := map[string]string{
+		"live_id": liveId,
+	}
+	go callback.GetCallbackService().Do(context, callback.TypeLiveStarted, body)
 
 	return
 }
@@ -183,6 +217,12 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 	live.Status = model.LiveStatusOff
 	live.EndAt = timestamp.Now()
 	err = db.Save(live).Error
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
+	}
 	return
 }
 
