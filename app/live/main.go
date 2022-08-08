@@ -10,11 +10,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/qbox/livekit/app/live/internal/report"
 	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/qbox/livekit/biz/callback"
 
 	"github.com/qbox/livekit/common/rtc"
 
@@ -27,7 +30,6 @@ import (
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/app/live/internal/controller"
 	"github.com/qbox/livekit/app/live/internal/cron"
-	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/mysql"
 	log "github.com/qbox/livekit/utils/logger"
 )
@@ -58,17 +60,21 @@ func main() {
 		errCh <- err
 	}()
 
-	modelList := []interface{}{
-		&model.LiveEntity{},
-		&model.LiveRoomUserEntity{},
-		&model.LiveMicEntity{},
-		&model.LiveUserEntity{},
-		&model.RelaySession{},
-	}
-	mysql.GetLive("").AutoMigrate(modelList...)
+	//modelList := []interface{}{
+	//	&model.LiveEntity{},
+	//	&model.LiveRoomUserEntity{},
+	//	&model.LiveMicEntity{},
+	//	&model.LiveUserEntity{},
+	//	&model.RelaySession{},
+	//	&model.ItemEntity{},
+	//	&model.ItemDemonstrate{},
+	//}
+	//mysql.GetLive("").AutoMigrate(modelList...)
 	uuid.Init(config.AppConfig.NodeID)
 
 	cron.Run()
+
+	report.GetService().ReportOnlineMessage(nil)
 
 	err := <-errCh
 	log.StdLog.Fatalf("exit %v", err)
@@ -78,7 +84,15 @@ func initAllService() {
 	token.InitService(token.Config{
 		JwtKey: config.AppConfig.JwtKey,
 	})
-
 	im.InitService(config.AppConfig.ImConfig)
 	rtc.InitService(config.AppConfig.RtcConfig)
+	callback.InitService(config.AppConfig.Callback)
+	report.InitService(report.Config{
+		IMAppID:    config.AppConfig.ImConfig.AppId,
+		RTCAppId:   config.AppConfig.RtcConfig.AppId,
+		PiliHub:    config.AppConfig.RtcConfig.Hub,
+		AccessKey:  config.AppConfig.RtcConfig.AccessKey,
+		SecretKey:  config.AppConfig.RtcConfig.SecretKey,
+		ReportHost: config.AppConfig.ReportHost,
+	})
 }

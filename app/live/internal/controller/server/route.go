@@ -19,6 +19,7 @@ func RegisterRoute(engine *gin.Engine) {
 	RegisterAuthRoutes(serverGroup)
 	RegisterUserRoutes(serverGroup)
 	RegisterLiveRoutes(serverGroup)
+	RegisterItemRoutes(serverGroup)
 
 	engine.Any("status", StatusCheckController.CheckStatus)
 }

@@ -9,6 +9,7 @@ package cron
 
 import (
 	"context"
+	"github.com/qbox/livekit/app/live/internal/report"
 	"time"
 
 	"gopkg.in/robfig/cron.v2"
@@ -47,6 +48,19 @@ func Run() {
 		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
 
 		liveService.TimeoutLiveUser(ctx, now)
+	})
+
+	c.AddFunc("0 0 2 * * ?", func() {
+		now := time.Now()
+		nowStr := now.Format(timestamp.TimestampFormatLayout)
+
+		log := logger.New("ReportOnlineMessage")
+		log.WithFields(map[string]interface{}{"start": nowStr})
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
+
+		report.GetService().ReportOnlineMessage(ctx)
 	})
 
 	c.Start()

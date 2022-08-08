@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/qbox/livekit/biz/callback"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
@@ -56,6 +58,8 @@ type IService interface {
 	TimeoutLiveRoom(ctx context.Context, now time.Time)
 
 	FindLiveRoomUser(context context.Context, liveId string, userId string) (liveRoomUser *model.LiveRoomUserEntity, err error)
+
+	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
 }
 
 type Service struct {
@@ -68,11 +72,14 @@ func GetService() IService {
 }
 
 type CreateLiveRequest struct {
-	AnchorId string        `json:"anchor_id"`
-	Title    string        `json:"title"`
-	Notice   string        `json:"notice"`
-	CoverUrl string        `json:"cover_url"`
-	Extends  model.Extends `json:"extends"`
+	AnchorId        string               `json:"anchor_id"`
+	Title           string               `json:"title"`
+	Notice          string               `json:"notice"`
+	CoverUrl        string               `json:"cover_url"`
+	StartAt         timestamp.Timestamp  `json:"start_at"`
+	EndAt           timestamp.Timestamp  `json:"end_at"`
+	PublishExpireAt *timestamp.Timestamp `json:"publish_expire_at"`
+	Extends         model.Extends        `json:"extends" gorm:"type:varchar(512)"`
 }
 
 func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
@@ -92,6 +99,14 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		log.Errorf("create chatroom failed, err: %v", err)
 		return
 	}
+	exp := req.PublishExpireAt
+	var url string
+	if exp != nil && exp.After(time.Now()) {
+		url = rtcClient.StreamPubURL(liveId, &exp.Time)
+	} else {
+		url = rtcClient.StreamPubURL(liveId, nil)
+	}
+
 	live = &model.LiveEntity{
 		LiveId:      liveId,
 		Title:       req.Title,
@@ -102,15 +117,18 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		Status:      model.LiveStatusPrepare,
 		PkId:        "",
 		OnlineCount: 0,
-		StartAt:     timestamp.Now(),
-		EndAt:       timestamp.Now(),
+		StartAt:     req.StartAt, //timestamp.Now(),
+		EndAt:       req.EndAt,   //timestamp.Now(),
 		ChatId:      chatroom,
-		PushUrl:     rtcClient.StreamPubURL(liveId),
+		PushUrl:     url,
 		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),
 		FlvPlayUrl:  rtcClient.StreamFlvPlayURL(liveId),
 		HlsPlayUrl:  rtcClient.StreamHlsPlayURL(liveId),
 	}
 	err = db.Create(live).Error
+	if err == nil {
+		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
+	}
 	return
 }
 
@@ -118,6 +136,13 @@ func (s *Service) DeleteLive(context context.Context, liveId string, anchorId st
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err = db.Delete(&model.LiveEntity{}, "live_id = ? and anchor_id = ? ", liveId, anchorId).Error
+
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveDeleted, body)
+	}
 	return
 }
 
@@ -161,6 +186,11 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 
 	db.Save(liveUser)
 
+	body := map[string]string{
+		"live_id": liveId,
+	}
+	go callback.GetCallbackService().Do(context, callback.TypeLiveStarted, body)
+
 	return
 }
 
@@ -183,6 +213,14 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 	live.Status = model.LiveStatusOff
 	live.EndAt = timestamp.Now()
 	err = db.Save(live).Error
+
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
+	}
+
 	return
 }
 
@@ -254,20 +292,39 @@ func (s *Service) JoinLiveRoom(context context.Context, liveId string, userId st
 	return err
 }
 
-func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId string) (err error) {
+func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId string) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveRoomUser := &model.LiveRoomUserEntity{}
 	result := db.Where("live_id = ? and user_id = ? ", liveId, userId).First(liveRoomUser)
 	if result.Error != nil {
-		err = result.Error
+		log.Errorf("find live rooom user error %s", result.Error.Error())
+		return api.ErrDatabase
 	} else {
 		liveRoomUser.LiveId = ""
 		liveRoomUser.Status = model.LiveRoomUserStatusLeave
 		liveRoomUser.UpdatedAt = timestamp.Now()
-		err = db.Save(liveRoomUser).Error
+		if err := db.Save(liveRoomUser).Error; err != nil {
+			log.Errorf("update live room user error %s", err.Error())
+			return api.ErrDatabase
+		}
 	}
-	return
+
+	// 如果是主播离开房间了，取消直播间当前讲解商品
+	liveEntity, err := s.getLive(context, liveId)
+	if err != nil {
+		log.Errorf("get live error %s", err.Error())
+		return api.ErrDatabase
+	}
+
+	if liveEntity != nil && liveEntity.AnchorId == userId {
+		itemService := GetItemService()
+		err = itemService.DelDemonstrateItem(context, liveId)
+		if err != nil {
+			log.Errorf("delete demonstrate for live %s error %s", liveId, err.Error())
+		}
+	}
+	return nil
 }
 
 func (s *Service) FindLiveRoomUser(context context.Context, liveId string, userId string) (liveRoomUser *model.LiveRoomUserEntity, err error) {
@@ -305,7 +362,6 @@ func (s *Service) Heartbeat(context context.Context, liveId string, userId strin
 		log.Errorf("get live user error %v", err)
 		return nil, err
 	}
-
 	if liveUser.Status != model.LiveRoomUserStatusOnline || liveUser.LiveId != liveId {
 		log.Errorf("user live room (liveId: %s, status: %d), not in %s", liveUser.LiveId, liveUser.Status, liveId)
 		return nil, errors.New("user not in live room")
@@ -483,4 +539,21 @@ func (s *Service) StopRelay(ctx context.Context, roomId, userId string, sid stri
 	live.PkId = ""
 	err = db.Save(live).Error
 	return
+}
+
+func (s *Service) CheckLiveAnchor(ctx context.Context, liveId string, userId string) error {
+	log := logger.ReqLogger(ctx)
+
+	liveEntity, err := s.LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get live info error %v", err)
+		return err
+	}
+
+	if liveEntity.AnchorId != userId {
+		log.Errorf("anchor not match liveAnchor(%s), userId(%s)", liveEntity.AnchorId, userId)
+		return api.ErrNotFound
+	}
+
+	return nil
 }

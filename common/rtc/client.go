@@ -7,12 +7,14 @@
 
 package rtc
 
+import "time"
+
 type Service interface {
 	GetRoomToken(userId, roomId string) string
 
 	GetRelayToken(userId, roomId string) string
 
-	StreamPubURL(roomId string) (url string)
+	StreamPubURL(roomId string, expectAt *time.Time) (url string)
 
 	StreamRtmpPlayURL(roomId string) (url string)
 
