@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"errors"
+	"github.com/qbox/livekit/biz/callback"
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
@@ -131,6 +132,9 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		HlsPlayUrl:  rtcClient.StreamHlsPlayURL(liveId),
 	}
 	err = db.Create(live).Error
+	if err == nil {
+		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
+	}
 	return
 }
 
@@ -138,6 +142,12 @@ func (s *Service) DeleteLive(context context.Context, liveId string, anchorId st
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err = db.Delete(&model.LiveEntity{}, "live_id = ? and anchor_id = ? ", liveId, anchorId).Error
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveDeleted, body)
+	}
 	return
 }
 
@@ -180,6 +190,10 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 	liveUser.HeartBeatAt = &now
 
 	db.Save(liveUser)
+	body := map[string]string{
+		"live_id": liveId,
+	}
+	go callback.GetCallbackService().Do(context, callback.TypeLiveStarted, body)
 
 	return
 }
@@ -203,6 +217,12 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 	live.Status = model.LiveStatusOff
 	live.EndAt = timestamp.Now()
 	err = db.Save(live).Error
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
+	}
 	return
 }
 

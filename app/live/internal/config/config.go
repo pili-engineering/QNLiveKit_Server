@@ -19,10 +19,11 @@ import (
 var AppConfig Config
 
 type Config struct {
-	NodeID int64                    `mapstructure:"node_id"`
-	Server Server                   `mapstructure:"service"`
-	JwtKey string                   `mapstructure:"jwt_key"`
-	Mysqls []*mysql.ConfigStructure `mapstructure:"mysqls"`
+	NodeID   int64                    `mapstructure:"node_id"`
+	Server   Server                   `mapstructure:"service"`
+	JwtKey   string                   `mapstructure:"jwt_key"`
+	Callback string                   `mapstructure:"callback"`
+	Mysqls   []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
 	MacConfig qiniumac.Config `mapstructure:"mac_config"`
 	RtcConfig rtc.Config      `mapstructure:"rtc_config"`
