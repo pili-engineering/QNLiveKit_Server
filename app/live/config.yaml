@@ -5,6 +5,7 @@ service:
   port: {{ port }}
 
 jwt_key: {{ jwt_key }}
+callback:
 
 mysqls:
   - host: 127.0.0.1

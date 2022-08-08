@@ -14,13 +14,16 @@ POST /server/live
 ## Body 参数
 使用JSON 格式数据
 
-| 参数            | 类型     | 必填   | 说明             | 举例              |
-| ---------      | ------  |  ----- |   ------          | ------               |
-| anchor_id     | string  |  是 | 主播的用户ID | user_1 |
-| title         | string  |  是 | 直播标题     | XXX直播 |
-| notice        | string  |  否 | 直播公告         | 直播公告 |
-| cover_url     | string  |  否 | 用户头像，URL 地址     |  https://xxx.com/avator.png |
-| extends       | map[string]string |  否 | 扩展信息，key value 结构 |  |
+| 参数        | 类型               | 必填  | 说明                | 举例    |
+|-----------|------------------|-----|-------------------| ------               |
+| anchor_id | string           | 是   | 主播的用户ID           | user_1 |
+| title     | string           | 是   | 直播标题              | XXX直播 |
+| notice    | string           | 否   | 直播公告              | 直播公告 |
+| cover_url | string           | 否   | 用户头像，URL 地址       |  https://xxx.com/avator.png |
+| extends   | map[string]string | 否   | 扩展信息，key value 结构 |  |
+| start_at  | string         | 否   | 直播开始时间            |"2021-12-02 11:11:11"  |
+| end_at    | string       | 否   | 直播结束时间            |   "2021-12-02 11:11:11"                     |
+| publish_expire_at| string   |   否   | 自定义推流地址Token过期时间  |      "2021-12-02 11:11:11"                  |
 
 举例如下
 ```
@@ -31,7 +34,10 @@ POST /server/live
     "cover_url":"http;//xxx.png",
     "extends": {
         "age":"18"
-    }
+    },
+    "start_at": "2021-12-02 11:11:11"  , 
+    "end_at":"2021-12-02 11:11:11"  ,
+    "publish_expire_at":"2021-12-02 11:11:11"
 }
 ```
 

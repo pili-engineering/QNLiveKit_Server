@@ -8,6 +8,9 @@
 package controller
 
 import (
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/app/live/internal/controller/client"
 	"github.com/qbox/livekit/app/live/internal/controller/server"
@@ -16,10 +19,21 @@ import (
 
 func Engine() *gin.Engine {
 	engine := gin.New()
-	engine.Use(gin.Recovery(), logger.LoggerHandleFunc())
+	engine.Use(Cors(), gin.Recovery(), logger.LoggerHandleFunc())
 
 	server.RegisterRoute(engine)
 	client.RegisterRoute(engine)
 
 	return engine
+}
+
+func Cors() gin.HandlerFunc {
+	c := cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"},
+		AllowHeaders:    []string{"Content-Type", "Access-Token", "Authorization"},
+		MaxAge:          6 * time.Hour,
+	}
+
+	return cors.New(c)
 }

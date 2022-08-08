@@ -122,9 +122,14 @@ func (c *QiniuClient) signToken(roomAccess interface{}) string {
 	return token
 }
 
-func (c *QiniuClient) StreamPubURL(roomId string) (url string) {
+func (c *QiniuClient) StreamPubURL(roomId string, expectAt *time.Time) (url string) {
 	rtmp := pili.RTMPPublishURL(c.Hub, c.PublishDomain, c.streamName(roomId))
-	expireAt := time.Now().Add(time.Second * time.Duration(c.publishExpireS)).Unix()
+	var expireAt int64
+	if expectAt != nil {
+		expireAt = expectAt.Unix()
+	} else {
+		expireAt = time.Now().Add(time.Second * time.Duration(c.publishExpireS)).Unix()
+	}
 	url, _ = pili.SignPublishURL(rtmp, pili.SignPublishURLArgs{
 		SecurityType: c.securityType,
 		PublishKey:   c.publishKey,

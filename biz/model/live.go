@@ -17,7 +17,6 @@ type LiveEntity struct {
 	OnlineCount     int                  `json:"online_count"`
 	StartAt         timestamp.Timestamp  `json:"start_at"`
 	EndAt           timestamp.Timestamp  `json:"end_at"`
-	RelaySessionId  string               `json:"relay_session_id"`
 	ChatId          int64                `json:"chat_id"`
 	PushUrl         string               `json:"push_url"`
 	RtmpPlayUrl     string               `json:"rtmp_play_url"`

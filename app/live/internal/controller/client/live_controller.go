@@ -13,9 +13,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/qbox/livekit/app/live/internal/dto"
-
 	"github.com/gin-gonic/gin"
+	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
 	user2 "github.com/qbox/livekit/biz/user"
@@ -112,8 +111,8 @@ func (*liveController) CreateLive(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.UnixMilli()
-	response.Data.EndTime = liveEntity.EndAt.UnixMilli()
+	response.Data.StartTime = liveEntity.StartAt.Unix()
+	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
 	response.Data.HlsUrl = liveEntity.HlsPlayUrl
@@ -207,8 +206,8 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = onlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	response.Data.StartTime = liveInfo.StartAt.Unix()
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -310,8 +309,8 @@ func (*liveController) StartLive(context *gin.Context) {
 	response.Data.RoomToken = roomToken
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	response.Data.StartTime = liveInfo.StartAt.Unix()
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -424,8 +423,8 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.UnixMilli()
-		list[i].EndTime = liveInfo.EndAt.UnixMilli()
+		list[i].StartTime = liveInfo.StartAt.Unix()
+		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
 		list[i].HlsUrl = liveInfo.HlsPlayUrl
@@ -494,8 +493,8 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	response.Data.StartTime = liveInfo.StartAt.Unix()
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -593,8 +592,8 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.UnixMilli()
-		list[i].EndTime = liveInfo.EndAt.UnixMilli()
+		list[i].StartTime = liveInfo.StartAt.Unix()
+		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
 		list[i].HlsUrl = liveInfo.HlsPlayUrl
