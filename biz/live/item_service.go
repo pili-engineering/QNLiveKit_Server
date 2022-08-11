@@ -10,8 +10,14 @@ package live
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/utils/rpc"
+	log "github.com/sirupsen/logrus"
+	"net/http"
+	"strings"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
@@ -38,12 +44,41 @@ type IItemService interface {
 	GetDemonstrateItem(ctx context.Context, liveId string) (*model.ItemEntity, error)
 	GetLiveItem(ctx context.Context, liveId string, itemId string) (*model.ItemEntity, error)
 	IsDemonstrateItem(ctx context.Context, liveId, itemId string) (bool, error)
+
+	SetDemonstrateLog(ctx context.Context, liveId string, itemId string) error
+	StopDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error)
+	getLatestDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error)
+	UpdateDemonstrateLog(ctx context.Context, itemLog *model.ItemDemonstrateLog) error
+	GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) ([]*model.ItemDemonstrateLog, error)
+	DelDemonstrateLog(ctx context.Context, liveId string, demonItem []string) error
+	saveDemonstrateLog(ctx context.Context, liveId, itemId string) error
 }
 
 type ItemService struct {
+	Config
+	DemonstrateRecord
 }
 
-var itemService IItemService = &ItemService{}
+var itemService IItemService
+
+type Config struct {
+	PiliHub   string
+	AccessKey string
+	SecretKey string
+}
+
+type DemonstrateRecord struct {
+	record map[string]string
+}
+
+func InitService(conf Config) {
+	record := make(map[string]string)
+	demo := DemonstrateRecord{record: record}
+	itemService = &ItemService{
+		Config:            conf,
+		DemonstrateRecord: demo,
+	}
+}
 
 func GetItemService() IItemService {
 	return itemService
@@ -523,6 +558,153 @@ func (s *ItemService) UpdateItemExtends(ctx context.Context, liveId string, item
 		return api.ErrDatabase
 	}
 
+	return nil
+}
+
+func (s *ItemService) SetDemonstrateLog(ctx context.Context, liveId string, itemId string) error {
+	log := logger.ReqLogger(ctx)
+	if _, ok := s.record[liveId]; ok {
+		if s.record[liveId] != "" {
+			s.StopDemonstrateLog(ctx, liveId, s.record[liveId])
+		}
+	}
+	s.record[liveId] = itemId
+	err := s.saveDemonstrateLog(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("save item demonstrate log error %s", err.Error())
+		return api.ErrDatabase
+	}
+
+	return nil
+}
+
+func (s *ItemService) saveDemonstrateLog(ctx context.Context, liveId, itemId string) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+
+	return db.Exec("insert into item_demonstrate_log(live_id, item_id, start) values(?, ?, ?) ",
+		liveId, itemId, timestamp.Now()).Error
+}
+
+func (s *ItemService) StopDemonstrateLog(ctx context.Context, liveId string, itemId string) (demonstrateLog *model.ItemDemonstrateLog, err error) {
+	defer func() {
+
+	}()
+	s.record[liveId] = ""
+	info, err := GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Info("get Live_entities table error %s", err.Error())
+		return nil, err
+	}
+	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
+	split := strings.Split(info.PushUrl, "/")
+	demonstrateLog, err = s.getLatestDemonstrateLog(ctx, liveId, itemId)
+	if err != nil {
+		log.Info("get DemonstrateLog table error %s", err.Error())
+		return nil, err
+	}
+	demonstrateLog.End = timestamp.Now()
+	reqValue := &model.StreamsDemonstrateReq{
+		Fname: demonstrateLog.LiveId + demonstrateLog.ItemId,
+		Start: demonstrateLog.Start.Unix(),
+		End:   demonstrateLog.End.Unix(),
+	}
+	encodedStreamTitle := base64.StdEncoding.EncodeToString([]byte(split[len(split)-1]))
+	streamResp, err := s.postDemonstrateStreams(ctx, reqValue, encodedStreamTitle)
+	if err != nil {
+		log.Info("POST DemonstrateLog  error %s", err.Error())
+		demonstrateLog.Status = model.LogStatusFail
+		s.UpdateDemonstrateLog(ctx, demonstrateLog)
+		return nil, err
+	}
+	demonstrateLog.Fname = streamResp.Fname
+	demonstrateLog.Status = model.LogStatusSuccess
+	s.UpdateDemonstrateLog(ctx, demonstrateLog)
+	return demonstrateLog, nil
+}
+
+func (s *ItemService) postDemonstrateStreams(ctx context.Context, reqValue *model.StreamsDemonstrateReq, encodedStreamTitle string) (*model.StreamsDemonstrateResponse, error) {
+	url := "https://pili.qiniuapi.com" + "/v2/hubs/" + s.PiliHub + "/streams/" + encodedStreamTitle + "/saveas"
+	mac := &qiniumac.Mac{
+		AccessKey: s.AccessKey,
+		SecretKey: []byte(s.SecretKey),
+	}
+	c := &http.Client{
+		Transport: qiniumac.NewTransport(mac, nil),
+	}
+	client := rpc.Client{
+		Client: c,
+	}
+
+	resp := &model.StreamsDemonstrateResponse{}
+	err := client.CallWithJSON(logger.ReqLogger(ctx), resp, url, reqValue)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (s *ItemService) getLatestDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+
+	demonstrateLog := model.ItemDemonstrateLog{}
+	result := db.First(&demonstrateLog, "live_id = ? and item_id = ?", liveId, itemId)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return nil, result.Error
+		} else {
+			return nil, api.ErrDatabase
+		}
+	}
+
+	return &demonstrateLog, nil
+}
+
+func (s *ItemService) GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) ([]*model.ItemDemonstrateLog, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	demonstrateLogs := make([]*model.ItemDemonstrateLog, 0)
+	result := db.Find(&demonstrateLogs, "live_id = ? and item_id = ?", liveId, itemId)
+	if result.Error != nil {
+		log.Errorf("GetList DemosrateLog %v", result.Error)
+		return nil, result.Error
+	}
+	return demonstrateLogs, nil
+}
+
+func (s *ItemService) UpdateDemonstrateLog(ctx context.Context, itemLog *model.ItemDemonstrateLog) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	updates := map[string]interface{}{
+		"fname":  itemLog.Fname,
+		"status": itemLog.Status,
+		"end":    itemLog.End,
+	}
+	var err error
+	if itemLog.ID != 0 {
+		err = db.Model(model.ItemDemonstrateLog{}).Where("id = ? ", itemLog.ID).Update(updates).Error
+	} else {
+		err = db.Model(model.ItemDemonstrateLog{}).Where("live_id = ? and item_id = ?", itemLog.LiveId, itemLog.ItemId).Update(updates).Error
+	}
+	if err != nil {
+		log.Errorf("update itemLog error %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (s *ItemService) DelDemonstrateLog(ctx context.Context, liveId string, demonItem []string) error {
+	log := logger.ReqLogger(ctx)
+	if len(demonItem) == 0 {
+		return nil
+	}
+	db := mysql.GetLive(log.ReqID())
+	err := db.Delete(model.ItemDemonstrateLog{}, "live_id = ? and id in (?) ", liveId, demonItem).Error
+	if err != nil {
+		log.Errorf("delete demonstrate Log error %s", err.Error())
+		return api.ErrDatabase
+	}
 	return nil
 }
 

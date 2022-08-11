@@ -35,8 +35,12 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.PUT("/:liveId/:itemId/extends", ItemController.PutItemExtends)
 
 	itemGroup.POST("/demonstrate/:liveId/:itemId", ItemController.PostItemDemonstrate)
+	itemGroup.POST("/demonstrate/stop/:liveId/:itemId", ItemController.StopItemDemonstrate)
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
+
+	itemGroup.GET("/demonstrate/record/:liveId/:itemId", ItemController.ListDemonstrateLog)
+	itemGroup.DELETE("/demonstrate/record", ItemController.DelDemonstrateLog)
 }
 
 type itemController struct {
@@ -385,7 +389,105 @@ func (c *itemController) PostItemDemonstrate(ctx *gin.Context) {
 		return
 	}
 
+	err = itemService.SetDemonstrateLog(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("set demonstrate  Log error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+func (c *itemController) StopItemDemonstrate(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	itemId := ctx.Param("itemId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	demonstrateLog, err := itemService.StopDemonstrateLog(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("record and stop demonstrate log error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
+	response := &StopItemDemonstrateLogResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     demonstrateLog,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (c *itemController) ListDemonstrateLog(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	itemId := ctx.Param("itemId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	demonstrateLog, err := itemService.GetListDemonstrateLog(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("ListDemonstrateLog error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	response := &ListDemonstrateLog{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     demonstrateLog,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (c *itemController) DelDemonstrateLog(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	request := &DelDemonItemRequest{}
+	if err := ctx.BindJSON(request); err != nil {
+		log.Errorf("bind request error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	if len(request.DemonItems) == 0 {
+		log.Errorf("invalid request %+v", request)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	itemService := live.GetItemService()
+	err := itemService.DelDemonstrateLog(ctx, request.LiveId, request.DemonItems)
+	if err != nil {
+		log.Errorf("delete demonstrate error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+type DelDemonItemRequest struct {
+	LiveId     string   `json:"live_id"`
+	DemonItems []string `json:"demonstrate_item"`
+}
+
+type StopItemDemonstrateLogResponse struct {
+	api.Response
+	Data *model.ItemDemonstrateLog
+}
+
+type ListDemonstrateLog struct {
+	api.Response
+	Data []*model.ItemDemonstrateLog
 }
 
 func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {

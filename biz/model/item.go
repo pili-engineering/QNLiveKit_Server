@@ -70,3 +70,47 @@ type ItemDemonstrate struct {
 func (ItemDemonstrate) TableName() string {
 	return "item_demonstrate"
 }
+
+type ItemDemonstrateLog struct {
+	ID           uint `gorm:"primary_key"`
+	Start        timestamp.Timestamp
+	End          timestamp.Timestamp
+	Status       uint   `json:"status"`
+	Format       uint   `json:"format"`
+	LiveId       string `json:"live_id"`
+	ItemId       string `json:"item_id"`
+	ExpireDays   uint   `json:"expireDays"`
+	Fname        string `json:"fname"`
+	PersistentID string `json:"persistentID"`
+}
+
+func (ItemDemonstrateLog) TableName() string {
+	return "item_demonstrate_log"
+}
+
+type StreamsDemonstrateReq struct {
+	Fname                     string `json:"fname"`
+	Start                     int64  `json:"start"`
+	End                       int64  `json:"end"`
+	Pipeline                  string `json:"pipeline"`
+	Format                    string `json:"uint"`
+	ExpireDays                int    `json:"expireDays"`
+	Notify                    string `json:"notify"`
+	PersistentDeleteAfterDays int    `json:"persistentDeleteAfterDays"`
+	FirstTsType               byte   `json:"firstTsType"`
+}
+
+type StreamsDemonstrateResponse struct {
+	Fname        string `json:"fname"`
+	Start        int64  `json:"start"`
+	End          int64  `json:"end"`
+	PersistentID string `json:"persistentID"`
+}
+
+//状态码0成功，1等待处理，2正在处理，3处理失败。
+const (
+	LogStatusSuccess = iota
+	LogStatusWait
+	LogStatusProcessing
+	LogStatusFail
+)
