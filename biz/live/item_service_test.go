@@ -262,7 +262,7 @@ func TestItemService_UpdateItemOrder(t *testing.T) {
 	orders := []*model.ItemOrder{{"item_1", 3}, {"item_2", 1}, {"item_3", 2}}
 	err := s.UpdateItemOrder(context.Background(), testLiveId, orders)
 	assert.Nil(t, err)
-	item, err := s.getLiveItem(context.Background(), testLiveId, "item_1")
+	item, err := s.GetLiveItem(context.Background(), testLiveId, "item_1")
 	assert.NotNil(t, item)
 	assert.Equal(t, uint(3), item.Order)
 
@@ -287,20 +287,20 @@ func TestItemService_UpdateItemOrderSingle(t *testing.T) {
 
 	err := s.UpdateItemOrderSingle(context.Background(), testLiveId, "item_1", 1, 10)
 	assert.Nil(t, err)
-	item, _ := s.getLiveItem(context.Background(), testLiveId, "item_1")
+	item, _ := s.GetLiveItem(context.Background(), testLiveId, "item_1")
 	assert.Equal(t, uint(10), item.Order)
-	item, _ = s.getLiveItem(context.Background(), testLiveId, "item_2")
+	item, _ = s.GetLiveItem(context.Background(), testLiveId, "item_2")
 	assert.Equal(t, uint(1), item.Order)
-	item, _ = s.getLiveItem(context.Background(), testLiveId, "item_10")
+	item, _ = s.GetLiveItem(context.Background(), testLiveId, "item_10")
 	assert.Equal(t, uint(9), item.Order)
 
 	err = s.UpdateItemOrderSingle(context.Background(), testLiveId, "item_50", 50, 41)
 	assert.Nil(t, err)
-	item, _ = s.getLiveItem(context.Background(), testLiveId, "item_50")
+	item, _ = s.GetLiveItem(context.Background(), testLiveId, "item_50")
 	assert.Equal(t, uint(41), item.Order)
-	item, _ = s.getLiveItem(context.Background(), testLiveId, "item_41")
+	item, _ = s.GetLiveItem(context.Background(), testLiveId, "item_41")
 	assert.Equal(t, uint(42), item.Order)
-	item, _ = s.getLiveItem(context.Background(), testLiveId, "item_49")
+	item, _ = s.GetLiveItem(context.Background(), testLiveId, "item_49")
 	assert.Equal(t, uint(50), item.Order)
 
 }
@@ -377,7 +377,7 @@ func TestItemService_getLiveItem(t *testing.T) {
 	s := &ItemService{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := s.getLiveItem(context.Background(), tt.liveId, tt.itemId)
+			got, err := s.GetLiveItem(context.Background(), tt.liveId, tt.itemId)
 			assert.Nil(t, err)
 			if tt.want == "" {
 				assert.Nil(t, got)
@@ -445,7 +445,7 @@ func TestItemService_UpdateItemInfo(t *testing.T) {
 			assert.Equal(t, tt.wantErr, err != nil)
 
 			if tt.updated {
-				cur, _ := s.getLiveItem(context.Background(), tt.liveId, tt.item.ItemId)
+				cur, _ := s.GetLiveItem(context.Background(), tt.liveId, tt.item.ItemId)
 				assert.Equal(t, tt.item.Title, cur.Title)
 				assert.Equal(t, tt.item.Tags, cur.Tags)
 				assert.Equal(t, tt.item.Thumbnail, cur.Thumbnail)
@@ -508,7 +508,7 @@ func TestItemService_UpdateItemExtends(t *testing.T) {
 			err := s.UpdateItemExtends(context.Background(), tt.liveId, tt.itemId, tt.extends)
 			assert.Equal(t, tt.wantErr, err != nil)
 			if tt.updated {
-				cur, _ := s.getLiveItem(context.Background(), tt.liveId, tt.itemId)
+				cur, _ := s.GetLiveItem(context.Background(), tt.liveId, tt.itemId)
 				assert.Equal(t, tt.extends["name"], cur.Extends["name"])
 			}
 		})
