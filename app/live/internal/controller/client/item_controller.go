@@ -39,8 +39,9 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
 
+	itemGroup.GET("/demonstrate/record/:liveId", ItemController.ListLiveDemonstrateLog)
 	itemGroup.GET("/demonstrate/record/:liveId/:itemId", ItemController.ListDemonstrateLog)
-	itemGroup.DELETE("/demonstrate/record", ItemController.DelDemonstrateLog)
+	itemGroup.POST("/demonstrate/record/delete", ItemController.DelDemonstrateLog)
 }
 
 type itemController struct {
@@ -420,6 +421,31 @@ func (c *itemController) StopItemDemonstrate(ctx *gin.Context) {
 	}
 	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
 	response := &StopItemDemonstrateLogResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     demonstrateLog,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (c *itemController) ListLiveDemonstrateLog(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	demonstrateLog, err := itemService.GetListLiveDemonstrateLog(ctx, liveId)
+	if err != nil {
+		log.Errorf("ListDemonstrateLog error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	response := &ListDemonstrateLog{
 		Response: api.SuccessResponse(log.ReqID()),
 		Data:     demonstrateLog,
 	}

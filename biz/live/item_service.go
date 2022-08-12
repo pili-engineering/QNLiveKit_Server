@@ -50,6 +50,7 @@ type IItemService interface {
 	getLatestDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error)
 	UpdateDemonstrateLog(ctx context.Context, itemLog *model.ItemDemonstrateLog) error
 	GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) ([]*model.ItemDemonstrateLog, error)
+	GetListLiveDemonstrateLog(ctx context.Context, liveId string) ([]*model.ItemDemonstrateLog, error)
 	DelDemonstrateLog(ctx context.Context, liveId string, demonItem []string) error
 	saveDemonstrateLog(ctx context.Context, liveId, itemId string) error
 }
@@ -666,6 +667,18 @@ func (s *ItemService) GetListDemonstrateLog(ctx context.Context, liveId string, 
 	db := mysql.GetLive(log.ReqID())
 	demonstrateLogs := make([]*model.ItemDemonstrateLog, 0)
 	result := db.Find(&demonstrateLogs, "live_id = ? and item_id = ?", liveId, itemId)
+	if result.Error != nil {
+		log.Errorf("GetList DemosrateLog %v", result.Error)
+		return nil, result.Error
+	}
+	return demonstrateLogs, nil
+}
+
+func (s *ItemService) GetListLiveDemonstrateLog(ctx context.Context, liveId string) ([]*model.ItemDemonstrateLog, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	demonstrateLogs := make([]*model.ItemDemonstrateLog, 0)
+	result := db.Find(&demonstrateLogs, "live_id = ?", liveId)
 	if result.Error != nil {
 		log.Errorf("GetList DemosrateLog %v", result.Error)
 		return nil, result.Error
