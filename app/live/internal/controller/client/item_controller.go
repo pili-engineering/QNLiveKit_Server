@@ -35,7 +35,6 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.PUT("/:liveId/:itemId/extends", ItemController.PutItemExtends)
 
 	itemGroup.POST("/demonstrate/:liveId/:itemId", ItemController.PostItemDemonstrate)
-	itemGroup.POST("/demonstrate/stop/:liveId/:itemId", ItemController.StopItemDemonstrate)
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
 
@@ -400,33 +399,6 @@ func (c *itemController) PostItemDemonstrate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 }
 
-func (c *itemController) StopItemDemonstrate(ctx *gin.Context) {
-	log := logger.ReqLogger(ctx)
-	liveId := ctx.Param("liveId")
-	itemId := ctx.Param("itemId")
-
-	userInfo := liveauth.GetUserInfo(ctx)
-	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
-		log.Errorf("check live anchor error %+v", err)
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
-		return
-	}
-
-	itemService := live.GetItemService()
-	demonstrateLog, err := itemService.StopDemonstrateLog(ctx, liveId, itemId)
-	if err != nil {
-		log.Errorf("record and stop demonstrate log error %+v", err)
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
-		return
-	}
-	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
-	response := &StopItemDemonstrateLogResponse{
-		Response: api.SuccessResponse(log.ReqID()),
-		Data:     demonstrateLog,
-	}
-	ctx.JSON(http.StatusOK, response)
-}
-
 func (c *itemController) ListLiveDemonstrateLog(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
@@ -502,8 +474,8 @@ func (c *itemController) DelDemonstrateLog(ctx *gin.Context) {
 }
 
 type DelDemonItemRequest struct {
-	LiveId     string   `json:"live_id"`
-	DemonItems []string `json:"demonstrate_item"`
+	LiveId     string `json:"live_id"`
+	DemonItems []int  `json:"demonstrate_item"`
 }
 
 type StopItemDemonstrateLogResponse struct {
@@ -535,7 +507,27 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	demonId, err := itemService.GetPreviusItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("delete demonstrate item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	if demonId == nil {
+		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	}
+	demonstrateLog, err := itemService.StopDemonstrateLog(ctx, liveId, *demonId)
+	if err != nil {
+		log.Errorf("record and stop demonstrate log error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
+	response := &StopItemDemonstrateLogResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     demonstrateLog,
+	}
+	ctx.JSON(http.StatusOK, response)
 }
 
 type GetItemDemonstrateResponse struct {
