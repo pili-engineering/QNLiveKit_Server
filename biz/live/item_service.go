@@ -558,6 +558,7 @@ func (s *ItemService) UpdateItemExtends(ctx context.Context, liveId string, item
 func (s *ItemService) SetDemonstrateLog(ctx context.Context, liveId string, itemId string) error {
 	log := logger.ReqLogger(ctx)
 
+	// 停止当前直播间的上一个商品的录制讲解
 	p, err := s.GetPreviusItem(ctx, liveId)
 	if err != nil {
 		log.Errorf("record previous item error %s", err.Error())
@@ -714,7 +715,17 @@ func (s *ItemService) DelDemonstrateLog(ctx context.Context, liveId string, demo
 
 func (s *ItemService) SetDemonstrateItem(ctx context.Context, liveId string, itemId string) error {
 	log := logger.ReqLogger(ctx)
-	err := s.saveDemonstrateItem(ctx, liveId, itemId)
+
+	// 停止当前直播间的上一个商品的录制讲解
+	p, err := s.GetPreviusItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("record previous item error %s", err.Error())
+	}
+	if err == nil && p != nil {
+		_, err = itemService.StopDemonstrateLog(ctx, liveId, *p)
+	}
+
+	err = s.saveDemonstrateItem(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("save item demonstrate error %s", err.Error())
 		return api.ErrDatabase

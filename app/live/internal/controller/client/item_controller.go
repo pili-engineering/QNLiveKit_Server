@@ -35,6 +35,7 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.PUT("/:liveId/:itemId/extends", ItemController.PutItemExtends)
 
 	itemGroup.POST("/demonstrate/:liveId/:itemId", ItemController.PostItemDemonstrate)
+	itemGroup.POST("/demonstrate/start/:liveId/:itemId", ItemController.PostStartRecordDemonstrate)
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
 
@@ -359,6 +360,39 @@ func (c *itemController) PutItemExtends(ctx *gin.Context) {
 }
 
 func (c *itemController) PostItemDemonstrate(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	itemId := ctx.Param("itemId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	item, err := itemService.GetLiveItem(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("get live item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	if item.Status == model.ItemStatusOffline {
+		log.Errorf("item offline, cannot demonstrate ")
+		ctx.AbortWithStatusJSON(http.StatusOK, api.Error(log.ReqID(), 501, "item offline, cannot demonstrate "))
+		return
+	}
+	err = itemService.SetDemonstrateItem(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("set demonstrate item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 	itemId := ctx.Param("itemId")
