@@ -522,6 +522,9 @@ func (s *ItemService) itemToUpdates(originItem, updateItem *model.ItemEntity) ma
 	if len(updateItem.OriginPrice) > 0 && updateItem.OriginPrice != originItem.OriginPrice {
 		updates["origin_price"] = updateItem.OriginPrice
 	}
+	if len(updateItem.Record) > 0 && updateItem.Record != originItem.Record {
+		updates["record"] = updateItem.Record
+	}
 	if len(updateItem.Extends) > 0 {
 		updates["extends"] = model.CombineExtends(originItem.Extends, updateItem.Extends)
 	}
@@ -613,7 +616,24 @@ func (s *ItemService) StopDemonstrateLog(ctx context.Context, liveId string, dem
 	demonstrateLog.Fname = streamResp.Fname
 	demonstrateLog.Status = model.LogStatusSuccess
 	s.UpdateDemonstrateLog(ctx, demonstrateLog)
+	err = s.UpdateItemRecord(ctx, "pili-playback.qnsdk.com/"+demonstrateLog.Fname, demonstrateLog.LiveId, demonstrateLog.ItemId)
+	if err != nil {
+		log.Info("DemonstrateLog url donnot save to item  %s", err.Error())
+	}
 	return demonstrateLog, nil
+}
+
+func (s *ItemService) UpdateItemRecord(ctx context.Context, url string, liveId string, itemId string) error {
+	item, err := s.GetLiveItem(ctx, liveId, itemId)
+	if err != nil {
+		return err
+	}
+	item.Record = url
+	err = s.UpdateItemInfo(ctx, liveId, item)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *ItemService) postDemonstrateStreams(ctx context.Context, reqValue *model.StreamsDemonstrateReq, encodedStreamTitle string) (*model.StreamsDemonstrateResponse, error) {

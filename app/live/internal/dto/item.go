@@ -22,6 +22,7 @@ type ItemDto struct {
 	CurrentPrice string        `json:"current_price"` //商品当前售价
 	OriginPrice  string        `json:"origin_price"`  //商品原始售价(划线价)
 	Status       uint          `json:"status"`        //商品状态
+	Record       string        `json:"record"`        //商品讲解回放
 	Extends      model.Extends `json:"extends"`       //扩展属性
 }
 
@@ -40,6 +41,7 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 		CurrentPrice: d.CurrentPrice,
 		OriginPrice:  d.OriginPrice,
 		Status:       d.Status,
+		Record:       d.Record,
 		Extends:      d.Extends,
 	}
 }
@@ -60,6 +62,7 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		CurrentPrice: e.CurrentPrice,
 		OriginPrice:  e.OriginPrice,
 		Status:       e.Status,
+		Record:       e.Record,
 		Extends:      e.Extends,
 	}
 }
