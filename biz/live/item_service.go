@@ -592,7 +592,7 @@ func (s *ItemService) StopDemonstrateLog(ctx context.Context, liveId string, dem
 		log.Info("get Live_entities table error %s", err.Error())
 		return nil, err
 	}
-	info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
+	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
 	split := strings.Split(info.PushUrl, "/")
 	demonstrateLog, err = s.getDemonstrateLog(ctx, demonId)
 	if err != nil {
