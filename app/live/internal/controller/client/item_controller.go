@@ -451,7 +451,7 @@ func (c *itemController) ListLiveDemonstrateLog(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	response := &ListDemonstrateLog{
+	response := &ListLiveDemonstrateLog{
 		Response: api.SuccessResponse(log.ReqID()),
 		Data:     demonstrateLog,
 	}
@@ -518,6 +518,10 @@ type StopItemDemonstrateLogResponse struct {
 }
 
 type ListDemonstrateLog struct {
+	api.Response
+	Data *model.ItemDemonstrateLog
+}
+type ListLiveDemonstrateLog struct {
 	api.Response
 	Data []*model.ItemDemonstrateLog
 }

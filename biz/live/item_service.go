@@ -49,7 +49,7 @@ type IItemService interface {
 	StopDemonstrateLog(ctx context.Context, liveId string, demonId int) (*model.ItemDemonstrateLog, error)
 	getDemonstrateLog(ctx context.Context, demonId int) (*model.ItemDemonstrateLog, error)
 	UpdateDemonstrateLog(ctx context.Context, itemLog *model.ItemDemonstrateLog) error
-	GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) ([]*model.ItemDemonstrateLog, error)
+	GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error)
 	GetListLiveDemonstrateLog(ctx context.Context, liveId string) ([]*model.ItemDemonstrateLog, error)
 	GetPreviusItem(ctx context.Context, liveId string) (*int, error)
 	DelDemonstrateLog(ctx context.Context, liveId string, demonItem []int) error
@@ -589,7 +589,7 @@ func (s *ItemService) StopDemonstrateLog(ctx context.Context, liveId string, dem
 		log.Info("get Live_entities table error %s", err.Error())
 		return nil, err
 	}
-	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
+	info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
 	split := strings.Split(info.PushUrl, "/")
 	demonstrateLog, err = s.getDemonstrateLog(ctx, demonId)
 	if err != nil {
@@ -643,7 +643,7 @@ func (s *ItemService) getDemonstrateLog(ctx context.Context, demonId int) (*mode
 
 	t := uint(demonId)
 	demonstrateLog := model.ItemDemonstrateLog{}
-	result := db.First(&demonstrateLog, "id = ?", t)
+	result := db.First(&demonstrateLog, "id = ? ", t)
 	if result.Error != nil {
 		if result.RecordNotFound() {
 			return nil, result.Error
@@ -654,16 +654,16 @@ func (s *ItemService) getDemonstrateLog(ctx context.Context, demonId int) (*mode
 	return &demonstrateLog, nil
 }
 
-func (s *ItemService) GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) ([]*model.ItemDemonstrateLog, error) {
+func (s *ItemService) GetListDemonstrateLog(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateLog, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
-	demonstrateLogs := make([]*model.ItemDemonstrateLog, 0)
-	result := db.Find(&demonstrateLogs, "live_id = ? and item_id = ?", liveId, itemId)
+	demonstrateLog := model.ItemDemonstrateLog{}
+	result := db.Last(&demonstrateLog, "live_id = ? and item_id = ? and status = 0", liveId, itemId)
 	if result.Error != nil {
 		log.Errorf("GetList DemosrateLog %v", result.Error)
 		return nil, result.Error
 	}
-	return demonstrateLogs, nil
+	return &demonstrateLog, nil
 }
 
 func (s *ItemService) GetListLiveDemonstrateLog(ctx context.Context, liveId string) ([]*model.ItemDemonstrateLog, error) {
