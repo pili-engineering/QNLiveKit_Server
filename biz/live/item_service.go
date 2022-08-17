@@ -593,7 +593,7 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 		log.Info("get Live_entities table error %s", err.Error())
 		return nil, err
 	}
-	info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
+	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
 	split := strings.Split(info.PushUrl, "/")
 	demonstrateLog, err = s.getRecordVideo(ctx, demonId)
 	if err != nil {
