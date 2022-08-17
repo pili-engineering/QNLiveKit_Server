@@ -8,6 +8,7 @@ import (
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
+	"github.com/qbox/livekit/utils/timestamp"
 	"net/http"
 	"strconv"
 )
@@ -74,6 +75,67 @@ func (s *RClient) postReportJson(log *logger.Logger, kind string, value map[stri
 	if err != nil {
 		log.Info("Error ", err)
 		return err
+	}
+	return nil
+}
+
+func (s *RClient) StatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
+	var err error
+	for _, entity := range entities {
+		err = s.updateSingleLive(ctx, entity)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *RClient) updateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
+	log := logger.ReqLogger(ctx)
+
+	db := mysql.GetLive(log.ReqID())
+	db = db.Model(model.StatsSingleLiveEntity{}).Where("live_id = ? and item_id = ? and user_id = ? and type = ?", entity.LiveId, entity.ItemId, entity.UserId, entity.Type)
+
+	old := model.StatsSingleLiveEntity{}
+	result := db.First(&old)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return s.createSingleLiveInfo(ctx, entity)
+		} else {
+			log.Errorf("find old stats single live error %+v", result.Error)
+			return api.ErrDatabase
+		}
+	}
+
+	updates := singleLiveUpdates(&old, entity)
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = timestamp.Now()
+	result = db.Update(updates)
+	if result.Error != nil {
+		log.Errorf("update stats single live error %v", result.Error)
+		return api.ErrDatabase
+	} else {
+		return nil
+	}
+}
+
+func singleLiveUpdates(old, update *model.StatsSingleLiveEntity) map[string]interface{} {
+	updates := map[string]interface{}{}
+	if update.Count > 0 {
+		updates["count"] = old.Count + update.Count
+	}
+	return updates
+}
+
+func (s *RClient) createSingleLiveInfo(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	result := db.Create(entity)
+	if result.Error != nil {
+		log.Errorf("create user %+v, error %+v", result.Error)
+		return api.ErrDatabase
 	}
 	return nil
 }
