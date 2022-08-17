@@ -9,6 +9,7 @@ package dto
 
 import (
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/utils/timestamp"
 )
 
 type ItemDto struct {
@@ -65,4 +66,31 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		Record:       e.Record,
 		Extends:      e.Extends,
 	}
+}
+
+type RecordDto struct {
+	ID        uint                `json:"id"`
+	RecordUrl string              `json:"record_url"`
+	Start     timestamp.Timestamp `json:"start"`
+	End       timestamp.Timestamp `json:"end"`
+	Status    uint                `json:"status"`
+	LiveId    string              `json:"live_id"`
+	ItemId    string              `json:"item_id"`
+}
+
+func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
+	if e == nil {
+		return nil
+	}
+
+	return &RecordDto{
+		ID:        e.ID,
+		RecordUrl: e.Fname,
+		Start:     e.Start,
+		End:       e.End,
+		LiveId:    e.LiveId,
+		Status:    e.Status,
+		ItemId:    e.ItemId,
+	}
+
 }

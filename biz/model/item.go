@@ -72,7 +72,7 @@ func (ItemDemonstrate) TableName() string {
 	return "item_demonstrate"
 }
 
-type ItemDemonstrateLog struct {
+type ItemDemonstrateRecord struct {
 	ID           uint `gorm:"primary_key"`
 	Start        timestamp.Timestamp
 	End          timestamp.Timestamp
@@ -85,7 +85,7 @@ type ItemDemonstrateLog struct {
 	PersistentID string `json:"persistentID"`
 }
 
-func (ItemDemonstrateLog) TableName() string {
+func (ItemDemonstrateRecord) TableName() string {
 	return "item_demonstrate_log"
 }
 
@@ -110,8 +110,9 @@ type StreamsDemonstrateResponse struct {
 
 //状态码0成功，1等待处理，2正在处理，3处理失败。
 const (
-	LogStatusSuccess = iota
-	LogStatusWait
-	LogStatusProcessing
-	LogStatusFail
+	RecordStatusSuccess = iota
+	RecordStatusWait
+	RecordStatusProcessing
+	RecordStatusFail
+	RecordStatusDefault
 )

@@ -39,9 +39,9 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
 
-	itemGroup.GET("/demonstrate/record/:liveId", ItemController.ListLiveDemonstrateLog)
-	itemGroup.GET("/demonstrate/record/:liveId/:itemId", ItemController.ListDemonstrateLog)
-	itemGroup.POST("/demonstrate/record/delete", ItemController.DelDemonstrateLog)
+	itemGroup.GET("/demonstrate/record/:liveId", ItemController.ListLiveRecordVideo)
+	itemGroup.GET("/demonstrate/record/:liveId/:itemId", ItemController.ListrecordVideo)
+	itemGroup.POST("/demonstrate/record/delete", ItemController.DelRecordVideo)
 }
 
 type itemController struct {
@@ -423,7 +423,7 @@ func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
 		return
 	}
 
-	err = itemService.SetDemonstrateLog(ctx, liveId, itemId)
+	err = itemService.StartRecordVideo(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("set demonstrate  Log error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -433,7 +433,7 @@ func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 }
 
-func (c *itemController) ListLiveDemonstrateLog(ctx *gin.Context) {
+func (c *itemController) ListLiveRecordVideo(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 
@@ -445,20 +445,24 @@ func (c *itemController) ListLiveDemonstrateLog(ctx *gin.Context) {
 	}
 
 	itemService := live.GetItemService()
-	demonstrateLog, err := itemService.GetListLiveDemonstrateLog(ctx, liveId)
+	demonstrateLog, err := itemService.GetListLiveRecordVideo(ctx, liveId)
 	if err != nil {
-		log.Errorf("ListDemonstrateLog error %s", err.Error())
+		log.Errorf("ListrecordVideo error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
+	var data []*dto.RecordDto
+	for _, v := range demonstrateLog {
+		data = append(data, dto.RecordEntityToDto(v))
+	}
 	response := &ListLiveDemonstrateLog{
 		Response: api.SuccessResponse(log.ReqID()),
-		Data:     demonstrateLog,
+		Data:     data,
 	}
 	ctx.JSON(http.StatusOK, response)
 }
 
-func (c *itemController) ListDemonstrateLog(ctx *gin.Context) {
+func (c *itemController) ListrecordVideo(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 	itemId := ctx.Param("itemId")
@@ -471,20 +475,20 @@ func (c *itemController) ListDemonstrateLog(ctx *gin.Context) {
 	}
 
 	itemService := live.GetItemService()
-	demonstrateLog, err := itemService.GetListDemonstrateLog(ctx, liveId, itemId)
+	demonstrateLog, err := itemService.GetListRecordVideo(ctx, liveId, itemId)
 	if err != nil {
-		log.Errorf("ListDemonstrateLog error %s", err.Error())
+		log.Errorf("ListrecordVideo error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 	response := &ListDemonstrateLog{
 		Response: api.SuccessResponse(log.ReqID()),
-		Data:     demonstrateLog,
+		Data:     dto.RecordEntityToDto(demonstrateLog),
 	}
 	ctx.JSON(http.StatusOK, response)
 }
 
-func (c *itemController) DelDemonstrateLog(ctx *gin.Context) {
+func (c *itemController) DelRecordVideo(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	request := &DelDemonItemRequest{}
 	if err := ctx.BindJSON(request); err != nil {
@@ -498,7 +502,7 @@ func (c *itemController) DelDemonstrateLog(ctx *gin.Context) {
 		return
 	}
 	itemService := live.GetItemService()
-	err := itemService.DelDemonstrateLog(ctx, request.LiveId, request.DemonItems)
+	err := itemService.DelRecordVideo(ctx, request.LiveId, request.DemonItems)
 	if err != nil {
 		log.Errorf("delete demonstrate error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
@@ -514,16 +518,16 @@ type DelDemonItemRequest struct {
 
 type StopItemDemonstrateLogResponse struct {
 	api.Response
-	Data *model.ItemDemonstrateLog
+	Data *dto.RecordDto
 }
 
 type ListDemonstrateLog struct {
 	api.Response
-	Data *model.ItemDemonstrateLog
+	Data *dto.RecordDto
 }
 type ListLiveDemonstrateLog struct {
 	api.Response
-	Data []*model.ItemDemonstrateLog
+	Data []*dto.RecordDto
 }
 
 func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
@@ -545,7 +549,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 		return
 	}
 
-	demonId, err := itemService.GetPreviusItem(ctx, liveId)
+	demonId, err := itemService.GetPreviousItem(ctx, liveId)
 	if err != nil {
 		log.Errorf("delete demonstrate item error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -554,7 +558,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 	if demonId == nil {
 		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 	}
-	demonstrateLog, err := itemService.StopDemonstrateLog(ctx, liveId, *demonId)
+	demonstrateLog, err := itemService.StopRecordVideo(ctx, liveId, *demonId)
 	if err != nil {
 		log.Errorf("record and stop demonstrate log error %+v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -563,7 +567,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
 	response := &StopItemDemonstrateLogResponse{
 		Response: api.SuccessResponse(log.ReqID()),
-		Data:     demonstrateLog,
+		Data:     dto.RecordEntityToDto(demonstrateLog),
 	}
 	ctx.JSON(http.StatusOK, response)
 }
