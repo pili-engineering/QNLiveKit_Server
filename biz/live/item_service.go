@@ -10,8 +10,14 @@ package live
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/utils/rpc"
+	log "github.com/sirupsen/logrus"
+	"net/http"
+	"strings"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
@@ -38,12 +44,35 @@ type IItemService interface {
 	GetDemonstrateItem(ctx context.Context, liveId string) (*model.ItemEntity, error)
 	GetLiveItem(ctx context.Context, liveId string, itemId string) (*model.ItemEntity, error)
 	IsDemonstrateItem(ctx context.Context, liveId, itemId string) (bool, error)
+
+	StartRecordVideo(ctx context.Context, liveId string, itemId string) error
+	StopRecordVideo(ctx context.Context, liveId string, demonId int) (*model.ItemDemonstrateRecord, error)
+	getRecordVideo(ctx context.Context, demonId int) (*model.ItemDemonstrateRecord, error)
+	UpdateRecordVideo(ctx context.Context, itemLog *model.ItemDemonstrateRecord) error
+	GetListRecordVideo(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateRecord, error)
+	GetListLiveRecordVideo(ctx context.Context, liveId string) ([]*model.ItemDemonstrateRecord, error)
+	GetPreviousItem(ctx context.Context, liveId string) (*int, error)
+	DelRecordVideo(ctx context.Context, liveId string, demonItem []int) error
+	saveRecordVideo(ctx context.Context, liveId, itemId string) error
 }
 
 type ItemService struct {
+	Config
 }
 
-var itemService IItemService = &ItemService{}
+var itemService IItemService
+
+type Config struct {
+	PiliHub   string
+	AccessKey string
+	SecretKey string
+}
+
+func InitService(conf Config) {
+	itemService = &ItemService{
+		Config: conf,
+	}
+}
 
 func GetItemService() IItemService {
 	return itemService
@@ -493,6 +522,9 @@ func (s *ItemService) itemToUpdates(originItem, updateItem *model.ItemEntity) ma
 	if len(updateItem.OriginPrice) > 0 && updateItem.OriginPrice != originItem.OriginPrice {
 		updates["origin_price"] = updateItem.OriginPrice
 	}
+	if len(updateItem.Record) > 0 && updateItem.Record != originItem.Record {
+		updates["record"] = updateItem.Record
+	}
 	if len(updateItem.Extends) > 0 {
 		updates["extends"] = model.CombineExtends(originItem.Extends, updateItem.Extends)
 	}
@@ -526,9 +558,195 @@ func (s *ItemService) UpdateItemExtends(ctx context.Context, liveId string, item
 	return nil
 }
 
+func (s *ItemService) StartRecordVideo(ctx context.Context, liveId string, itemId string) error {
+	log := logger.ReqLogger(ctx)
+
+	// 停止当前直播间的上一个商品的录制讲解
+	p, err := s.GetPreviousItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("record previous item error %s", err.Error())
+	}
+	if err == nil && p != nil {
+		_, err = itemService.StopRecordVideo(ctx, liveId, *p)
+	}
+
+	// status
+	err = s.saveRecordVideo(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("save item demonstrate log error %s", err.Error())
+		return api.ErrDatabase
+	}
+	return nil
+}
+
+func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+
+	return db.Exec("insert into item_demonstrate_log(live_id, item_id, start,status) values(?, ?, ? ,? ) ",
+		liveId, itemId, timestamp.Now(), model.RecordStatusDefault).Error
+}
+
+func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonId int) (demonstrateLog *model.ItemDemonstrateRecord, err error) {
+	info, err := GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Info("get Live_entities table error %s", err.Error())
+		return nil, err
+	}
+	info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
+	split := strings.Split(info.PushUrl, "/")
+	demonstrateLog, err = s.getRecordVideo(ctx, demonId)
+	if err != nil {
+		log.Info("get DemonstrateLog table error %s", err.Error())
+		return nil, err
+	}
+	demonstrateLog.End = timestamp.Now()
+	reqValue := &model.StreamsDemonstrateReq{
+		Fname: demonstrateLog.LiveId + demonstrateLog.ItemId,
+		Start: demonstrateLog.Start.Unix(),
+		End:   demonstrateLog.End.Unix(),
+	}
+	encodedStreamTitle := base64.StdEncoding.EncodeToString([]byte(split[len(split)-1]))
+	streamResp, err := s.postDemonstrateStreams(ctx, reqValue, encodedStreamTitle)
+	if err != nil {
+		log.Info("POST DemonstrateLog  error %s", err.Error())
+		demonstrateLog.Status = model.RecordStatusFail
+		s.UpdateRecordVideo(ctx, demonstrateLog)
+		return nil, err
+	}
+	demonstrateLog.Fname = streamResp.Fname
+	demonstrateLog.Status = model.RecordStatusSuccess
+	s.UpdateRecordVideo(ctx, demonstrateLog)
+	err = s.UpdateItemRecord(ctx, "pili-playback.qnsdk.com/"+demonstrateLog.Fname, demonstrateLog.LiveId, demonstrateLog.ItemId)
+	if err != nil {
+		log.Info("DemonstrateLog url donnot save to item  %s", err.Error())
+	}
+	return demonstrateLog, nil
+}
+
+func (s *ItemService) UpdateItemRecord(ctx context.Context, url string, liveId string, itemId string) error {
+	item, err := s.GetLiveItem(ctx, liveId, itemId)
+	if err != nil {
+		return err
+	}
+	item.Record = url
+	err = s.UpdateItemInfo(ctx, liveId, item)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ItemService) postDemonstrateStreams(ctx context.Context, reqValue *model.StreamsDemonstrateReq, encodedStreamTitle string) (*model.StreamsDemonstrateResponse, error) {
+	url := "https://pili.qiniuapi.com" + "/v2/hubs/" + s.PiliHub + "/streams/" + encodedStreamTitle + "/saveas"
+	mac := &qiniumac.Mac{
+		AccessKey: s.AccessKey,
+		SecretKey: []byte(s.SecretKey),
+	}
+	c := &http.Client{
+		Transport: qiniumac.NewTransport(mac, nil),
+	}
+	client := rpc.Client{
+		Client: c,
+	}
+
+	resp := &model.StreamsDemonstrateResponse{}
+	err := client.CallWithJSON(logger.ReqLogger(ctx), resp, url, reqValue)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (s *ItemService) getRecordVideo(ctx context.Context, demonId int) (*model.ItemDemonstrateRecord, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+
+	t := uint(demonId)
+	demonstrateLog := model.ItemDemonstrateRecord{}
+	result := db.First(&demonstrateLog, "id = ? ", t)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return nil, result.Error
+		} else {
+			return nil, api.ErrDatabase
+		}
+	}
+	return &demonstrateLog, nil
+}
+
+func (s *ItemService) GetListRecordVideo(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateRecord, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	demonstrateLog := model.ItemDemonstrateRecord{}
+	result := db.Last(&demonstrateLog, "live_id = ? and item_id = ? and status = 0", liveId, itemId)
+	if result.Error != nil {
+		log.Errorf("GetList DemosrateLog %v", result.Error)
+		return nil, result.Error
+	}
+	return &demonstrateLog, nil
+}
+
+func (s *ItemService) GetListLiveRecordVideo(ctx context.Context, liveId string) ([]*model.ItemDemonstrateRecord, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	demonstrateLogs := make([]*model.ItemDemonstrateRecord, 0)
+	result := db.Find(&demonstrateLogs, "live_id = ?", liveId)
+	if result.Error != nil {
+		log.Errorf("GetList DemosrateLog %v", result.Error)
+		return nil, result.Error
+	}
+	return demonstrateLogs, nil
+}
+
+func (s *ItemService) UpdateRecordVideo(ctx context.Context, itemLog *model.ItemDemonstrateRecord) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	updates := map[string]interface{}{
+		"fname":  itemLog.Fname,
+		"status": itemLog.Status,
+		"end":    itemLog.End,
+	}
+	var err error
+	if itemLog.ID != 0 {
+		err = db.Model(model.ItemDemonstrateRecord{}).Where("id = ? ", itemLog.ID).Update(updates).Error
+	} else {
+		err = db.Model(model.ItemDemonstrateRecord{}).Where("live_id = ? and item_id = ?", itemLog.LiveId, itemLog.ItemId).Update(updates).Error
+	}
+	if err != nil {
+		log.Errorf("update itemLog error %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (s *ItemService) DelRecordVideo(ctx context.Context, liveId string, demonItem []int) error {
+	log := logger.ReqLogger(ctx)
+	if len(demonItem) == 0 {
+		return nil
+	}
+	db := mysql.GetLive(log.ReqID())
+	err := db.Delete(model.ItemDemonstrateRecord{}, "live_id = ? and id in (?) ", liveId, demonItem).Error
+	if err != nil {
+		log.Errorf("delete demonstrate Log error %s", err.Error())
+		return api.ErrDatabase
+	}
+	return nil
+}
+
 func (s *ItemService) SetDemonstrateItem(ctx context.Context, liveId string, itemId string) error {
 	log := logger.ReqLogger(ctx)
-	err := s.saveDemonstrateItem(ctx, liveId, itemId)
+
+	// 停止当前直播间的上一个商品的录制讲解
+	p, err := s.GetPreviousItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("record previous item error %s", err.Error())
+	}
+	if err == nil && p != nil {
+		_, err = itemService.StopRecordVideo(ctx, liveId, *p)
+	}
+
+	err = s.saveDemonstrateItem(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("save item demonstrate error %s", err.Error())
 		return api.ErrDatabase
@@ -591,6 +809,23 @@ func (s *ItemService) GetDemonstrateItem(ctx context.Context, liveId string) (*m
 	}
 
 	return s.GetLiveItem(ctx, liveId, d.ItemId)
+}
+func (s *ItemService) GetPreviousItem(ctx context.Context, liveId string) (*int, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+
+	d := model.ItemDemonstrateRecord{}
+	result := db.Last(&d, "live_id = ? and end is null", liveId)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return nil, nil
+		} else {
+			return nil, api.ErrDatabase
+		}
+	}
+
+	id := int(d.ID)
+	return &id, nil
 }
 
 func (s *ItemService) GetLiveItem(ctx context.Context, liveId string, itemId string) (*model.ItemEntity, error) {

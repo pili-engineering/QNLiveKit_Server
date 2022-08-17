@@ -35,8 +35,13 @@ func RegisterItemRoutes(group *gin.RouterGroup) {
 	itemGroup.PUT("/:liveId/:itemId/extends", ItemController.PutItemExtends)
 
 	itemGroup.POST("/demonstrate/:liveId/:itemId", ItemController.PostItemDemonstrate)
+	itemGroup.POST("/demonstrate/start/:liveId/:itemId", ItemController.PostStartRecordDemonstrate)
 	itemGroup.DELETE("/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
 	itemGroup.GET("/demonstrate/:liveId", ItemController.GetItemDemonstrate)
+
+	itemGroup.GET("/demonstrate/record/:liveId", ItemController.ListLiveRecordVideo)
+	itemGroup.GET("/demonstrate/record/:liveId/:itemId", ItemController.ListrecordVideo)
+	itemGroup.POST("/demonstrate/record/delete", ItemController.DelRecordVideo)
 }
 
 type itemController struct {
@@ -384,8 +389,145 @@ func (c *itemController) PostItemDemonstrate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
+	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	itemId := ctx.Param("itemId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	item, err := itemService.GetLiveItem(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("get live item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	if item.Status == model.ItemStatusOffline {
+		log.Errorf("item offline, cannot demonstrate ")
+		ctx.AbortWithStatusJSON(http.StatusOK, api.Error(log.ReqID(), 501, "item offline, cannot demonstrate "))
+		return
+	}
+	err = itemService.SetDemonstrateItem(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("set demonstrate item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	err = itemService.StartRecordVideo(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("set demonstrate  Log error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
 
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+func (c *itemController) ListLiveRecordVideo(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	demonstrateLog, err := itemService.GetListLiveRecordVideo(ctx, liveId)
+	if err != nil {
+		log.Errorf("ListrecordVideo error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	var data []*dto.RecordDto
+	for _, v := range demonstrateLog {
+		data = append(data, dto.RecordEntityToDto(v))
+	}
+	response := &ListLiveDemonstrateLog{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     data,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (c *itemController) ListrecordVideo(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	itemId := ctx.Param("itemId")
+
+	userInfo := liveauth.GetUserInfo(ctx)
+	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
+		log.Errorf("check live anchor error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	itemService := live.GetItemService()
+	demonstrateLog, err := itemService.GetListRecordVideo(ctx, liveId, itemId)
+	if err != nil {
+		log.Errorf("ListrecordVideo error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	response := &ListDemonstrateLog{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     dto.RecordEntityToDto(demonstrateLog),
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (c *itemController) DelRecordVideo(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	request := &DelDemonItemRequest{}
+	if err := ctx.BindJSON(request); err != nil {
+		log.Errorf("bind request error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	if len(request.DemonItems) == 0 {
+		log.Errorf("invalid request %+v", request)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	itemService := live.GetItemService()
+	err := itemService.DelRecordVideo(ctx, request.LiveId, request.DemonItems)
+	if err != nil {
+		log.Errorf("delete demonstrate error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+}
+
+type DelDemonItemRequest struct {
+	LiveId     string `json:"live_id"`
+	DemonItems []int  `json:"demonstrate_item"`
+}
+
+type StopItemDemonstrateLogResponse struct {
+	api.Response
+	Data *dto.RecordDto
+}
+
+type ListDemonstrateLog struct {
+	api.Response
+	Data *dto.RecordDto
+}
+type ListLiveDemonstrateLog struct {
+	api.Response
+	Data []*dto.RecordDto
 }
 
 func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
@@ -407,7 +549,27 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	demonId, err := itemService.GetPreviousItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("delete demonstrate item error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	if demonId == nil {
+		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	}
+	demonstrateLog, err := itemService.StopRecordVideo(ctx, liveId, *demonId)
+	if err != nil {
+		log.Errorf("record and stop demonstrate log error %+v", err)
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
+	response := &StopItemDemonstrateLogResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     dto.RecordEntityToDto(demonstrateLog),
+	}
+	ctx.JSON(http.StatusOK, response)
 }
 
 type GetItemDemonstrateResponse struct {
