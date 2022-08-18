@@ -112,7 +112,7 @@ CREATE TABLE `items` (
     `current_price` varchar(64) DEFAULT NULL,
     `origin_price` varchar(64) DEFAULT NULL,
     `status` int unsigned DEFAULT NULL,
-    `record` varchar(64) DEFAULT NULL,
+    `record_id` int unsigned DEFAULT NULL,
     `extends` varchar(1024) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_live_status` (`live_id`,`status`)

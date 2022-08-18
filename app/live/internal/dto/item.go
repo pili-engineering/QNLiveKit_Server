@@ -8,8 +8,11 @@
 package dto
 
 import (
+	"context"
+	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/utils/timestamp"
+	log "github.com/sirupsen/logrus"
 )
 
 type ItemDto struct {
@@ -23,7 +26,7 @@ type ItemDto struct {
 	CurrentPrice string        `json:"current_price"` //商品当前售价
 	OriginPrice  string        `json:"origin_price"`  //商品原始售价(划线价)
 	Status       uint          `json:"status"`        //商品状态
-	Record       string        `json:"record"`        //商品讲解回放
+	Record       *RecordDto    `json:"record"`        //商品讲解回放
 	Extends      model.Extends `json:"extends"`       //扩展属性
 }
 
@@ -32,7 +35,7 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 		return nil
 	}
 
-	return &model.ItemEntity{
+	e := &model.ItemEntity{
 		LiveId:       d.LiveId,
 		ItemId:       d.ItemId,
 		Title:        d.Title,
@@ -42,9 +45,12 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 		CurrentPrice: d.CurrentPrice,
 		OriginPrice:  d.OriginPrice,
 		Status:       d.Status,
-		Record:       d.Record,
 		Extends:      d.Extends,
 	}
+	if d.Record != nil {
+		e.RecordId = d.Record.ID
+	}
+	return e
 }
 
 func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
@@ -52,7 +58,7 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		return nil
 	}
 
-	return &ItemDto{
+	i := &ItemDto{
 		LiveId:       e.LiveId,
 		ItemId:       e.ItemId,
 		Order:        e.Order,
@@ -63,9 +69,17 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		CurrentPrice: e.CurrentPrice,
 		OriginPrice:  e.OriginPrice,
 		Status:       e.Status,
-		Record:       e.Record,
 		Extends:      e.Extends,
 	}
+
+	record, err := live.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
+	if err != nil {
+		log.Info(err)
+	}
+	if err == nil && record != nil {
+		i.Record = RecordEntityToDto(record)
+	}
+	return i
 }
 
 type RecordDto struct {
@@ -85,7 +99,7 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 
 	return &RecordDto{
 		ID:        e.ID,
-		RecordUrl: e.Fname,
+		RecordUrl: "https://pili-playback.qnsdk.com/" + e.Fname,
 		Start:     e.Start,
 		End:       e.End,
 		LiveId:    e.LiveId,
