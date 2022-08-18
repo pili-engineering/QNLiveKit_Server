@@ -31,7 +31,7 @@ type ItemEntity struct {
 	CurrentPrice string  `json:"current_price"`
 	OriginPrice  string  `json:"origin_price"`
 	Status       uint    `json:"status"`
-	Record       string  `json:"record"`
+	RecordId     uint    `json:"record_id"`
 	Extends      Extends `json:"extends" gorm:"type:varchar(512)"`
 }
 
