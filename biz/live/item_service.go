@@ -55,6 +55,7 @@ type IItemService interface {
 	GetPreviousItem(ctx context.Context, liveId string) (*int, error)
 	DelRecordVideo(ctx context.Context, liveId string, demonItem []int) error
 	saveRecordVideo(ctx context.Context, liveId, itemId string) error
+	UpdateItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error
 }
 
 type ItemService struct {
@@ -622,10 +623,6 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 	demonstrateLog.Fname = streamResp.Fname
 	demonstrateLog.Status = model.RecordStatusSuccess
 	s.UpdateRecordVideo(ctx, demonstrateLog)
-	err = s.UpdateItemRecord(ctx, demonstrateLog.ID, demonstrateLog.LiveId, demonstrateLog.ItemId)
-	if err != nil {
-		log.Info("DemonstrateLog url donnot save to item  %s", err.Error())
-	}
 	return demonstrateLog, nil
 }
 

@@ -97,9 +97,9 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 		return nil
 	}
 
-	return &RecordDto{
+	r := &RecordDto{
 		ID:        e.ID,
-		RecordUrl: "https://pili-playback.qnsdk.com/" + e.Fname,
+		RecordUrl: e.Fname,
 		Start:     e.Start,
 		End:       e.End,
 		LiveId:    e.LiveId,
@@ -107,4 +107,8 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 		ItemId:    e.ItemId,
 	}
 
+	if e.Status == 0 {
+		r.RecordUrl = "https://pili-playback.qnsdk.com/" + e.Fname
+	}
+	return r
 }

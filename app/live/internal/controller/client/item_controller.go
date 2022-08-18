@@ -429,7 +429,18 @@ func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-
+	demonItem, err := itemService.GetPreviousItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("set demonstrate  Log,GetPreviousItem  error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	err = itemService.UpdateItemRecord(ctx, uint(*demonItem), liveId, itemId)
+	if err != nil {
+		log.Errorf("Demonstrate Record  donnot save to item %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 }
 
