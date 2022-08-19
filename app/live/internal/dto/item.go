@@ -71,7 +71,9 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		Status:       e.Status,
 		Extends:      e.Extends,
 	}
-
+	if e.RecordId == 0 {
+		return i
+	}
 	record, err := live.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
 	if err != nil {
 		log.Info(err)
