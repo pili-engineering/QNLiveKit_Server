@@ -528,7 +528,7 @@ func (c *itemController) DelRecordVideo(ctx *gin.Context) {
 				d.FailureDemonItems = append(d.FailureDemonItems, v)
 				log.Errorf("delete demonstrate error %s", err.Error())
 			} else {
-				err := itemService.DelRecordVideo(ctx, request.LiveId, request.DemonItems)
+				err := itemService.DelRecordVideo(ctx, request.LiveId, []uint{v})
 				if err != nil {
 					d.FailureDemonItems = append(d.FailureDemonItems, v)
 					log.Errorf("delete demonstrate error %s", err.Error())
