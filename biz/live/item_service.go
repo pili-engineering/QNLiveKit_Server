@@ -53,8 +53,10 @@ type IItemService interface {
 	GetListRecordVideo(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateRecord, error)
 	GetListLiveRecordVideo(ctx context.Context, liveId string) ([]*model.ItemDemonstrateRecord, error)
 	GetPreviousItem(ctx context.Context, liveId string) (*int, error)
-	DelRecordVideo(ctx context.Context, liveId string, demonItem []int) error
+	DelRecordVideo(ctx context.Context, liveId string, demonItem []uint) error
 	saveRecordVideo(ctx context.Context, liveId, itemId string) error
+	UpdateItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error
+	DeleteItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error
 }
 
 type ItemService struct {
@@ -526,6 +528,9 @@ func (s *ItemService) itemToUpdates(originItem, updateItem *model.ItemEntity) ma
 	if updateItem.RecordId > 0 && updateItem.RecordId != originItem.RecordId {
 		updates["record_id"] = updateItem.RecordId
 	}
+	if updateItem.RecordId == 0 && updateItem.RecordId != originItem.RecordId {
+		updates["record_id"] = nil
+	}
 	if len(updateItem.Extends) > 0 {
 		updates["extends"] = model.CombineExtends(originItem.Extends, updateItem.Extends)
 	}
@@ -622,10 +627,6 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 	demonstrateLog.Fname = streamResp.Fname
 	demonstrateLog.Status = model.RecordStatusSuccess
 	s.UpdateRecordVideo(ctx, demonstrateLog)
-	err = s.UpdateItemRecord(ctx, demonstrateLog.ID, demonstrateLog.LiveId, demonstrateLog.ItemId)
-	if err != nil {
-		log.Info("DemonstrateLog url donnot save to item  %s", err.Error())
-	}
 	return demonstrateLog, nil
 }
 
@@ -635,6 +636,19 @@ func (s *ItemService) UpdateItemRecord(ctx context.Context, demonId uint, liveId
 		return err
 	}
 	item.RecordId = demonId
+	err = s.UpdateItemInfo(ctx, liveId, item)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ItemService) DeleteItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error {
+	item, err := s.GetLiveItem(ctx, liveId, itemId)
+	if err != nil {
+		return err
+	}
+	item.RecordId = 0
 	err = s.UpdateItemInfo(ctx, liveId, item)
 	if err != nil {
 		return err
@@ -728,7 +742,7 @@ func (s *ItemService) UpdateRecordVideo(ctx context.Context, itemLog *model.Item
 	return nil
 }
 
-func (s *ItemService) DelRecordVideo(ctx context.Context, liveId string, demonItem []int) error {
+func (s *ItemService) DelRecordVideo(ctx context.Context, liveId string, demonItem []uint) error {
 	log := logger.ReqLogger(ctx)
 	if len(demonItem) == 0 {
 		return nil

@@ -429,7 +429,18 @@ func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-
+	demonItem, err := itemService.GetPreviousItem(ctx, liveId)
+	if err != nil {
+		log.Errorf("set demonstrate  Log,GetPreviousItem  error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	err = itemService.UpdateItemRecord(ctx, uint(*demonItem), liveId, itemId)
+	if err != nil {
+		log.Errorf("Demonstrate Record  donnot save to item %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 }
 
@@ -502,18 +513,46 @@ func (c *itemController) DelRecordVideo(ctx *gin.Context) {
 		return
 	}
 	itemService := live.GetItemService()
-	err := itemService.DelRecordVideo(ctx, request.LiveId, request.DemonItems)
-	if err != nil {
-		log.Errorf("delete demonstrate error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+
+	d := &DelDemonItemResponse{}
+	for _, v := range request.DemonItems {
+		video, err := itemService.GetRecordVideo(ctx, v)
+		if err != nil {
+			d.FailureDemonItems = append(d.FailureDemonItems, v)
+			log.Errorf("delete demonstrate error %s", err.Error())
+		} else if video == nil {
+			continue
+		} else {
+			err = itemService.DeleteItemRecord(ctx, v, video.LiveId, video.ItemId)
+			if err != nil {
+				d.FailureDemonItems = append(d.FailureDemonItems, v)
+				log.Errorf("delete demonstrate error %s", err.Error())
+			} else {
+				err := itemService.DelRecordVideo(ctx, request.LiveId, []uint{v})
+				if err != nil {
+					d.FailureDemonItems = append(d.FailureDemonItems, v)
+					log.Errorf("delete demonstrate error %s", err.Error())
+				}
+			}
+		}
 	}
-	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	if len(d.FailureDemonItems) == 0 {
+		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+	} else {
+		d.Response = *api.ErrorWithRequestId(log.ReqID(), api.ErrDatabase)
+		ctx.JSON(http.StatusOK, d)
+	}
 }
 
 type DelDemonItemRequest struct {
 	LiveId     string `json:"live_id"`
-	DemonItems []int  `json:"demonstrate_item"`
+	DemonItems []uint `json:"demonstrate_item"`
+}
+
+type DelDemonItemResponse struct {
+	api.Response
+	LiveId            string `json:"live_id"`
+	FailureDemonItems []uint `json:"failure_demon_items"`
 }
 
 type StopItemDemonstrateLogResponse struct {

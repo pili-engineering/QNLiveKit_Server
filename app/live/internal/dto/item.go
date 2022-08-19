@@ -71,7 +71,9 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		Status:       e.Status,
 		Extends:      e.Extends,
 	}
-
+	if e.RecordId == 0 {
+		return i
+	}
 	record, err := live.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
 	if err != nil {
 		log.Info(err)
@@ -97,9 +99,9 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 		return nil
 	}
 
-	return &RecordDto{
+	r := &RecordDto{
 		ID:        e.ID,
-		RecordUrl: "https://pili-playback.qnsdk.com/" + e.Fname,
+		RecordUrl: e.Fname,
 		Start:     e.Start,
 		End:       e.End,
 		LiveId:    e.LiveId,
@@ -107,4 +109,8 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 		ItemId:    e.ItemId,
 	}
 
+	if e.Status == 0 {
+		r.RecordUrl = "https://pili-playback.qnsdk.com/" + e.Fname
+	}
+	return r
 }
