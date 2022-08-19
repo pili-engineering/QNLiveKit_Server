@@ -517,6 +517,11 @@ func (c *itemController) DelRecordVideo(ctx *gin.Context) {
 	d := &DelDemonItemResponse{}
 	for _, v := range request.DemonItems {
 		video, err := itemService.GetRecordVideo(ctx, v)
+		if video.LiveId != request.LiveId {
+			log.Errorf("demonstrate_record_id donnot equal to request live_id  %+v", request)
+			ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+			return
+		}
 		if err != nil {
 			d.FailureDemonItems = append(d.FailureDemonItems, v)
 			log.Errorf("delete demonstrate error %s", err.Error())
