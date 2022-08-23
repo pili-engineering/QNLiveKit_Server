@@ -9,6 +9,7 @@ package dto
 
 import (
 	"context"
+	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -110,7 +111,7 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 	}
 
 	if e.Status == 0 {
-		r.RecordUrl = "https://pili-playback.qnsdk.com/" + e.Fname
+		r.RecordUrl = config.AppConfig.RtcConfig.RtcPlayBackUrl + "/" + e.Fname
 	}
 	return r
 }
