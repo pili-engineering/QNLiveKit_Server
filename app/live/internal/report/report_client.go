@@ -38,6 +38,7 @@ func InitStatsTypeDescription() {
 	model.StatsTypeDescription = make(map[int]string)
 	model.StatsTypeDescription[1] = "Live"
 	model.StatsTypeDescription[2] = "Item"
+	model.StatsTypeDescription[3] = "Comment"
 }
 
 type RequestReport struct {
@@ -129,7 +130,7 @@ func (s *RClient) GetStatsSingleLive(ctx context.Context, liveId string) (*Commo
 func (s *RClient) PostStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
 	var err error
 	for _, entity := range entities {
-		err = s.updateSingleLive(ctx, entity)
+		err = s.UpdateSingleLive(ctx, entity)
 		if err != nil {
 			return err
 		}
@@ -137,7 +138,7 @@ func (s *RClient) PostStatsSingleLive(ctx context.Context, entities []*model.Sta
 	return nil
 }
 
-func (s *RClient) updateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
+func (s *RClient) UpdateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
 	log := logger.ReqLogger(ctx)
 
 	db := mysql.GetLive(log.ReqID())
