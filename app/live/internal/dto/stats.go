@@ -7,7 +7,7 @@ import (
 type SingleLiveInfo struct {
 	LiveId string `json:"live_id"`
 	UserId string `json:"user_id"`
-	ItemId string `json:"item_id"`
+	BizId  string `json:"biz_id"`
 	Count  int    `json:"count"`
 	Type   int    `json:"type"`
 }
@@ -19,7 +19,7 @@ func StatsSLDtoToEntity(d *SingleLiveInfo) *model.StatsSingleLiveEntity {
 
 	return &model.StatsSingleLiveEntity{
 		LiveId: d.LiveId,
-		ItemId: d.ItemId,
+		BizId:  d.BizId,
 		UserId: d.UserId,
 		Type:   d.Type,
 		Count:  d.Count,

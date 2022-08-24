@@ -7,7 +7,8 @@ import (
 
 type RService interface {
 	ReportOnlineMessage(ctx context.Context)
-	StatsSingleLive(context.Context, []*model.StatsSingleLiveEntity) error
+	PostStatsSingleLive(context.Context, []*model.StatsSingleLiveEntity) error
+	GetStatsSingleLive(ctx context.Context, liveId string) (*CommonStats, error)
 }
 
 type Config struct {

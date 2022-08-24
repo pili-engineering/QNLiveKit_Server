@@ -30,7 +30,14 @@ func NewReportClient(conf Config) *RClient {
 			Transport: tr,
 		},
 	}
+	InitStatsTypeDescription()
 	return r
+}
+
+func InitStatsTypeDescription() {
+	model.StatsTypeDescription = make(map[int]string)
+	model.StatsTypeDescription[1] = "Live"
+	model.StatsTypeDescription[2] = "Item"
 }
 
 type RequestReport struct {
@@ -79,7 +86,47 @@ func (s *RClient) postReportJson(log *logger.Logger, kind string, value map[stri
 	return nil
 }
 
-func (s *RClient) StatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
+type CommonSingleStats struct {
+	Type            int    `json:"type"`
+	TypeDescription string `json:"type_description"`
+	PageView        int    `json:"page_view"`
+	UniqueVisitor   int    `json:"unique_visitor"`
+}
+
+type CommonStats struct {
+	Flow string              `json:"flow"`
+	Info []CommonSingleStats `json:"info"`
+}
+
+func (s *RClient) GetStatsSingleLive(ctx context.Context, liveId string) (*CommonStats, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	info := make([]CommonSingleStats, len(model.StatsTypeDescription))
+	data := &CommonStats{
+		Info: info,
+	}
+	for i := 0; i < len(model.StatsTypeDescription); i++ {
+		data.Info[i].Type = i + 1
+		data.Info[i].TypeDescription = model.StatsTypeDescription[i+1]
+		var pv *int
+		var uv *int
+		db.DB().QueryRow("SELECT count(*) FROM (SELECT DISTINCT user_id FROM stats_single_live  WHERE type = ? and live_id = ?) as nums", i+1, liveId).Scan(&uv)
+		sql := "select sum(count) from stats_single_live where type = ? and live_id = ? ;"
+		err := db.DB().QueryRow(sql, i+1, liveId).Scan(&pv)
+		if err != nil {
+			return nil, err
+		}
+		if pv != nil {
+			data.Info[i].PageView = *pv
+		}
+		if uv != nil {
+			data.Info[i].UniqueVisitor = *uv
+		}
+	}
+	return data, nil
+}
+
+func (s *RClient) PostStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
 	var err error
 	for _, entity := range entities {
 		err = s.updateSingleLive(ctx, entity)
@@ -94,7 +141,7 @@ func (s *RClient) updateSingleLive(ctx context.Context, entity *model.StatsSingl
 	log := logger.ReqLogger(ctx)
 
 	db := mysql.GetLive(log.ReqID())
-	db = db.Model(model.StatsSingleLiveEntity{}).Where("live_id = ? and item_id = ? and user_id = ? and type = ?", entity.LiveId, entity.ItemId, entity.UserId, entity.Type)
+	db = db.Model(model.StatsSingleLiveEntity{}).Where("live_id = ? and biz_id = ? and user_id = ? and type = ?", entity.LiveId, entity.BizId, entity.UserId, entity.Type)
 
 	old := model.StatsSingleLiveEntity{}
 	result := db.First(&old)

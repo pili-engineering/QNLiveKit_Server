@@ -130,7 +130,7 @@ CREATE TABLE `item_demonstrate` (
 CREATE TABLE `stats_single_live`(
       `id` int unsigned NOT NULL AUTO_INCREMENT,
       `live_id` varchar(255) DEFAULT NULL,
-      `item_id` varchar(255) DEFAULT NULL,
+      `biz_id` varchar(255) DEFAULT NULL,
       `user_id` varchar(64) DEFAULT NULL,
       `type` int DEFAULT NULL,
       `count` int DEFAULT 0,

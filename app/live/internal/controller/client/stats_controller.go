@@ -13,7 +13,8 @@ import (
 func RegisterStatsRoutes(group *gin.RouterGroup) {
 	statsGroup := group.Group("/stats")
 
-	statsGroup.POST("/singleLive", StatsController.StatsSingleLive)
+	statsGroup.POST("/singleLive", StatsController.PostStatsSingleLive)
+	statsGroup.GET("/singleLive/:live_id", StatsController.GetStatsSingleLive)
 }
 
 type statsController struct {
@@ -21,7 +22,7 @@ type statsController struct {
 
 var StatsController = &statsController{}
 
-func (c *statsController) StatsSingleLive(ctx *gin.Context) {
+func (c *statsController) PostStatsSingleLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	request := &SingleLiveRequest{}
 	if err := ctx.BindJSON(request); err != nil {
@@ -41,9 +42,9 @@ func (c *statsController) StatsSingleLive(ctx *gin.Context) {
 	}
 
 	rService := report.GetService()
-	err := rService.StatsSingleLive(ctx, entities)
+	err := rService.PostStatsSingleLive(ctx, entities)
 	if err != nil {
-		log.Errorf("statistic single live error %s", err.Error())
+		log.Errorf("post statistic single live error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
@@ -52,4 +53,26 @@ func (c *statsController) StatsSingleLive(ctx *gin.Context) {
 
 type SingleLiveRequest struct {
 	Data []*dto.SingleLiveInfo `json:"data"`
+}
+
+func (c *statsController) GetStatsSingleLive(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("live_id")
+	rService := report.GetService()
+	message, err := rService.GetStatsSingleLive(ctx, liveId)
+	if err != nil {
+		log.Errorf("get statistic single live error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	response := &StatsSingleLiveResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data:     *message,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+type StatsSingleLiveResponse struct {
+	api.Response
+	Data report.CommonStats `json:"data"`
 }
