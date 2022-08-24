@@ -128,7 +128,6 @@ CREATE TABLE `item_demonstrate` (
     UNIQUE KEY `uix_live` (`live_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
 CREATE  TABLE `item_demonstrate_log`(
         `id` int unsigned NOT NULL AUTO_INCREMENT,
         `live_id` varchar(255) DEFAULT NULL,
@@ -141,4 +140,15 @@ CREATE  TABLE `item_demonstrate_log`(
         `expireDays` int DEFAULT NULL,
         `persistentID` varchar(255) DEFAULT NULL,
         PRIMARY KEY (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stats_single_live`(
+      `id` int unsigned NOT NULL AUTO_INCREMENT,
+      `live_id` varchar(255) DEFAULT NULL,
+      `biz_id` varchar(255) DEFAULT NULL,
+      `user_id` varchar(64) DEFAULT NULL,
+      `type` int DEFAULT NULL,
+      `count` int DEFAULT 0,
+      `updated_at` datetime DEFAULT NULL,
+      PRIMARY KEY (`id`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -9,6 +9,7 @@ package client
 
 import (
 	"context"
+	"github.com/qbox/livekit/app/live/internal/report"
 	"math"
 	"net/http"
 	"strconv"
@@ -474,6 +475,14 @@ func (c *liveController) JoinLive(context *gin.Context) {
 		})
 		return
 	}
+	rService := report.GetService()
+	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
+		LiveId: liveId,
+		UserId: user.UserId,
+		Type:   1,
+		Count:  1,
+	}
+	rService.UpdateSingleLive(context, statsSingleLiveEntity)
 	anchorStatus, _ := c.getLiveAnchorStatus(context, liveInfo.LiveId, liveInfo.AnchorId)
 	response := &LiveResponse{}
 	response.Response.Code = 200
