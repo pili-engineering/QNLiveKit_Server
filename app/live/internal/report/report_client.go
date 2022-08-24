@@ -111,7 +111,7 @@ func (s *RClient) GetStatsSingleLive(ctx context.Context, liveId string) (*Commo
 		data.Info[i].TypeDescription = model.StatsTypeDescription[i+1]
 		var pv *int
 		var uv *int
-		db.DB().QueryRow("SELECT count(*) FROM (SELECT DISTINCT user_id FROM stats_single_live  WHERE type = ? and live_id = ?) as nums", i+1, liveId).Scan(&uv)
+		db.DB().QueryRow("SELECT count(DISTINCT(user_id)) FROM stats_single_live  WHERE type = ? and live_id = ?", i+1, liveId).Scan(&uv)
 		sql := "select sum(count) from stats_single_live where type = ? and live_id = ? ;"
 		err := db.DB().QueryRow(sql, i+1, liveId).Scan(&pv)
 		if err != nil {
