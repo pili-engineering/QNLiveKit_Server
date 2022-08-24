@@ -8,7 +8,12 @@
 package dto
 
 import (
+	"context"
+	"github.com/qbox/livekit/app/live/internal/config"
+	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/utils/timestamp"
+	log "github.com/sirupsen/logrus"
 )
 
 type ItemDto struct {
@@ -22,6 +27,7 @@ type ItemDto struct {
 	CurrentPrice string        `json:"current_price"` //商品当前售价
 	OriginPrice  string        `json:"origin_price"`  //商品原始售价(划线价)
 	Status       uint          `json:"status"`        //商品状态
+	Record       *RecordDto    `json:"record"`        //商品讲解回放
 	Extends      model.Extends `json:"extends"`       //扩展属性
 }
 
@@ -30,7 +36,7 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 		return nil
 	}
 
-	return &model.ItemEntity{
+	e := &model.ItemEntity{
 		LiveId:       d.LiveId,
 		ItemId:       d.ItemId,
 		Title:        d.Title,
@@ -42,6 +48,10 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 		Status:       d.Status,
 		Extends:      d.Extends,
 	}
+	if d.Record != nil {
+		e.RecordId = d.Record.ID
+	}
+	return e
 }
 
 func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
@@ -49,7 +59,7 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		return nil
 	}
 
-	return &ItemDto{
+	i := &ItemDto{
 		LiveId:       e.LiveId,
 		ItemId:       e.ItemId,
 		Order:        e.Order,
@@ -62,4 +72,46 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 		Status:       e.Status,
 		Extends:      e.Extends,
 	}
+	if e.RecordId == 0 {
+		return i
+	}
+	record, err := live.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
+	if err != nil {
+		log.Info(err)
+	}
+	if err == nil && record != nil {
+		i.Record = RecordEntityToDto(record)
+	}
+	return i
+}
+
+type RecordDto struct {
+	ID        uint                `json:"id"`
+	RecordUrl string              `json:"record_url"`
+	Start     timestamp.Timestamp `json:"start"`
+	End       timestamp.Timestamp `json:"end"`
+	Status    uint                `json:"status"`
+	LiveId    string              `json:"live_id"`
+	ItemId    string              `json:"item_id"`
+}
+
+func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
+	if e == nil {
+		return nil
+	}
+
+	r := &RecordDto{
+		ID:        e.ID,
+		RecordUrl: e.Fname,
+		Start:     e.Start,
+		End:       e.End,
+		LiveId:    e.LiveId,
+		Status:    e.Status,
+		ItemId:    e.ItemId,
+	}
+
+	if e.Status == 0 {
+		r.RecordUrl = config.AppConfig.RtcConfig.RtcPlayBackUrl + "/" + e.Fname
+	}
+	return r
 }

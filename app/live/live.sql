@@ -112,6 +112,7 @@ CREATE TABLE `items` (
     `current_price` varchar(64) DEFAULT NULL,
     `origin_price` varchar(64) DEFAULT NULL,
     `status` int unsigned DEFAULT NULL,
+    `record_id` int unsigned DEFAULT NULL,
     `extends` varchar(1024) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `idx_live_status` (`live_id`,`status`)
@@ -126,6 +127,20 @@ CREATE TABLE `item_demonstrate` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uix_live` (`live_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE  TABLE `item_demonstrate_log`(
+        `id` int unsigned NOT NULL AUTO_INCREMENT,
+        `live_id` varchar(255) DEFAULT NULL,
+        `item_id` varchar(255) DEFAULT NULL,
+        `start` datetime DEFAULT NULL,
+        `end` datetime DEFAULT NULL,
+        `fname` varchar(255) DEFAULT NULL,
+        `status` int DEFAULT NULL,
+        `format` int DEFAULT NULL,
+        `expireDays` int DEFAULT NULL,
+        `persistentID` varchar(255) DEFAULT NULL,
+        PRIMARY KEY (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `stats_single_live`(
       `id` int unsigned NOT NULL AUTO_INCREMENT,

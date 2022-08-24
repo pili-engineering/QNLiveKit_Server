@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/biz/live"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -94,5 +95,10 @@ func initAllService() {
 		AccessKey:  config.AppConfig.RtcConfig.AccessKey,
 		SecretKey:  config.AppConfig.RtcConfig.SecretKey,
 		ReportHost: config.AppConfig.ReportHost,
+	})
+	live.InitService(live.Config{
+		AccessKey: config.AppConfig.RtcConfig.AccessKey,
+		SecretKey: config.AppConfig.RtcConfig.SecretKey,
+		PiliHub:   config.AppConfig.RtcConfig.Hub,
 	})
 }
