@@ -152,3 +152,12 @@ CREATE TABLE `stats_single_live`(
       `updated_at` datetime DEFAULT NULL,
       PRIMARY KEY (`id`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `admin_user` (
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `user_id` varchar(255) DEFAULT NULL,
+     `pass_word` varchar(255) DEFAULT NULL,
+     `description` varchar(255) DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `uix_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
