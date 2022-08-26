@@ -58,7 +58,7 @@ const (
 
 	ErrorCodeLiveItemExceed = 20001 //直播间商品数量超过限制
 
-	ErrorCodePassWordWrong = 30001 //admin登录密码错误
+	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -72,4 +72,4 @@ var ErrStatus = &Response{Code: ErrorCodeBadStatus, Message: "cant operate on th
 
 var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "items exceed in live room"}
 
-var ErrorPassWordWrong = &Response{Code: ErrorCodePassWordWrong, Message: "password wrong，Login Failure"}
+var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}

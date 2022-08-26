@@ -155,8 +155,9 @@ CREATE TABLE `stats_single_live`(
 
 CREATE TABLE `admin_user` (
      `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `user_name` varchar(255) DEFAULT NULL,
      `user_id` varchar(255) DEFAULT NULL,
-     `pass_word` varchar(255) DEFAULT NULL,
+     `password` varchar(255) DEFAULT NULL,
      `description` varchar(255) DEFAULT NULL,
       PRIMARY KEY (`id`),
       UNIQUE KEY `uix_user` (`user_id`)

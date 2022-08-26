@@ -2,8 +2,9 @@ package model
 
 type ManagerEntity struct {
 	ID          uint   `gorm:"primary_key"`
+	UserName    string `json:"user_name"`
 	UserId      string `json:"user_id"`
-	PassWord    string `json:"pass_word"`
+	Password    string `json:"password"`
 	Description string `json:"description"`
 }
 

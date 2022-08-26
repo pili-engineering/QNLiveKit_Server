@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/app/live/internal/controller/server"
 	"github.com/qbox/livekit/biz/admin"
@@ -20,9 +19,8 @@ type managerController struct {
 }
 
 type LoginRequest struct {
-	UserId    string `json:"user_id" form:"user_id"`
-	PassWord  string `json:"pass_word" form:"pass_word"`
-	ExpiresAt int64  `json:"expires_at"form:"expires_at"`
+	UserName string `json:"user_name" form:"user_name"`
+	Password string `json:"password" form:"password"`
 }
 
 func (c *managerController) LoginManager(ctx *gin.Context) {
@@ -34,18 +32,19 @@ func (c *managerController) LoginManager(ctx *gin.Context) {
 		return
 	}
 	manService := admin.GetManagerService()
-	_, err := manService.LoginManager(ctx, req.UserId, req.PassWord)
+	admin, err := manService.FindAdminByUserName(ctx, req.UserName)
 	if err != nil {
-		log.Errorf("get user userId:%s, login error:%v", req.UserId, err)
+		log.Errorf("userName:%s, login error:%v", req.UserName, err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	} else if admin.Password != req.Password {
+		log.Errorf("userName:%s, login error:%v", req.UserName, api.ErrorLoginWrong)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrorLoginWrong))
 		return
 	}
 
 	authToken := token.AuthToken{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: req.ExpiresAt,
-		},
-		UserId: req.UserId,
+		UserId: admin.UserId,
 		Role:   "admin",
 	}
 

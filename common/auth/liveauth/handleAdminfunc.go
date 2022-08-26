@@ -49,7 +49,7 @@ func AuthAdminHandleFunc(jwtKey string) gin.HandlerFunc {
 			return
 		}
 		manService := admin.GetManagerService()
-		_, err = manService.FindManager(ctx, authToken.UserId)
+		_, err = manService.FindAdminByUserId(ctx, authToken.UserId)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, api.ErrorWithRequestId(log.ReqID(), err))
 			return
