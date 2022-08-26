@@ -39,6 +39,8 @@ func InitStatsTypeDescription() {
 	model.StatsTypeDescription[1] = "Live"
 	model.StatsTypeDescription[2] = "Item"
 	model.StatsTypeDescription[3] = "Comment"
+	model.StatsTypeDescription[4] = "PK"
+	model.StatsTypeDescription[5] = "观众连麦"
 }
 
 type RequestReport struct {
