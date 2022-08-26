@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const AdminCtxKey = "UserCtxKey"
+const AdminCtxKey = "AdminCtxKey"
 
 type AdminInfo struct {
 	UserId string
