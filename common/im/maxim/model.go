@@ -48,3 +48,8 @@ type UpdatePasswordResponse struct {
 	Response
 	Data bool `json:"data"`
 }
+
+type CommonResponse struct {
+	Response
+	Data bool `json:"data"`
+}
