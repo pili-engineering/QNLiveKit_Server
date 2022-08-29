@@ -20,6 +20,7 @@ type AuthToken struct {
 	AppId    string
 	UserId   string
 	DeviceId string
+	Role     string
 }
 
 var tokenService ITokenService

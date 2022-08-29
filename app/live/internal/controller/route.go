@@ -8,6 +8,7 @@
 package controller
 
 import (
+	"github.com/qbox/livekit/app/live/internal/controller/admin"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -23,7 +24,7 @@ func Engine() *gin.Engine {
 
 	server.RegisterRoute(engine)
 	client.RegisterRoute(engine)
-
+	admin.RegisterRoute(engine)
 	return engine
 }
 
