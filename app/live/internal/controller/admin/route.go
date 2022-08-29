@@ -8,7 +8,7 @@ import (
 
 func RegisterRoute(engine *gin.Engine) {
 	group := engine.Group("/manager")
-	group.GET("/login", ManagerController.LoginManager)
+	group.GET("/login", adController.LoginManager)
 
 	adminGroup := engine.Group("/admin", liveauth.AuthAdminHandleFunc(config.AppConfig.JwtKey))
 	RegisterManagerRoutes(adminGroup)

@@ -3,6 +3,7 @@ package admin
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/app/live/internal/controller/server"
+	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/api"
@@ -11,11 +12,13 @@ import (
 )
 
 func RegisterManagerRoutes(group *gin.RouterGroup) {
+	group.POST("/censor/config", adController.UpdateCensorConfig)
+	group.GET("/censor/config", adController.GetCensorConfig)
 }
 
-var ManagerController = &managerController{}
+var adController = &adminController{}
 
-type managerController struct {
+type adminController struct {
 }
 
 type LoginRequest struct {
@@ -23,7 +26,7 @@ type LoginRequest struct {
 	Password string `json:"password" form:"password"`
 }
 
-func (c *managerController) LoginManager(ctx *gin.Context) {
+func (c *adminController) LoginManager(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	req := &LoginRequest{}
 	if err := ctx.BindQuery(req); err != nil {
@@ -65,5 +68,53 @@ func (c *managerController) LoginManager(ctx *gin.Context) {
 		resp.Data.ExpiresAt = authToken.ExpiresAt
 		ctx.JSON(http.StatusOK, resp)
 	}
+}
 
+type CensorConfigResponse struct {
+	api.Response
+	Data *dto.CensorConfigDto `json:"data"`
+}
+
+func (c *adminController) UpdateCensorConfig(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	req := &dto.CensorConfigDto{}
+	if err := ctx.BindJSON(req); err != nil {
+		log.Errorf("bind request error %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	censorService := admin.GetCensorService()
+	err := censorService.UpdateCensorConfig(ctx, dto.CConfigDtoToEntity(req))
+	if err != nil {
+		log.Errorf(" UpdateCensorConfig error:%v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	ctx.JSON(http.StatusOK, &CensorConfigResponse{
+		Response: api.Response{
+			RequestId: log.ReqID(),
+			Code:      0,
+			Message:   "success",
+		},
+		Data: req,
+	})
+}
+
+func (c *adminController) GetCensorConfig(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	censorService := admin.GetCensorService()
+	censorConfig, err := censorService.GetCensorConfig(ctx)
+	if err != nil {
+		log.Errorf("GetCensorConfig error:%v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	ctx.JSON(http.StatusOK, &CensorConfigResponse{
+		Response: api.Response{
+			RequestId: log.ReqID(),
+			Code:      0,
+			Message:   "success",
+		},
+		Data: dto.CConfigEntityToDto(censorConfig),
+	})
 }

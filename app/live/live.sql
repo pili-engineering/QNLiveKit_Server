@@ -162,3 +162,14 @@ CREATE TABLE `admin_user` (
       PRIMARY KEY (`id`),
       UNIQUE KEY `uix_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `admin_censor_config` (
+      `id` int unsigned NOT NULL,
+      `enable` BOOLEAN DEFAULT FALSE,
+      `interval` int DEFAULT NULL,
+      `pulp` BOOLEAN DEFAULT FALSE,
+      `terror` BOOLEAN DEFAULT FALSE,
+      `politician` BOOLEAN DEFAULT FALSE,
+      `ads` BOOLEAN DEFAULT FALSE,
+       PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
