@@ -173,3 +173,16 @@ CREATE TABLE `censor_config` (
       `ads` BOOLEAN DEFAULT FALSE,
        PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `operation_log` (
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `user_id` varchar(30) NOT NULL DEFAULT '',
+     `ip` varchar(30) DEFAULT NULL,
+     `method` varchar(10) DEFAULT NULL,
+     `url` varchar(1024) DEFAULT NULL,
+     `args` varchar(1024) DEFAULT NULL,
+     `status_code` int NOT NULL DEFAULT 0,
+     `created_at` timestamp NULL DEFAULT NULL,
+     PRIMARY KEY (`id`),
+     KEY `idx_user`(`user_id`, `created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
