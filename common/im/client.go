@@ -20,9 +20,13 @@ type Service interface {
 
 	UpdateUserPassword(ctx context.Context, userId int64, password string) (bool, error)
 
-	//owner 群主的IM 用户ID
-	//name 群名
+	// CreateChatroom owner 群主的IM 用户ID
+	// name 群名
 	CreateChatroom(ctx context.Context, owner int64, name string) (int64, error)
+
+	SendCommandMessageToGroup(ctx context.Context, fromUserId int64, toGroupId int64, content string) error
+
+	SendCommandMessageToUser(ctx context.Context, fromUserId int64, toUserId int64, content string) error
 }
 
 var service Service
