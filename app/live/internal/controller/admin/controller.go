@@ -6,10 +6,12 @@ import (
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
 	"net/http"
 )
@@ -18,7 +20,7 @@ func RegisterCensorRoutes(group *gin.RouterGroup) {
 	censorGroup := group.Group("/censor")
 	censorGroup.POST("/config", censorController.UpdateCensorConfig)
 	censorGroup.GET("/config", censorController.GetCensorConfig)
-	censorGroup.POST("/stop/live/:liveId", censorController.PostStopLive)
+	censorGroup.POST("/stoplive/:liveId", censorController.PostStopLive)
 }
 
 var censorController = &CensorController{}
@@ -125,6 +127,8 @@ func (c *CensorController) GetCensorConfig(ctx *gin.Context) {
 }
 
 func (c *CensorController) PostStopLive(ctx *gin.Context) {
+	adminInfo := liveauth.GetAdminInfo(ctx)
+
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 	if liveId == "" {
@@ -152,7 +156,7 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
 	}
 
-	err = live.GetService().StopLive(ctx, liveId, liveEntity.AnchorId)
+	err = live.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
 	if err != nil {
 		log.Errorf("stop live failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))

@@ -26,6 +26,10 @@ type LiveEntity struct {
 	CreatedAt       timestamp.Timestamp  `json:"created_at"`
 	UpdatedAt       timestamp.Timestamp  `json:"updated_at"`
 	DeletedAt       *timestamp.Timestamp `json:"deleted_at"`
+
+	StopReason string               `json:"stop_reason"`  //关闭原因：censor 内容违规
+	StopUserId string               `json:"stop_user_id"` //关闭直播的管理员用户ID
+	StopAt     *timestamp.Timestamp `json:"stop_at"`      //关闭时间
 }
 
 type LiveRoomUserStatus int
@@ -60,9 +64,13 @@ type LiveMicEntity struct {
 }
 
 const (
-	LiveStatusPrepare = iota
-	LiveStatusOn
-	LiveStatusOff
+	LiveStopReasonCensor = "censor"
+)
+
+const (
+	LiveStatusPrepare = iota //刚创建
+	LiveStatusOn             //直播中
+	LiveStatusOff            //直播结束
 )
 
 const (
