@@ -20,6 +20,10 @@ CREATE TABLE `live_entities` (
    `created_at` datetime DEFAULT NULL,
    `updated_at` datetime DEFAULT NULL,
    `deleted_at` datetime DEFAULT NULL,
+
+   `stop_reason` varchar(64) DEFAULT '',
+   `stop_user_id` varchar(64) DEFAULT '',
+   `stop_at` datetime DEFAULT NULL,
    PRIMARY KEY (`id`),
    UNIQUE KEY `live_id` (`live_id`),
    KEY `idx_status_deleted_at` (`status`,`deleted_at`),
