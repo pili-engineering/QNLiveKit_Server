@@ -11,14 +11,15 @@ import (
 	"net/http"
 )
 
-func RegisterManagerRoutes(group *gin.RouterGroup) {
-	group.POST("/censor/config", adController.UpdateCensorConfig)
-	group.GET("/censor/config", adController.GetCensorConfig)
+func RegisterCensorRoutes(group *gin.RouterGroup) {
+	censorGroup := group.Group("/censor")
+	censorGroup.POST("/config", censorController.UpdateCensorConfig)
+	censorGroup.GET("/config", censorController.GetCensorConfig)
 }
 
-var adController = &adminController{}
+var censorController = &CensorController{}
 
-type adminController struct {
+type CensorController struct {
 }
 
 type LoginRequest struct {
@@ -26,7 +27,7 @@ type LoginRequest struct {
 	Password string `json:"password" form:"password"`
 }
 
-func (c *adminController) LoginManager(ctx *gin.Context) {
+func (c *CensorController) LoginManager(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	req := &LoginRequest{}
 	if err := ctx.BindQuery(req); err != nil {
@@ -75,7 +76,7 @@ type CensorConfigResponse struct {
 	Data *dto.CensorConfigDto `json:"data"`
 }
 
-func (c *adminController) UpdateCensorConfig(ctx *gin.Context) {
+func (c *CensorController) UpdateCensorConfig(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	req := &dto.CensorConfigDto{}
 	if err := ctx.BindJSON(req); err != nil {
@@ -100,7 +101,7 @@ func (c *adminController) UpdateCensorConfig(ctx *gin.Context) {
 	})
 }
 
-func (c *adminController) GetCensorConfig(ctx *gin.Context) {
+func (c *CensorController) GetCensorConfig(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	censorService := admin.GetCensorService()
 	censorConfig, err := censorService.GetCensorConfig(ctx)

@@ -23,5 +23,5 @@ type CensorConfig struct {
 }
 
 func (e CensorConfig) TableName() string {
-	return "admin_censor_config"
+	return "censor_config"
 }

@@ -163,7 +163,7 @@ CREATE TABLE `admin_user` (
       UNIQUE KEY `uix_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `admin_censor_config` (
+CREATE TABLE `censor_config` (
       `id` int unsigned NOT NULL,
       `enable` BOOLEAN DEFAULT FALSE,
       `interval` int DEFAULT NULL,

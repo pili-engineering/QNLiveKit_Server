@@ -25,16 +25,8 @@ func GetCensorService() CCService {
 func (c *CensorService) UpdateCensorConfig(ctx *gin.Context, mod *model.CensorConfig) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
-	var num int
-	err := db.Model(model.CensorConfig{}).Count(&num).Error
-	if err != nil {
-		return api.ErrDatabase
-	}
-	if num > 0 {
-		db.Delete(model.CensorConfig{}, "id = 1")
-	}
 	mod.ID = 1
-	err = db.Model(model.CensorConfig{}).Save(mod).Error
+	err := db.Model(model.CensorConfig{}).Save(mod).Error
 	if err != nil {
 		return api.ErrDatabase
 	}
@@ -45,9 +37,20 @@ func (c *CensorService) GetCensorConfig(ctx *gin.Context) (*model.CensorConfig, 
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	mod := &model.CensorConfig{}
-	err := db.Model(model.CensorConfig{}).First(mod).Error
-	if err != nil {
-		return nil, api.ErrDatabase
+	result := db.Model(model.CensorConfig{}).First(mod)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			mod.Enable = true
+			mod.ID = 1
+			mod.Pulp = true
+			mod.Interval = 20
+			err := db.Model(model.CensorConfig{}).Save(mod).Error
+			if err != nil {
+				return nil, api.ErrDatabase
+			}
+		} else {
+			return nil, api.ErrDatabase
+		}
 	}
 	return mod, nil
 }
