@@ -62,11 +62,11 @@ func (c *Client) SendCommandMessageToUser(ctx context.Context, fromUserId int64,
 }
 
 type SendMessageRequest struct {
-	TransactionId int64       `json:"transaction_Id,omitempty"`
+	TransactionId int64       `json:"transaction_id,omitempty"`
 	Type          TargetType  `json:"type"`
-	FromUserId    int64       `json:"from_User_Id,omitempty"`
+	FromUserId    int64       `json:"from_user_id,omitempty"`
 	Targets       []int64     `json:"targets"`
-	ContentType   ContentType `json:"content_Type"`
+	ContentType   ContentType `json:"content_type"`
 	Content       string      `json:"content"`
 	Attachment    string      `json:"attachment"`
 	Ext           string      `json:"ext,omitempty"`
