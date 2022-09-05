@@ -8,10 +8,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/qbox/livekit/app/live/internal/report"
 	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/common/prome"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -58,6 +60,11 @@ func main() {
 	go func() {
 		addr := fmt.Sprintf("%s:%d", config.AppConfig.Server.Host, config.AppConfig.Server.Port)
 		err := engine.Run(addr)
+		errCh <- err
+	}()
+
+	go func() {
+		err := prome.Start(context.Background(), config.AppConfig.PromeConfig)
 		errCh <- err
 	}()
 
