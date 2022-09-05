@@ -9,6 +9,7 @@ package controller
 
 import (
 	"github.com/qbox/livekit/app/live/internal/controller/admin"
+	"github.com/qbox/livekit/common/prome"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -20,7 +21,7 @@ import (
 
 func Engine() *gin.Engine {
 	engine := gin.New()
-	engine.Use(Cors(), gin.Recovery(), logger.LoggerHandleFunc())
+	engine.Use(Cors(), prome.Middleware(), gin.Recovery(), logger.LoggerHandleFunc())
 
 	server.RegisterRoute(engine)
 	client.RegisterRoute(engine)
