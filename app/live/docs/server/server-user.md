@@ -161,7 +161,7 @@ GET /server/user/info/{user_id}
     "data": {
         "user_id": "user-1",
         "nick":"用户",
-        "avatar":"http;//xxx.png",
+        "avatar":"http://xxx.png",
         "im_userid": "im 系统用户ID",
         "extends": {
             "age":"18"
