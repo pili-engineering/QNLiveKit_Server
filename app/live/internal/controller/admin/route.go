@@ -9,6 +9,7 @@ import (
 func RegisterRoute(engine *gin.Engine) {
 	group := engine.Group("/manager")
 	group.GET("/login", censorController.LoginManager)
+	group.POST("/censor/callback", censorController.CallbackCensorJob)
 	adminGroup := engine.Group("/admin", liveauth.AuthAdminHandleFunc(config.AppConfig.JwtKey))
 	RegisterCensorRoutes(adminGroup)
 }

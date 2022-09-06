@@ -19,9 +19,11 @@ import (
 var AppConfig Config
 
 type Config struct {
-	NodeID     int64                    `mapstructure:"node_id"`
-	Server     Server                   `mapstructure:"service"`
-	JwtKey     string                   `mapstructure:"jwt_key"`
+	NodeID         int64  `mapstructure:"node_id"`
+	Server         Server `mapstructure:"service"`
+	JwtKey         string `mapstructure:"jwt_key"`
+	CensorCallback string `mapstructure:"censor_callback"`
+
 	Callback   string                   `mapstructure:"callback"`
 	ReportHost string                   `mapstructure:"report_host"`
 	Mysqls     []*mysql.ConfigStructure `mapstructure:"mysqls"`

@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"errors"
+	"github.com/qbox/livekit/biz/admin"
 	"time"
 
 	"github.com/qbox/livekit/biz/callback"
@@ -127,6 +128,10 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 	}
 	err = db.Create(live).Error
 	if err == nil {
+		err = admin.GetCensorService().CreateCensorJob(context, live)
+		if err != nil {
+			log.Errorf("create censor job  failed, err: %v", err)
+		}
 		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
 	}
 	return
@@ -221,6 +226,11 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
 	}
 
+	err = admin.GetCensorService().StopCensorJob(context, liveId)
+	if err != nil {
+		log.Errorf("stop censor job failed, err: %v", err)
+		return err
+	}
 	return
 }
 
