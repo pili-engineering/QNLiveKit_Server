@@ -63,7 +63,7 @@ im_config:
 rtc_config:
   app_id: {{ app_id }}
   access_key: {{ ak }}
-  secret_key: {{ ak }}
+  secret_key: {{ sk }}
   room_token_expire_s: 3600
   hub: {{ 直播hub }} 
   security_type: none
