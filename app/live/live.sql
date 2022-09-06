@@ -190,3 +190,34 @@ CREATE TABLE `operation_log` (
      PRIMARY KEY (`id`),
      KEY `idx_user`(`user_id`, `created_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `live_censor` (
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `live_id` varchar(255) DEFAULT NULL,
+    `job_id` varchar(255) DEFAULT NULL,
+    `pulp` BOOLEAN DEFAULT FALSE,
+    `terror` BOOLEAN DEFAULT FALSE,
+    `politician` BOOLEAN DEFAULT FALSE,
+    `ads` BOOLEAN DEFAULT FALSE,
+    `interval` int DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_live_job` (`live_id`,`job_id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `censor_image`(
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `url` varchar(255)  NOT NULL,
+     `job_id` varchar(255)  NOT NULL,
+     `created_at` int DEFAULT NULL,
+     `suggestion` varchar(255) DEFAULT NULL,
+     `pulp`  varchar(255) DEFAULT FALSE,
+     `terror` varchar(255)  DEFAULT FALSE,
+     `politician` varchar(255) DEFAULT FALSE,
+     `ads` varchar(255) DEFAULT FALSE,
+     `live_id` varchar(255) DEFAULT NULL,
+     `is_review` int DEFAULT 0,
+     `review_answer` int DEFAULT NULL,
+     `review_user_id` varchar(255) DEFAULT NULL,
+     `review_time` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

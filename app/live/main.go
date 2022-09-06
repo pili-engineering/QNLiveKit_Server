@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/common/prome"
 	"math/rand"
@@ -107,5 +108,10 @@ func initAllService() {
 		AccessKey: config.AppConfig.RtcConfig.AccessKey,
 		SecretKey: config.AppConfig.RtcConfig.SecretKey,
 		PiliHub:   config.AppConfig.RtcConfig.Hub,
+	})
+	admin.InitCensorService(admin.Config{
+		AccessKey:      config.AppConfig.RtcConfig.AccessKey,
+		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
+		CensorCallback: config.AppConfig.CensorCallback,
 	})
 }
