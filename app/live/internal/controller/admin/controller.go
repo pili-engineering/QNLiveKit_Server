@@ -385,11 +385,10 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, api.Response{
 		Code:      http.StatusOK,
-    Message:   "success",
+		Message:   "success",
 		RequestId: log.ReqID(),
 	})
 }
-
 
 func (c *CensorController) PostStopLive(ctx *gin.Context) {
 	adminInfo := liveauth.GetAdminInfo(ctx)
@@ -434,9 +433,6 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		RequestId: log.ReqID(),
 	})
 }
-
-
-
 
 type CensorCreateRequest struct {
 	LiveId string `json:"live_id"`
