@@ -1,7 +1,7 @@
 直播间相关。
 
 # 创建直播间
-创建一个直播间。
+创建一个直播间。创建直播间的用户，作为直播间的主播。
 
 ## 路径
 POST /client/live/room/instance
@@ -144,6 +144,8 @@ GET /client/live/room/info/{live_id}
 
 只有直播间的主播，才能开始直播。
 
+直播间关闭之后，不能调用该接口开始直播。
+
 ## 路径
 PUT /client/live/room/{live_id}
 
@@ -204,7 +206,11 @@ PUT /client/live/room/{live_id}
 ```
 
 # 停止直播
-停止直播。只有直播间的主播才能停止直播。
+停止直播。
+
+只有直播间的主播才能停止直播。
+
+只有直播间在直播状态，才能停止直播。
 
 ## 路径
 POST /client/live/room/{live_id}
@@ -233,7 +239,9 @@ POST /client/live/room/{live_id}
 ```
 
 # 删除直播间
-删除直播间。只有直播间的主播才能删除直播间。
+删除直播间。
+
+只有直播间的主播才能删除直播间。
 
 ## 路径
 DELETE /client/live/room/instance/{live_id}
@@ -329,7 +337,9 @@ GET /client/live/room
 ```
 
 # 直播列表
-查看直播间列表。
+分页查看直播间列表。
+
+只会看到正在直播的直播间。
 
 ## 路径
 GET /client/live/room/list
@@ -395,6 +405,12 @@ GET /client/live/room/list
 ```
 
 # 加入直播
+用户加入一个直播间。
+
+一个用户在同一个时间，只能加入一个直播间。
+
+加入第二个直播间，会主动从第一个直播间退出。
+
 ## 路径
 POST /client/live/room/user/{live_id}
 
@@ -450,6 +466,8 @@ POST /client/live/room/user/{live_id}
 ```
 
 # 离开直播
+直播间内的用户离开直播间。
+
 ## 路径
 DELETE /client/live/room/user/{live_id}
 
@@ -477,6 +495,12 @@ DELETE /client/live/room/user/{live_id}
 ```
 
 # 心跳
+用户加入直播间后，需要通过心跳，确认自己还在直播间。
+
+用户加入直播间后，每5秒需要发送一个心跳。服务端在连续丢失3个心跳后，会认为用户已经离开直播间。
+
+如果主播心跳丢失，会在直播间内提示主播离线。主播离线10分钟，会关闭直播间。
+
 ## 路径
 GET /client/live/room/heartbeat/{live_id}
 
@@ -508,6 +532,8 @@ GET /client/live/room/heartbeat/{live_id}
 ```
 
 # 更新直播扩展
+更新直播间的扩展信息。
+
 ## 路径
 PUT /client/live/room/extends
 
@@ -536,6 +562,8 @@ PUT /client/live/room/extends
 ```
 
 # 房间用户列表
+获取直播间内的用户列表。
+
 ## 路径
 GET /client/live/room/user_list
 

@@ -1,4 +1,8 @@
 # 开始跨房连麦
+开始跨房连麦。
+
+只有直播间的主播，才能发起跨房连麦请求。
+
 ## 路径
 POST /client/relay/start
 
@@ -32,6 +36,8 @@ POST /client/relay/start
 ```
 
 # 获取跨房会话信息
+查询跨房连麦的会话信息。
+
 ## 路径
 GET /client/relay/{relay_id}
 
@@ -70,6 +76,8 @@ GET /client/relay/{relay_id}
 ```
 
 # 获取跨房会话Token
+获取跨房连麦的会话Token，使用该token 可以向目的房间进行推流。
+
 ## 路径
 GET /client/relay/{relay_id}/token
 
@@ -99,6 +107,8 @@ GET /client/relay/{relay_id}/token
 ```
 
 # 停止跨房
+停止跨房连麦。
+
 ## 路径
 POST /client/relay/{relay_id}/stop
 
@@ -123,6 +133,8 @@ POST /client/relay/{relay_id}/stop
 ```
 
 # 上报跨房完成
+本地推流到跨房的目的房间后，上报状态完成。更新跨房会话的状态。
+
 ## 路径
 POST /client/relay/{relay_id}/started
 
@@ -147,6 +159,8 @@ POST /client/relay/{relay_id}/started
 ```
 
 # 更新跨房扩展信息
+更新跨房连麦会话的扩展信息。
+
 ## 路径
 POST /client/relay/{relay_id}/extends
 

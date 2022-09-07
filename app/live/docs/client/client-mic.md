@@ -1,5 +1,7 @@
 # 申请上麦
-用户在直播间内，请求上麦。
+用户在直播间内，请求上麦。请求上麦成功后，返回上麦token，用户使用该token 发布视频语音流。
+
+用户必须先加入直播间。
 
 ## 路径
 POST /client/mic
@@ -9,7 +11,7 @@ POST /client/mic
 |----           | ---            | ---               |
 | Authorization | 鉴权token |      |
 
-## 请求参数
+## Body参数
 ```
 {
     "live_id":"live_123",   //直播间ID
@@ -34,6 +36,8 @@ POST /client/mic
 ```
 
 # 申请下麦
+已上麦的用户申请下麦。
+
 ## 路径
 DELETE /client/mic
 
@@ -42,7 +46,7 @@ DELETE /client/mic
 |----           | ---            | ---               |
 | Authorization | 鉴权token |      |
 
-## 请求参数
+## Body参数
 ```
 {
     "live_id":"live_123",   //直播间ID
@@ -59,6 +63,8 @@ DELETE /client/mic
 ```
 
 # 房间麦位列表
+获取直播间内的麦位列表信息。
+
 ## 路径
 GET /client/mic/room/list/{live_id}
 
@@ -101,6 +107,8 @@ GET /client/mic/room/list/{live_id}
 ```
 
 # 更新麦位扩展信息
+更新麦位的扩展信息。
+
 ## 路径
 PUT /client/mic/extension
 
@@ -129,6 +137,10 @@ PUT /client/mic/extension
 ```
 
 # 打开/关闭麦克风/摄像头
+上麦用户更改自己的推流配置。
+
+可以打开或者关闭麦克风；打开或者关闭摄像头。
+
 ## 路径
 PUT /client/mic/switch
 

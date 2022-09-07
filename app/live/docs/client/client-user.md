@@ -1,4 +1,6 @@
 # 获取自己的详细信息接口
+用户获取自己的详细信息。包括自己私有信息，如：IM用户名，密码。
+
 ## 路径
 GET /client/user/profile
 
@@ -29,6 +31,8 @@ GET /client/user/profile
 ```
 
 # 获取其他用户信息
+查询其他用户的信息。不包含私有信息。
+
 ## 路径
 GET /client/user/user/{user_id}
 
@@ -65,6 +69,8 @@ GET /client/user/user/{user_id}
 ```
 
 # 批量获取用户信息
+批量获取其他用户的公开信息。
+
 ## 路径
 GET /client/user/users
 
@@ -101,6 +107,8 @@ curl "https://live-api.qiniu.com/client/user/users?user_ids=user_1&user_ids=user
 ```
 
 # 更新用户信息
+更新自己的用户信息。
+
 ## 路径
 PUT /client/user/user
 
@@ -131,6 +139,8 @@ PUT /client/user/user
 ```
 
 # 根据IM用户id 查找用户信息
+根据IM 用户ID，查找用户信息。
+
 ## 路径
 GET /client/user/imusers
 
