@@ -5,11 +5,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
-	"github.com/qbox/livekit/utils/rpc"
-	"net/http"
 )
 
 type CCService interface {
@@ -21,43 +18,15 @@ type CCService interface {
 	GetLiveCensorJobByJobId(ctx context.Context, jobId string) (*model.LiveCensor, error)
 
 	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
-
+	SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
-
-	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
-	JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error
-}
-
-type Config struct {
-	AccessKey      string
-	SecretKey      string
-	CensorCallback string
-	CensorBucket   string
 }
 
 type CensorService struct {
-	Config
-	CClient rpc.Client
 }
 
-func InitCensorService(config Config) {
-	mac := &qiniumac.Mac{
-		AccessKey: config.AccessKey,
-		SecretKey: []byte(config.SecretKey),
-	}
-	c := &http.Client{
-		Transport: qiniumac.NewTransport(mac, nil),
-	}
-	cService = &CensorService{
-		Config: config,
-		CClient: rpc.Client{
-			Client: c,
-		},
-	}
-}
-
-var cService CCService
+var cService CCService = &CensorService{}
 
 func GetCensorService() CCService {
 	return cService
@@ -106,9 +75,9 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 	if config.Enable == false {
 		return nil
 	}
-	resp, err := c.postCreateCensorJob(ctx, liveEntity, config)
+	resp, err := GetJobService().JobCreate(ctx, liveEntity, config)
 	if err != nil {
-		log.Errorf("postCreateCensorJob Error %v", err)
+		log.Errorf("JobCreate Error %v", err)
 		return err
 	}
 	err = c.SaveLiveCensorJob(ctx, liveEntity.LiveId, resp.Data.JobID, config)
@@ -117,43 +86,6 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 		return nil
 	}
 	return nil
-}
-
-func (c *CensorService) postCreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error) {
-	log := logger.ReqLogger(ctx)
-	req := &JobCreateRequest{}
-	req.Data.Url = liveEntity.PushUrl
-	req.Params.Image.IsOn = config.Enable
-	req.Params.Image.IntervalMsecs = config.Interval * 1000
-
-	req.Params.HookAuth = false
-	req.Params.HookUrl = c.CensorCallback + "/manager/censor/callback"
-
-	s := make([]string, 0)
-	if config.Pulp {
-		s = append(s, "pulp")
-	}
-	if config.Terror {
-		s = append(s, "terror")
-	}
-	if config.Politician {
-		s = append(s, "politician")
-	}
-	if config.Ads {
-		s = append(s, "ads")
-	}
-
-	req.Params.Image.Scenes = s
-	req.Params.Image.HookRule = 0 //图片审核结果回调规则，0/1。默认为 0，返回判定结果违规的审核结果；设为 1 时，返回所有审核结果。
-	req.Params.Image.Saver.Bucket = c.CensorBucket
-	reqUrl := "http://ai.qiniuapi.com/v3/live/censor"
-	resp := &JobCreateResponse{}
-	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
-	if err != nil {
-		log.Errorf("%v", err)
-		return nil, err
-	}
-	return resp, nil
 }
 
 func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error {
@@ -193,12 +125,11 @@ func (c *CensorService) StopCensorJob(ctx context.Context, liveId string) error 
 		log.Errorf("GetLiveCensorJobByLiveId Error %v", err)
 		return err
 	}
+
 	req := &JobCreateResponseData{
 		JobID: liveCensorJob.JobID,
 	}
-	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/close"
-	resp := &api.Response{}
-	err = c.CClient.CallWithJSON(log, resp, reqUrl, req)
+	err = GetJobService().JobClose(ctx, req)
 	if err != nil {
 		log.Errorf("post StopCensorJob Error %v", err)
 		return err
@@ -270,26 +201,6 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 		return
 	}
 	return
-}
-
-func (c *CensorService) JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error {
-	log := logger.ReqLogger(ctx)
-	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/list"
-	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *CensorService) JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error {
-	log := logger.ReqLogger(ctx)
-	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/query"
-	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 type JobQueryRequest struct {

@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/app/live/internal/controller/server"
 	"github.com/qbox/livekit/app/live/internal/dto"
@@ -191,7 +190,7 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		return
 	}
 	if req.Image.Code != 200 {
-		fmt.Println(req)
+		log.Errorf("CallbackCensorJob  response Error %v", req.Error.Message)
 		return
 	}
 	m := &model.CensorImage{
@@ -213,9 +212,9 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		return
 	}
 	m.LiveID = liveCensor.LiveID
-	err = censorService.SetCensorImage(ctx, m)
+	err = censorService.SaveCensorImage(ctx, m)
 	if err != nil {
-		log.Errorf("SetCensorImage error %v", err)
+		log.Errorf("SaveCensorImage error %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
 			Code:      http.StatusInternalServerError,
 			Message:   "switch mic failed",
@@ -238,14 +237,14 @@ func (c *CensorController) CreateJob(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	m, err := live.GetService().LiveInfo(ctx, req.LiveId)
+	liveEntity, err := live.GetService().LiveInfo(ctx, req.LiveId)
 	if err != nil {
 		log.Errorf("LiveInfo error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 	censorService := admin.GetCensorService()
-	err = censorService.CreateCensorJob(ctx, m)
+	err = censorService.CreateCensorJob(ctx, liveEntity)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -360,7 +359,7 @@ func (c *CensorController) ListAllJobs(ctx *gin.Context) {
 		Marker: req.Marker,
 	}
 	resp := &admin.JobListResponse{}
-	err := admin.GetCensorService().JobList(ctx, requset, resp)
+	err := admin.GetJobService().JobList(ctx, requset, resp)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -384,7 +383,7 @@ func (c *CensorController) QueryJob(ctx *gin.Context) {
 		Suggestions: req.Suggestions,
 	}
 	resp := &admin.JobQueryResponse{}
-	err := admin.GetCensorService().JobQuery(ctx, requset, resp)
+	err := admin.GetJobService().JobQuery(ctx, requset, resp)
 	if err != nil {
 		log.Errorf("Job Query error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -422,7 +421,7 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		image.ReviewAnswer = req.ReviewAnswer
 		image.ReviewTime = timestamp.Now()
 		image.ReviewUserId = userInfo.UserId
-		err = censorService.SetCensorImage(ctx, image)
+		err = censorService.SaveCensorImage(ctx, image)
 		if err != nil {
 			log.Errorf("AuditRecordImage fail %v", err)
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))

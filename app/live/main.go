@@ -109,10 +109,11 @@ func initAllService() {
 		SecretKey: config.AppConfig.RtcConfig.SecretKey,
 		PiliHub:   config.AppConfig.RtcConfig.Hub,
 	})
-	admin.InitCensorService(admin.Config{
+	admin.InitJobService(admin.Config{
 		AccessKey:      config.AppConfig.RtcConfig.AccessKey,
 		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
 		CensorCallback: config.AppConfig.CensorCallback,
 		CensorBucket:   config.AppConfig.CensorBucket,
 	})
+
 }
