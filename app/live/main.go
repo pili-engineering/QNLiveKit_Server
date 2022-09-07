@@ -113,5 +113,6 @@ func initAllService() {
 		AccessKey:      config.AppConfig.RtcConfig.AccessKey,
 		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
 		CensorCallback: config.AppConfig.CensorCallback,
+		CensorBucket:   config.AppConfig.CensorBucket,
 	})
 }

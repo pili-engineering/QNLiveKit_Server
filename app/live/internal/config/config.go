@@ -20,14 +20,14 @@ import (
 var AppConfig Config
 
 type Config struct {
-	NodeID         int64  `mapstructure:"node_id"`
-	Server         Server `mapstructure:"service"`
-	JwtKey         string `mapstructure:"jwt_key"`
-	CensorCallback string `mapstructure:"censor_callback"`
-
-	Callback   string                   `mapstructure:"callback"`
-	ReportHost string                   `mapstructure:"report_host"`
-	Mysqls     []*mysql.ConfigStructure `mapstructure:"mysqls"`
+	NodeID         int64                    `mapstructure:"node_id"`
+	Server         Server                   `mapstructure:"service"`
+	JwtKey         string                   `mapstructure:"jwt_key"`
+	CensorCallback string                   `mapstructure:"censor_callback"`
+	CensorBucket   string                   `mapstructure:"censor_bucket"`
+	Callback       string                   `mapstructure:"callback"`
+	ReportHost     string                   `mapstructure:"report_host"`
+	Mysqls         []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
 	MacConfig   qiniumac.Config `mapstructure:"mac_config"`
 	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`

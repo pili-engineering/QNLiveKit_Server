@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"github.com/jinzhu/gorm"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/qiniumac"
@@ -21,7 +22,7 @@ type CCService interface {
 
 	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
 
-	SetCensorImage(ctx context.Context, image *model.CensorImage) error
+	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 
 	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
@@ -32,6 +33,7 @@ type Config struct {
 	AccessKey      string
 	SecretKey      string
 	CensorCallback string
+	CensorBucket   string
 }
 
 type CensorService struct {
@@ -94,47 +96,6 @@ func (c *CensorService) GetCensorConfig(ctx context.Context) (*model.CensorConfi
 	return mod, nil
 }
 
-type JobCreateRequest struct {
-	Data   JobLiveData     `json:"data"`
-	Params JobCreateParams `json:"params"`
-}
-
-type JobLiveData struct {
-	ID   string `json:"ID"`
-	Url  string `json:"uri"`
-	Info string `json:"info"`
-}
-
-type JobCreateParams struct {
-	Image    JobImage `json:"image"`
-	HookUrl  string   `json:"hook_url"`
-	HookAuth bool     `json:"hook_auth"`
-}
-
-type JobImage struct {
-	IsOn          bool          `json:"is_on"`
-	Scenes        []string      `json:"scenes"`
-	IntervalMsecs int           `json:"interval_msecs"`
-	Saver         JobImageSaver `json:"saver"`
-	HookRule      int           `json:"hook_rule"`
-}
-
-type JobImageSaver struct {
-	Bucket string `json:"bucket"`
-	Prefix string `json:"prefix"`
-}
-
-type JobCreateResponse struct {
-	RequestId string                `json:"request_id"` //请求ID
-	Code      int                   `json:"code"`       //错误码，0 成功，其他失败
-	Message   string                `json:"message"`    //错误信息
-	Data      JobCreateResponseData `json:"data"`
-}
-
-type JobCreateResponseData struct {
-	JobID string `json:"job"`
-}
-
 func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity) error {
 	log := logger.ReqLogger(ctx)
 	config, err := c.GetCensorConfig(ctx)
@@ -150,9 +111,9 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 		log.Errorf("postCreateCensorJob Error %v", err)
 		return err
 	}
-	err = c.SetLiveCensorJob(ctx, liveEntity.LiveId, resp.Data.JobID, config)
+	err = c.SaveLiveCensorJob(ctx, liveEntity.LiveId, resp.Data.JobID, config)
 	if err != nil {
-		log.Errorf("SetLiveCensorJob Error %v", err)
+		log.Errorf("SaveLiveCensorJob Error %v", err)
 		return nil
 	}
 	return nil
@@ -184,7 +145,7 @@ func (c *CensorService) postCreateCensorJob(ctx context.Context, liveEntity *mod
 
 	req.Params.Image.Scenes = s
 	req.Params.Image.HookRule = 0 //图片审核结果回调规则，0/1。默认为 0，返回判定结果违规的审核结果；设为 1 时，返回所有审核结果。
-	req.Params.Image.Saver.Bucket = "niu-cube"
+	req.Params.Image.Saver.Bucket = c.CensorBucket
 	reqUrl := "http://ai.qiniuapi.com/v3/live/censor"
 	resp := &JobCreateResponse{}
 	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
@@ -195,7 +156,7 @@ func (c *CensorService) postCreateCensorJob(ctx context.Context, liveEntity *mod
 	return resp, nil
 }
 
-func (c *CensorService) SetLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error {
+func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{
@@ -267,7 +228,7 @@ func (c *CensorService) GetLiveCensorJobByJobId(ctx context.Context, jobId strin
 	return m, nil
 }
 
-func (c *CensorService) SetCensorImage(ctx context.Context, image *model.CensorImage) error {
+func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.CensorImage) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	err := db.Model(model.CensorImage{}).Save(image).Error
@@ -283,28 +244,25 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	image = make([]model.CensorImage, 0)
 
+	var where *gorm.DB
+	var all *gorm.DB
 	if liveId == "" {
-		if isReview == 0 {
-			err = db.Where(" is_review = ? ", isReview).Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-			err = db.Model(&model.CensorImage{}).Where(" is_review = ? ", isReview).Count(&totalCount).Error
-		} else if isReview == 1 {
-			err = db.Model(&model.CensorImage{}).Where(" is_review = ? ", isReview).Count(&totalCount).Error
-			err = db.Where(" is_review = ?", isReview).Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-		} else {
-			err = db.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-			err = db.Model(&model.CensorImage{}).Count(&totalCount).Error
-		}
+		where = db.Model(&model.CensorImage{}).Where(" is_review = ? ", isReview)
+		all = db.Model(&model.CensorImage{})
 	} else {
-		if isReview == 0 {
-			err = db.Where(" is_review = ? and live_id = ?", isReview, liveId).Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-			err = db.Model(&model.CensorImage{}).Where(" is_review = ?  and live_id = ?", isReview, liveId).Count(&totalCount).Error
-		} else if isReview == 1 {
-			err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ?", isReview, liveId).Count(&totalCount).Error
-			err = db.Where(" is_review = ? and live_id = ?", isReview, liveId).Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-		} else {
-			err = db.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-			err = db.Model(&model.CensorImage{}).Count(&totalCount).Error
-		}
+		where = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ?", isReview, liveId)
+		all = db.Model(&model.CensorImage{}).Where(" live_id = ? ", liveId)
+	}
+
+	if isReview == 0 {
+		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
+		err = where.Count(&totalCount).Error
+	} else if isReview == 1 {
+		err = where.Count(&totalCount).Error
+		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
+	} else {
+		err = all.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
+		err = all.Count(&totalCount).Error
 	}
 
 	if err != nil {
@@ -314,52 +272,19 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 	return
 }
 
-type JobListRequest struct {
-	Start  int64  `json:"start"`
-	End    int64  `json:"end"`
-	Status string `json:"status"`
-	Limit  int    `json:"limit"`
-	Marker string `json:"marker"`
-}
-
-type JobListResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    struct {
-		Marker string `json:"marker"`
-		Items  []struct {
-			Id   string `json:"id"`
-			Data struct {
-				Id   string `json:"id"`
-				Uri  string `json:"uri"`
-				Info string `json:"info"`
-			} `json:"data"`
-			Params struct {
-				HookUrl  string `json:"hook_url"`
-				HookAuth bool   `json:"hook_auth"`
-				Image    struct {
-					IsOn          bool     `json:"is_on"`
-					Scenes        []string `json:"scenes"`
-					IntervalMsecs int      `json:"interval_msecs"`
-					Saver         struct {
-						Uid    int    `json:"uid"`
-						Bucket string `json:"bucket"`
-						Prefix string `json:"prefix"`
-					} `json:"saver"`
-					HookRule int `json:"hook_rule"`
-				} `json:"image"`
-			} `json:"params"`
-			Message   string `json:"message"`
-			Status    string `json:"status"`
-			CreatedAt int    `json:"created_at"`
-			UpdatedAt int    `json:"updated_at"`
-		} `json:"items"`
-	} `json:"data"`
-}
-
 func (c *CensorService) JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error {
 	log := logger.ReqLogger(ctx)
 	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/list"
+	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *CensorService) JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error {
+	log := logger.ReqLogger(ctx)
+	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/query"
 	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
 		return err
@@ -427,12 +352,86 @@ type JobQueryResponse struct {
 	} `json:"data"`
 }
 
-func (c *CensorService) JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error {
-	log := logger.ReqLogger(ctx)
-	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/query"
-	err := c.CClient.CallWithJSON(log, resp, reqUrl, req)
-	if err != nil {
-		return err
-	}
-	return nil
+type JobListRequest struct {
+	Start  int64  `json:"start"`
+	End    int64  `json:"end"`
+	Status string `json:"status"`
+	Limit  int    `json:"limit"`
+	Marker string `json:"marker"`
+}
+
+type JobListResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Marker string `json:"marker"`
+		Items  []struct {
+			Id   string `json:"id"`
+			Data struct {
+				Id   string `json:"id"`
+				Uri  string `json:"uri"`
+				Info string `json:"info"`
+			} `json:"data"`
+			Params struct {
+				HookUrl  string `json:"hook_url"`
+				HookAuth bool   `json:"hook_auth"`
+				Image    struct {
+					IsOn          bool     `json:"is_on"`
+					Scenes        []string `json:"scenes"`
+					IntervalMsecs int      `json:"interval_msecs"`
+					Saver         struct {
+						Uid    int    `json:"uid"`
+						Bucket string `json:"bucket"`
+						Prefix string `json:"prefix"`
+					} `json:"saver"`
+					HookRule int `json:"hook_rule"`
+				} `json:"image"`
+			} `json:"params"`
+			Message   string `json:"message"`
+			Status    string `json:"status"`
+			CreatedAt int    `json:"created_at"`
+			UpdatedAt int    `json:"updated_at"`
+		} `json:"items"`
+	} `json:"data"`
+}
+
+type JobCreateRequest struct {
+	Data   JobLiveData     `json:"data"`
+	Params JobCreateParams `json:"params"`
+}
+
+type JobLiveData struct {
+	ID   string `json:"ID"`
+	Url  string `json:"uri"`
+	Info string `json:"info"`
+}
+
+type JobCreateParams struct {
+	Image    JobImage `json:"image"`
+	HookUrl  string   `json:"hook_url"`
+	HookAuth bool     `json:"hook_auth"`
+}
+
+type JobImage struct {
+	IsOn          bool          `json:"is_on"`
+	Scenes        []string      `json:"scenes"`
+	IntervalMsecs int           `json:"interval_msecs"`
+	Saver         JobImageSaver `json:"saver"`
+	HookRule      int           `json:"hook_rule"`
+}
+
+type JobImageSaver struct {
+	Bucket string `json:"bucket"`
+	Prefix string `json:"prefix"`
+}
+
+type JobCreateResponse struct {
+	RequestId string                `json:"request_id"` //请求ID
+	Code      int                   `json:"code"`       //错误码，0 成功，其他失败
+	Message   string                `json:"message"`    //错误信息
+	Data      JobCreateResponseData `json:"data"`
+}
+
+type JobCreateResponseData struct {
+	JobID string `json:"job"`
 }
