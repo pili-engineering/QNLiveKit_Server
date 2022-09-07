@@ -219,6 +219,11 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.TotalCount = 0
 	response.Data.TotalMics = 0
 	response.Data.LiveStatus = liveInfo.Status
+	response.Data.StopReason = liveInfo.StopReason
+	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StopAt != nil {
+		response.Data.StopTime = liveInfo.StopAt.Unix()
+	}
 	context.JSON(http.StatusOK, response)
 }
 
@@ -436,6 +441,12 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].TotalCount = 0
 		list[i].TotalMics = 0
 		list[i].LiveStatus = liveInfo.Status
+
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
 	}
 	response.Data.List = list
 	context.JSON(http.StatusOK, response)
@@ -514,6 +525,11 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.TotalCount = 0
 	response.Data.TotalMics = 0
 	response.Data.LiveStatus = liveInfo.Status
+	response.Data.StopReason = liveInfo.StopReason
+	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StopAt != nil {
+		response.Data.StopTime = liveInfo.StopAt.Unix()
+	}
 	context.JSON(http.StatusOK, response)
 }
 
@@ -613,6 +629,11 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].TotalCount = 0
 		list[i].TotalMics = 0
 		list[i].LiveStatus = liveInfo.Status
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
 		log.Infof("liveInfo: %v", liveInfo)
 	}
 	response.Data.List = list

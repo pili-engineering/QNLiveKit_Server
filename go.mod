@@ -16,11 +16,11 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.1+incompatible // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
+	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/qiniu/go-sdk/v7 v7.12.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.8.0
-	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 )

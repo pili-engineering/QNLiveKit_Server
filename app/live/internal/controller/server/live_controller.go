@@ -152,6 +152,11 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 	response.Data.TotalCount = 0
 	response.Data.TotalMics = 0
 	response.Data.LiveStatus = liveEntity.Status
+	response.Data.StopReason = liveEntity.StopReason
+	response.Data.StopUserId = liveEntity.StopUserId
+	if liveEntity.StopAt != nil {
+		response.Data.StopTime = liveEntity.StopAt.Unix()
+	}
 
 	ctx.JSON(http.StatusOK, response)
 }

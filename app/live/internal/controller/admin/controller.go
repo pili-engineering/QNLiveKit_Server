@@ -8,7 +8,9 @@ import (
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/token"
+	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -26,9 +28,9 @@ func RegisterCensorRoutes(group *gin.RouterGroup) {
 	censorGroup.POST("/job/close", censorController.CloseJob)
 	censorGroup.POST("/job/list", censorController.ListAllJobs)
 	censorGroup.POST("/job/query", censorController.QueryJob)
-
 	censorGroup.GET("/record", censorController.SearchRecordImage)
 	censorGroup.GET("/audit", censorController.AuditRecordImage)
+	censorGroup.POST("/stoplive/:liveId", censorController.PostStopLive)
 }
 
 var censorController = &CensorController{}
@@ -383,10 +385,58 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, api.Response{
 		Code:      http.StatusOK,
+    Message:   "success",
+		RequestId: log.ReqID(),
+	})
+}
+
+
+func (c *CensorController) PostStopLive(ctx *gin.Context) {
+	adminInfo := liveauth.GetAdminInfo(ctx)
+
+	log := logger.ReqLogger(ctx)
+	liveId := ctx.Param("liveId")
+	if liveId == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+
+	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("find live error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	anchorInfo, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+	if err != nil {
+		log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
+	}
+	notifyItem := LiveNotifyItem{
+		LiveId:  liveEntity.LiveId,
+		Message: "直播涉嫌违规，\n管理员已关闭直播间。",
+	}
+	err = notify.SendNotifyToLive(ctx, anchorInfo, liveEntity, notify.ActionTypeCensorStop, &notifyItem)
+	if err != nil {
+		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
+	}
+
+	err = live.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
+	if err != nil {
+		log.Errorf("stop live failed, err: %v", err)
+		ctx.JSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, api.Response{
+		Code:      200,
 		Message:   "success",
 		RequestId: log.ReqID(),
 	})
 }
+
+
+
 
 type CensorCreateRequest struct {
 	LiveId string `json:"live_id"`
@@ -490,4 +540,9 @@ type CensorImageListResponse struct {
 		EndPage    bool                `json:"end_page"`
 		List       []model.CensorImage `json:"list"`
 	} `json:"data"`
+}
+
+type LiveNotifyItem struct {
+	LiveId  string `json:"live_id"`
+	Message string `json:"message"`
 }

@@ -29,6 +29,8 @@ type IService interface {
 
 	StopLive(context context.Context, liveId string, anchorId string) (err error)
 
+	AdminStopLive(ctx context.Context, liveId string, reason string, adminId string) error
+
 	LiveInfo(context context.Context, liveId string) (live *model.LiveEntity, err error)
 
 	LiveList(context context.Context, pageNum, pageSize int) (lives []model.LiveEntity, totalCount int, err error)
@@ -232,6 +234,40 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 		return err
 	}
 	return
+}
+
+func (s *Service) AdminStopLive(ctx context.Context, liveId string, reason string, adminId string) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	live, err := s.LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("LiveInfo error:%v", err)
+		return err
+	}
+	if live.Status != model.LiveStatusOn {
+		err = errors.New("live status error")
+		return err
+	}
+
+	now := timestamp.Now()
+
+	live.Status = model.LiveStatusOff
+	live.EndAt = now
+
+	live.StopReason = reason
+	live.StopUserId = adminId
+	live.StopAt = &now
+
+	err = db.Save(live).Error
+
+	if err == nil {
+		body := map[string]string{
+			"live_id": liveId,
+		}
+		go callback.GetCallbackService().Do(ctx, callback.TypeLiveStopped, body)
+	}
+
+	return nil
 }
 
 func (s *Service) LiveInfo(context context.Context, liveId string) (live *model.LiveEntity, err error) {

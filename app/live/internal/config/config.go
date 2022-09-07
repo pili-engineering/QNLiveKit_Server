@@ -11,6 +11,7 @@ import (
 	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/rtc"
 	"github.com/qbox/livekit/utils/config"
 )
@@ -28,9 +29,10 @@ type Config struct {
 	ReportHost string                   `mapstructure:"report_host"`
 	Mysqls     []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
-	MacConfig qiniumac.Config `mapstructure:"mac_config"`
-	RtcConfig rtc.Config      `mapstructure:"rtc_config"`
-	ImConfig  im.Config       `mapstructure:"im_config"`
+	MacConfig   qiniumac.Config `mapstructure:"mac_config"`
+	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`
+	ImConfig    im.Config       `mapstructure:"im_config"`
+	PromeConfig prome.Config    `mapstructure:"prome_config"`
 }
 
 // Server service port and host

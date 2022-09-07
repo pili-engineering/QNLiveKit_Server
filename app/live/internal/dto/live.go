@@ -32,4 +32,8 @@ type LiveInfoDto struct {
 	TotalCount   int    `json:"total_count"`
 	TotalMics    int    `json:"total_mics"`
 	LiveStatus   int    `json:"live_status"`
+
+	StopReason string `json:"stop_reason,omitempty"`  //关闭原因：censor 内容违规
+	StopUserId string `json:"stop_user_id,omitempty"` //关闭直播的管理员用户ID
+	StopTime   int64  `json:"stop_at,omitempty"`      //关闭时间
 }
