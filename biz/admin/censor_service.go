@@ -7,6 +7,7 @@ import (
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/timestamp"
 )
 
 type CCService interface {
@@ -21,6 +22,7 @@ type CCService interface {
 	SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
+	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
 }
 
 type CensorService struct {
@@ -201,6 +203,58 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 		return
 	}
 	return
+}
+
+const AuditNo = 1
+const AuditAll = 0
+
+func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+
+	var sql, sqlCount string
+	if audit == AuditNo {
+		sql = "SELECT m.live_id,m.title,m.anchor_id,m.status,m.count,n.time\nFROM(\n    SELECT DISTINCT a.live_id,a.title ,a.anchor_id,a.status,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE b.is_review= 0\n    GROUP BY a.live_id,a.title,a.anchor_id\n) m \nLEFT JOIN(\n    SELECT live_id, MAX(review_time)  AS time\n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2 \n    GROUP BY live_id\n)n \nON m.live_id = n.live_id\nLimit ? OFFSET ?"
+		sqlCount = "SELECT COUNT(*) AS count\nFROM(\n    SELECT DISTINCT a.live_id,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE b.is_review= 0\n    GROUP BY a.live_id\n) a\n"
+	} else {
+		sql = "SELECT m.live_id,m.title,m.anchor_id,m.status,m.count,n.time\nFROM(\n    SELECT DISTINCT a.live_id,a.title ,a.anchor_id,a.status,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE (b.is_review= 1 or b.is_review = 0)    GROUP BY a.live_id,a.title,a.anchor_id\n) m \nLEFT JOIN(\n    SELECT live_id, MAX(review_time)  AS time\n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2 \n    GROUP BY live_id\n)n \nON m.live_id = n.live_id\nLimit ? OFFSET ?"
+		sqlCount = "\nSELECT COUNT(*) AS count\nFROM(\n    SELECT DISTINCT a.live_id,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE (b.is_review= 1 or b.is_review = 0)\n    GROUP BY a.live_id\n) a"
+	}
+	err = db.DB().QueryRow(sqlCount).Scan(&totalCount)
+	if err != nil {
+		log.Errorf("SearchCensorLive %v", err)
+		return nil, 0, err
+	}
+	rows, err := db.DB().Query(sql, pageSize, (pageNum-1)*pageSize)
+	if err != nil {
+		log.Errorf("SearchCensorLive %v", err)
+		return nil, 0, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		cl := CensorLive{}
+		err = rows.Scan(&cl.LiveId, &cl.Title, &cl.AnchorId, &cl.Status, &cl.Count, &cl.Time)
+		if err != nil {
+			log.Errorf("SearchCensorLive %v", err)
+			return nil, 0, err
+		}
+		censorLive = append(censorLive, cl)
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		log.Errorf("SearchCensorLive %v", err)
+		return nil, 0, err
+	}
+	return
+}
+
+type CensorLive struct {
+	LiveId   string              `json:"live_id"`
+	Title    string              `json:"title"`
+	AnchorId string              `json:"anchor_id"`
+	Status   int                 `json:"live_status"`
+	Count    int                 `json:"count"`
+	Time     timestamp.Timestamp `json:"time"`
 }
 
 type JobQueryRequest struct {

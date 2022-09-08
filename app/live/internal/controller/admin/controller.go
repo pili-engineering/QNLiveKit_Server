@@ -30,6 +30,7 @@ func RegisterCensorRoutes(group *gin.RouterGroup) {
 	censorGroup.POST("/job/list", censorController.ListAllJobs)
 	censorGroup.POST("/job/query", censorController.QueryJob)
 
+	censorGroup.GET("/live", censorController.SearchCensorLive)
 	censorGroup.GET("/record", censorController.SearchRecordImage)
 	censorGroup.GET("/audit", censorController.AuditRecordImage)
 }
@@ -343,6 +344,69 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	// 1，只查看有未审核记录的直播间；0，全部直播间
+	Audit := ctx.DefaultQuery("audit", "0")
+	pageNum := ctx.DefaultQuery("page_num", "1")
+	pageSize := ctx.DefaultQuery("page_size", "10")
+	pageNumInt, err := strconv.Atoi(pageNum)
+	if err != nil {
+		log.Errorf("page_num is not int, err: %v", err)
+		ctx.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "page_num is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		log.Errorf("page_size is not int, err: %v", err)
+		ctx.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "page_size is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	AuditInt, err := strconv.Atoi(Audit)
+	if err != nil {
+		log.Errorf("page_size is not int, err: %v", err)
+		ctx.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "is_review is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	// 1，只查看有未审核记录的直播间；0，全部直播间
+	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, AuditInt, pageNumInt, pageSizeInt)
+	if err != nil {
+		log.Errorf("search censor image  failed, err: %v", err)
+		ctx.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "search  censor image failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+
+	endPage := false
+	if len(lives) < pageSizeInt {
+		endPage = true
+	}
+	response := &CensorLiveListResponse{}
+	response.Response.Code = 200
+	response.Response.Message = "success"
+	response.Response.RequestId = log.ReqID()
+	response.Data.TotalCount = count
+	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
+	response.Data.EndPage = endPage
+	response.Data.List = lives
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (c *CensorController) ListAllJobs(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorListRequest{}
@@ -541,5 +605,15 @@ type CensorImageListResponse struct {
 		PageTotal  int                 `json:"page_total"`
 		EndPage    bool                `json:"end_page"`
 		List       []model.CensorImage `json:"list"`
+	} `json:"data"`
+}
+
+type CensorLiveListResponse struct {
+	api.Response
+	Data struct {
+		TotalCount int                `json:"total_count"`
+		PageTotal  int                `json:"page_total"`
+		EndPage    bool               `json:"end_page"`
+		List       []admin.CensorLive `json:"list"`
 	} `json:"data"`
 }
