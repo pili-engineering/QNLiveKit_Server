@@ -12,21 +12,12 @@ type RService interface {
 	UpdateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error
 }
 
-type Config struct {
-	IMAppID    string
-	RTCAppId   string
-	PiliHub    string
-	AccessKey  string
-	SecretKey  string
-	ReportHost string
-}
-
 var service RService
 
 func GetService() RService {
 	return service
 }
 
-func InitService(config Config) {
-	service = NewReportClient(config)
+func InitService() {
+	service = NewReportClient()
 }

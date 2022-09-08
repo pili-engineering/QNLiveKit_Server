@@ -10,6 +10,7 @@ package cron
 import (
 	"context"
 	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/common/apimonitor"
 	"time"
 
 	"gopkg.in/robfig/cron.v2"
@@ -61,6 +62,19 @@ func Run() {
 		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
 
 		report.GetService().ReportOnlineMessage(ctx)
+	})
+
+	c.AddFunc("0/5 * * * * ?", func() {
+		now := time.Now()
+		nowStr := now.Format(timestamp.TimestampFormatLayout)
+
+		log := logger.New("ReportApiMonitor")
+		log.WithFields(map[string]interface{}{"start": nowStr})
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
+
+		apimonitor.ReportMonitorItems(ctx)
 	})
 
 	c.Start()

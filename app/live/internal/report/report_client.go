@@ -4,32 +4,18 @@ import (
 	"context"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/utils/logger"
-	"github.com/qbox/livekit/utils/rpc"
 	"github.com/qbox/livekit/utils/timestamp"
-	"net/http"
 	"strconv"
 )
 
 type RClient struct {
-	Config
-	client *http.Client
 }
 
-func NewReportClient(conf Config) *RClient {
-	mac := &qiniumac.Mac{
-		AccessKey: conf.AccessKey,
-		SecretKey: []byte(conf.SecretKey),
-	}
-	tr := qiniumac.NewTransport(mac, nil)
-	r := &RClient{
-		Config: conf,
-		client: &http.Client{
-			Transport: tr,
-		},
-	}
+func NewReportClient() *RClient {
+	r := &RClient{}
 	InitStatsTypeDescription()
 	return r
 }
@@ -39,13 +25,6 @@ func InitStatsTypeDescription() {
 	model.StatsTypeDescription[1] = "Live"
 	model.StatsTypeDescription[2] = "Item"
 	model.StatsTypeDescription[3] = "Comment"
-}
-
-type RequestReport struct {
-	IMAppID  string        `json:"im_app"`
-	RTCAppId string        `json:"rtc_app"`
-	PiliHub  string        `json:"pili_hub"`
-	Item     model.Extends `json:"item"`
 }
 
 func (s *RClient) ReportOnlineMessage(ctx context.Context) {
@@ -64,27 +43,7 @@ func (s *RClient) ReportOnlineMessage(ctx context.Context) {
 		"lives": strconv.Itoa(numLives),
 		"users": strconv.Itoa(numUsers),
 	}
-	s.postReportJson(log, "overview", value)
-}
-
-func (s *RClient) postReportJson(log *logger.Logger, kind string, value map[string]string) error {
-	r := &RequestReport{
-		IMAppID:  s.IMAppID,
-		RTCAppId: s.RTCAppId,
-		PiliHub:  s.PiliHub,
-		Item:     value,
-	}
-	client := rpc.Client{
-		Client: s.client,
-	}
-	url := s.ReportHost + "/report/live/" + kind
-	resp := &api.Response{}
-	err := client.CallWithJSON(log, resp, url, r)
-	if err != nil {
-		log.Info("Error ", err)
-		return err
-	}
-	return nil
+	trace.ReportEvent(ctx, "overview", value)
 }
 
 type CommonSingleStats struct {
