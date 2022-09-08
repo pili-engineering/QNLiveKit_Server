@@ -14,6 +14,7 @@ import (
 	"github.com/qbox/livekit/app/live/internal/report"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/common/prome"
+	"github.com/qbox/livekit/common/trace"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -82,7 +83,7 @@ func main() {
 
 	cron.Run()
 
-	report.GetService().ReportOnlineMessage(nil)
+	report.GetService().ReportOnlineMessage(context.Background())
 
 	err := <-errCh
 	log.StdLog.Fatalf("exit %v", err)
@@ -95,7 +96,8 @@ func initAllService() {
 	im.InitService(config.AppConfig.ImConfig)
 	rtc.InitService(config.AppConfig.RtcConfig)
 	callback.InitService(config.AppConfig.Callback)
-	report.InitService(report.Config{
+	report.InitService()
+	trace.InitService(trace.Config{
 		IMAppID:    config.AppConfig.ImConfig.AppId,
 		RTCAppId:   config.AppConfig.RtcConfig.AppId,
 		PiliHub:    config.AppConfig.RtcConfig.Hub,
