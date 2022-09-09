@@ -19,7 +19,7 @@ type CCService interface {
 	GetLiveCensorJobByJobId(ctx context.Context, jobId string) (*model.LiveCensor, error)
 
 	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
-	SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error
+	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
@@ -90,12 +90,12 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 	return nil
 }
 
-func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, JobId string, config *model.CensorConfig) error {
+func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{
 		LiveID:     liveId,
-		JobID:      JobId,
+		JobID:      jobId,
 		Interval:   config.Interval,
 		Politician: config.Politician,
 		Pulp:       config.Pulp,
