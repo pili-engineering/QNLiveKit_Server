@@ -211,21 +211,23 @@ const AuditAll = 0
 func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
+	var sql string
 
-	var sql, sqlCount string
 	if audit == AuditNo {
-		sql = "SELECT m.live_id,m.title,m.anchor_id,m.status,m.count,n.time\nFROM(\n    SELECT DISTINCT a.live_id,a.title ,a.anchor_id,a.status,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE b.is_review= 0\n    GROUP BY a.live_id,a.title,a.anchor_id\n) m \nLEFT JOIN(\n    SELECT live_id, MAX(review_time)  AS time\n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2 \n    GROUP BY live_id\n)n \nON m.live_id = n.live_id\nLimit ? OFFSET ?"
-		sqlCount = "SELECT COUNT(*) AS count\nFROM(\n    SELECT DISTINCT a.live_id,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE b.is_review= 0\n    GROUP BY a.live_id\n) a\n"
+		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review= 1 or is_review = 0\n    GROUP BY live_id "
 	} else {
-		sql = "SELECT m.live_id,m.title,m.anchor_id,m.status,m.count,n.time\nFROM(\n    SELECT DISTINCT a.live_id,a.title ,a.anchor_id,a.status,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE (b.is_review= 1 or b.is_review = 0)    GROUP BY a.live_id,a.title,a.anchor_id\n) m \nLEFT JOIN(\n    SELECT live_id, MAX(review_time)  AS time\n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2 \n    GROUP BY live_id\n)n \nON m.live_id = n.live_id\nLimit ? OFFSET ?"
-		sqlCount = "\nSELECT COUNT(*) AS count\nFROM(\n    SELECT DISTINCT a.live_id,count(*) as count\n    FROM live_entities a LEFT JOIN censor_image b\n    ON a.live_id = b.live_id\n    WHERE (b.is_review= 1 or b.is_review = 0)\n    GROUP BY a.live_id\n) a"
+		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review = 0\n    GROUP BY live_id "
 	}
-	err = db.DB().QueryRow(sqlCount).Scan(&totalCount)
+
+	sqlTime := " SELECT  MAX(review_time)  AS time \n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2  and live_id = ? \n    GROUP BY live_id"
+	sqlLive := "SELECT title,anchor_id \nFROM  live_entities \nWHERE live_id = ?"
+	sqlTotal := "SELECT COUNT(*) AS Count \nFROM (" + sql + ") a"
+	err = db.DB().QueryRow(sqlTotal).Scan(&totalCount)
 	if err != nil {
 		log.Errorf("SearchCensorLive %v", err)
 		return nil, 0, err
 	}
-	rows, err := db.DB().Query(sql, pageSize, (pageNum-1)*pageSize)
+	rows, err := db.DB().Query(sql+" Limit ? OFFSET ?", pageSize, (pageNum-1)*pageSize)
 	if err != nil {
 		log.Errorf("SearchCensorLive %v", err)
 		return nil, 0, err
@@ -233,7 +235,9 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 	defer rows.Close()
 	for rows.Next() {
 		cl := CensorLive{}
-		err = rows.Scan(&cl.LiveId, &cl.Title, &cl.AnchorId, &cl.Status, &cl.Count, &cl.Time)
+		err = rows.Scan(&cl.LiveId, &cl.Count)
+		err = db.DB().QueryRow(sqlTime, cl.LiveId).Scan(&cl.Time)
+		err = db.DB().QueryRow(sqlLive, cl.LiveId).Scan(&cl.Title, &cl.AnchorId)
 		if err != nil {
 			log.Errorf("SearchCensorLive %v", err)
 			return nil, 0, err

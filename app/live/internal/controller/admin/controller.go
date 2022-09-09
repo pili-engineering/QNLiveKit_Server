@@ -27,12 +27,12 @@ func RegisterCensorRoutes(group *gin.RouterGroup) {
 
 	censorGroup.POST("/job/start", censorController.CreateJob)
 	censorGroup.POST("/job/close", censorController.CloseJob)
-	censorGroup.POST("/job/list", censorController.ListAllJobs)
-	censorGroup.POST("/job/query", censorController.QueryJob)
+	censorGroup.GET("/job/list", censorController.ListAllJobs)
+	censorGroup.GET("/job/query", censorController.QueryJob)
 
 	censorGroup.GET("/live", censorController.SearchCensorLive)
 	censorGroup.GET("/record", censorController.SearchRecordImage)
-	censorGroup.GET("/audit", censorController.AuditRecordImage)
+	censorGroup.POST("/audit", censorController.AuditRecordImage)
 }
 
 var censorController = &CensorController{}
@@ -283,7 +283,7 @@ func (c *CensorController) CloseJob(ctx *gin.Context) {
 
 func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	IsReview := ctx.DefaultQuery("is_review", "2")
+	isReview := ctx.DefaultQuery("is_review", "2")
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	liveId := ctx.Query("live_id")
@@ -307,7 +307,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 		})
 		return
 	}
-	IsReviewInt, err := strconv.Atoi(IsReview)
+	isReviewInt, err := strconv.Atoi(isReview)
 	if err != nil {
 		log.Errorf("page_size is not int, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -318,7 +318,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 		return
 	}
 	//0： 没审核 1：审核 2：都需要list出来/*
-	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, IsReviewInt, pageNumInt, pageSizeInt, liveId)
+	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, isReviewInt, pageNumInt, pageSizeInt, liveId)
 	if err != nil {
 		log.Errorf("search censor image  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -415,7 +415,7 @@ func (c *CensorController) ListAllJobs(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	requset := &admin.JobListRequest{
+	request := &admin.JobListRequest{
 		Start:  req.Start.Unix(),
 		End:    req.End.Unix(),
 		Status: req.Status,
@@ -423,7 +423,7 @@ func (c *CensorController) ListAllJobs(ctx *gin.Context) {
 		Marker: req.Marker,
 	}
 	resp := &admin.JobListResponse{}
-	err := admin.GetJobService().JobList(ctx, requset, resp)
+	err := admin.GetJobService().JobList(ctx, request, resp)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
