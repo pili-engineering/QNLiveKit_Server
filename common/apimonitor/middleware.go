@@ -16,7 +16,8 @@ func Middleware() gin.HandlerFunc {
 		method := c.Request.Method
 		status := c.Writer.Status()
 		duration := time.Since(start).Milliseconds()
+		handler := c.HandlerName()
 
-		monitor(method, host, path, status, int(duration))
+		monitor(method, host, path, handler, status, int(duration))
 	}
 }
