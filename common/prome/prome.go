@@ -36,7 +36,6 @@ func startExporter(ctx context.Context, config ExporterConfig) error {
 
 func startPusher(ctx context.Context, config PusherConfig) error {
 	log := logger.ReqLogger(ctx)
-	pusher := push.New(config.URL, config.Job)
 	for {
 		select {
 		case <-ctx.Done():
@@ -44,6 +43,7 @@ func startPusher(ctx context.Context, config PusherConfig) error {
 			return ctx.Err()
 
 		case <-time.After(time.Duration(config.IntervalS) * time.Second):
+			pusher := push.New(config.URL, config.Job)
 			err := pusher.Gatherer(prometheus.DefaultGatherer).
 				Grouping("instance", config.Instance).
 				Add()
