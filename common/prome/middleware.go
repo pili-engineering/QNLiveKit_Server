@@ -21,7 +21,7 @@ var (
 		Help:        "Histogram of response latency (seconds) of http handlers.",
 		ConstLabels: nil,
 		Buckets:     nil,
-	}, []string{"method", "code", "path"})
+	}, []string{"handler", "method", "code", "path"})
 )
 
 // init 初始化prometheus模型
@@ -35,8 +35,10 @@ func Middleware() gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 
+		handler := c.HandlerName()
 		path := c.Request.URL.Path
 		httpHistogram.WithLabelValues(
+			handler,
 			c.Request.Method,
 			strconv.Itoa(c.Writer.Status()),
 			path,

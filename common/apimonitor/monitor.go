@@ -11,6 +11,7 @@ type MonitorItem struct {
 	Method   string `json:"method"`
 	Host     string `json:"host"`
 	Path     string `json:"path"`
+	Handler  string `json:"handler"`
 	Status   int    `json:"status"`
 	Duration int    `json:"duration"`
 	LogTime  int64  `json:"logTime"`
@@ -25,11 +26,12 @@ func init() {
 	monitorItems = make([]*MonitorItem, 0, 1024)
 }
 
-func monitor(method, host, path string, status int, duration int) {
+func monitor(method, host, path, handler string, status int, duration int) {
 	item := MonitorItem{
 		Method:   method,
 		Host:     host,
 		Path:     path,
+		Handler:  handler,
 		Status:   status,
 		Duration: duration,
 		LogTime:  time.Now().UnixNano() / int64(time.Millisecond),
