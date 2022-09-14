@@ -211,18 +211,16 @@ const AuditAll = 0
 func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
-	var sql string
+	var sql, sqlCount string
 
 	if audit == AuditNo {
-		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review= 1 or is_review = 0\n    GROUP BY live_id "
+		sql = "SELECT live_id,title,anchor_id,status,review_record_count,review_block_time   FROM  live_entities    WHERE  review_record_count > 0  and stop_reason != \"censor\""
+		sqlCount = "select count(*)   FROM  live_entities   WHERE  review_record_count > 0 and  stop_reason != \"censor\" "
 	} else {
-		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review = 0\n    GROUP BY live_id "
+		sql = " SELECT live_id,title,anchor_id,status,review_record_count,review_block_time   FROM  live_entities  WHERE  review_record_count >= 0 "
+		sqlCount = "select  count(*)   FROM  live_entities  WHERE  review_record_count >= 0 "
 	}
-
-	sqlTime := " SELECT  MAX(review_time)  AS time \n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2  and live_id = ? \n    GROUP BY live_id"
-	sqlLive := "SELECT title,anchor_id \nFROM  live_entities \nWHERE live_id = ?"
-	sqlTotal := "SELECT COUNT(*) AS Count \nFROM (" + sql + ") a"
-	err = db.DB().QueryRow(sqlTotal).Scan(&totalCount)
+	err = db.DB().QueryRow(sqlCount).Scan(&totalCount)
 	if err != nil {
 		log.Errorf("SearchCensorLive %v", err)
 		return nil, 0, err
@@ -235,9 +233,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 	defer rows.Close()
 	for rows.Next() {
 		cl := CensorLive{}
-		err = rows.Scan(&cl.LiveId, &cl.Count)
-		err = db.DB().QueryRow(sqlTime, cl.LiveId).Scan(&cl.Time)
-		err = db.DB().QueryRow(sqlLive, cl.LiveId).Scan(&cl.Title, &cl.AnchorId)
+		err = rows.Scan(&cl.LiveId, &cl.Title, &cl.AnchorId, &cl.Status, &cl.Count, &cl.Time)
 		if err != nil {
 			log.Errorf("SearchCensorLive %v", err)
 			return nil, 0, err

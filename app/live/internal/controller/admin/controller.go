@@ -216,11 +216,20 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 	err = censorService.SaveCensorImage(ctx, m)
 	if err != nil {
 		log.Errorf("SaveCensorImage error %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "switch mic failed",
-			RequestId: log.ReqID(),
-		})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	info, err := live.GetService().LiveInfo(ctx, m.LiveID)
+	if err != nil {
+		log.Errorf("SaveCensorImage error %v get live info failed", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	info.ReviewRecordCount++
+	err = live.GetService().UpdateLive(ctx, *info)
+	if err != nil {
+		log.Errorf("SaveCensorImage update Live error %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 	ctx.JSON(http.StatusOK, api.Response{
@@ -347,7 +356,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	// 1，只查看有未审核记录的直播间；0，全部直播间
-	Audit := ctx.DefaultQuery("audit", "0")
+	audit := ctx.DefaultQuery("audit", "0")
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -370,7 +379,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		})
 		return
 	}
-	AuditInt, err := strconv.Atoi(Audit)
+	AuditInt, err := strconv.Atoi(audit)
 	if err != nil {
 		log.Errorf("page_size is not int, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -488,6 +497,22 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		err = censorService.SaveCensorImage(ctx, image)
 		if err != nil {
 			log.Errorf("AuditRecordImage fail %v", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+			return
+		}
+		liveInfo, err := live.GetService().LiveInfo(ctx, image.LiveID)
+		if err != nil {
+			log.Errorf("AuditRecordImage : Get Live Info fail %v", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+			return
+		}
+		liveInfo.ReviewRecordCount--
+		if req.ReviewAnswer == 2 {
+			liveInfo.ReviewBlockTime = image.ReviewTime
+		}
+		err = live.GetService().UpdateLive(ctx, *liveInfo)
+		if err != nil {
+			log.Errorf("AuditRecordImage : Update Live Info fail %v", err)
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 			return
 		}

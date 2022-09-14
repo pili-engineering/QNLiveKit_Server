@@ -63,6 +63,8 @@ type IService interface {
 	FindLiveRoomUser(context context.Context, liveId string, userId string) (liveRoomUser *model.LiveRoomUserEntity, err error)
 
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
+
+	UpdateLive(context context.Context, live model.LiveEntity) (err error)
 }
 
 type Service struct {
@@ -305,6 +307,13 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 		return
 	}
 	live.Extends = extends
+	err = db.Save(live).Error
+	return
+}
+
+func (s *Service) UpdateLive(context context.Context, live model.LiveEntity) (err error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
 	err = db.Save(live).Error
 	return
 }
