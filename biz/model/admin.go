@@ -1,5 +1,7 @@
 package model
 
+import "github.com/qbox/livekit/utils/timestamp"
+
 type ManagerEntity struct {
 	ID          uint   `gorm:"primary_key"`
 	UserName    string `json:"user_name"`
@@ -24,4 +26,44 @@ type CensorConfig struct {
 
 func (e CensorConfig) TableName() string {
 	return "censor_config"
+}
+
+type LiveCensor struct {
+	ID         uint   `gorm:"primary_key"`
+	LiveID     string `json:"live_id"`
+	JobID      string `json:"job_id"`
+	Pulp       bool   `json:"pulp"`
+	Terror     bool   `json:"terror"`
+	Politician bool   `json:"politician"`
+	Ads        bool   `json:"ads"`
+	Interval   int    `json:"interval"`
+}
+
+func (e LiveCensor) TableName() string {
+	return "live_censor"
+}
+
+type CensorImage struct {
+	ID        uint   `gorm:"primary_key"`
+	Url       string `json:"url"`
+	JobID     string `json:"job_id"`
+	CreatedAt int    `json:"created_at"`
+	//Scenes       string              `json:"scenes"`
+
+	Suggestion string `json:"suggestion"`
+	Pulp       string `json:"pulp"`
+	Terror     string `json:"terror"`
+	Politician string `json:"politician"`
+	Ads        string `json:"ads"`
+
+	LiveID string `json:"live_id"`
+
+	IsReview     int                 `json:"is_review"`
+	ReviewAnswer int                 `json:"review_answer"`
+	ReviewUserId string              `json:"review_user_id"`
+	ReviewTime   timestamp.Timestamp `json:"review_time"`
+}
+
+func (e CensorImage) TableName() string {
+	return "censor_image"
 }

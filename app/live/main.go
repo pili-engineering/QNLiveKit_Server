@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/trace"
@@ -110,4 +111,11 @@ func initAllService() {
 		SecretKey: config.AppConfig.RtcConfig.SecretKey,
 		PiliHub:   config.AppConfig.RtcConfig.Hub,
 	})
+	admin.InitJobService(admin.Config{
+		AccessKey:      config.AppConfig.RtcConfig.AccessKey,
+		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
+		CensorCallback: config.AppConfig.CensorCallback,
+		CensorBucket:   config.AppConfig.CensorBucket,
+	})
+
 }
