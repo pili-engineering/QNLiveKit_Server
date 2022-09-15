@@ -64,7 +64,7 @@ type IService interface {
 
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
 
-	UpdateLiveRelatedReview(context context.Context, liveId string, add bool, latest *timestamp.Timestamp) (err error)
+	UpdateLiveRelatedReview(context context.Context, liveId string, change int, latest *timestamp.Timestamp) (err error)
 }
 
 type Service struct {
@@ -311,7 +311,8 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 	return
 }
 
-func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, add bool, latest *timestamp.Timestamp) (err error) {
+// UpdateLiveRelatedReview  change = 0 +1 ,change!=0 减去相应数目
+func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, change int, latest *timestamp.Timestamp) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	old := &model.LiveEntity{}
@@ -326,10 +327,10 @@ func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string
 	}
 
 	updates := map[string]interface{}{}
-	if add {
+	if change == 0 {
 		updates["un_review_record_count"] = old.UnReviewRecordCount + 1
 	} else {
-		updates["un_review_record_count"] = old.UnReviewRecordCount - 1
+		updates["un_review_record_count"] = old.UnReviewRecordCount - change
 	}
 	if latest != nil {
 		updates["review_blocked_latest_time"] = *latest

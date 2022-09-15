@@ -220,7 +220,7 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		return
 	}
 
-	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, true, nil)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, 0, nil)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
@@ -474,6 +474,8 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 	}
 	censorService := admin.GetCensorService()
 	entities := make([]*model.CensorImage, 0, len(req.Images))
+	var latest *timestamp.Timestamp
+	length := 0
 	for _, idx := range req.Images {
 		image, err := censorService.GetCensorImageById(ctx, idx)
 		if err != nil {
@@ -484,29 +486,25 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		if image.IsReview == 1 {
 			continue
 		}
+		length++
 		image.IsReview = 1
 		image.ReviewAnswer = req.ReviewAnswer
 		image.ReviewTime = timestamp.Now()
 		image.ReviewUserId = userInfo.UserId
 		entities = append(entities, image)
-		if err != nil {
-			log.Errorf("AuditRecordImage fail %v", err)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-			return
-		}
-		var latest *timestamp.Timestamp
 		if req.ReviewAnswer == 2 {
 			latest = &image.ReviewTime
-		}
-		err = live.GetService().UpdateLiveRelatedReview(ctx, image.LiveID, false, latest)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-			return
 		}
 	}
 	err := censorService.BatchSaveCensorImage(ctx, entities)
 	if err != nil {
 		log.Errorf("update audit censor image info  error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, length, latest)
+	if err != nil {
+		log.Errorf("update Live Related Review error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
@@ -527,6 +525,7 @@ type CensorCreateRequest struct {
 }
 
 type CensorAuditRequest struct {
+	LiveId       string `json:"live_id"`
 	Images       []uint `json:"image_list"`
 	ReviewAnswer int    `json:"review_answer"`
 }
