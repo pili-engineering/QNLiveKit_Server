@@ -21,6 +21,7 @@ type CCService interface {
 	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
 	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
+	BatchSaveCensorImage(ctx context.Context, images []*model.CensorImage) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
 }
@@ -211,41 +212,45 @@ const AuditAll = 0
 func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
-	var sql, sqlCount string
-
+	lives := make([]model.LiveEntity, 0)
+	var db2 *gorm.DB
 	if audit == AuditNo {
-		sql = "SELECT live_id,title,anchor_id,status,review_record_count,review_block_time   FROM  live_entities    WHERE  review_record_count > 0  and stop_reason != \"censor\""
-		sqlCount = "select count(*)   FROM  live_entities   WHERE  review_record_count > 0 and  stop_reason != \"censor\" "
+		db2 = db.Model(&model.LiveEntity{}).Where("un_review_record_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
 	} else {
-		sql = " SELECT live_id,title,anchor_id,status,review_record_count,review_block_time   FROM  live_entities  WHERE  review_record_count >= 0 "
-		sqlCount = "select  count(*)   FROM  live_entities  WHERE  review_record_count >= 0 "
+		db2 = db.Model(&model.LiveEntity{}).Where("un_review_record_count >= 0")
 	}
-	err = db.DB().QueryRow(sqlCount).Scan(&totalCount)
+	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
+	err = db2.Count(&totalCount).Error
 	if err != nil {
 		log.Errorf("SearchCensorLive %v", err)
 		return nil, 0, err
 	}
-	rows, err := db.DB().Query(sql+" Limit ? OFFSET ?", pageSize, (pageNum-1)*pageSize)
-	if err != nil {
-		log.Errorf("SearchCensorLive %v", err)
-		return nil, 0, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		cl := CensorLive{}
-		err = rows.Scan(&cl.LiveId, &cl.Title, &cl.AnchorId, &cl.Status, &cl.Count, &cl.Time)
-		if err != nil {
-			log.Errorf("SearchCensorLive %v", err)
-			return nil, 0, err
+
+	for _, live := range lives {
+		cl := CensorLive{
+			LiveId:   live.LiveId,
+			Title:    live.Title,
+			AnchorId: live.AnchorId,
+			Status:   live.Status,
+			Count:    live.UnReviewRecordCount,
+			Time:     live.ReviewBlockedLatestTime,
 		}
 		censorLive = append(censorLive, cl)
 	}
-	rows.Close()
-	if err = rows.Err(); err != nil {
-		log.Errorf("SearchCensorLive %v", err)
-		return nil, 0, err
-	}
 	return
+}
+
+func (c *CensorService) BatchSaveCensorImage(ctx context.Context, images []*model.CensorImage) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	db = db.Model(model.CensorImage{})
+	for _, image := range images {
+		err := db.Save(image).Error
+		if err != nil {
+			return api.ErrDatabase
+		}
+	}
+	return nil
 }
 
 type CensorLive struct {

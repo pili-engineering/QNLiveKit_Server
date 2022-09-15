@@ -64,7 +64,7 @@ type IService interface {
 
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
 
-	UpdateLive(context context.Context, live model.LiveEntity) (err error)
+	UpdateLiveRelatedReview(context context.Context, liveId string, add bool, latest *timestamp.Timestamp) (err error)
 }
 
 type Service struct {
@@ -311,11 +311,37 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 	return
 }
 
-func (s *Service) UpdateLive(context context.Context, live model.LiveEntity) (err error) {
+func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, add bool, latest *timestamp.Timestamp) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	err = db.Save(live).Error
-	return
+	old := &model.LiveEntity{}
+	result := db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).First(old)
+	if result.Error != nil {
+		log.Errorf("find old live information error %+v", result.Error)
+		if result.RecordNotFound() {
+			return api.ErrNotFound
+		} else {
+			return api.ErrDatabase
+		}
+	}
+
+	updates := map[string]interface{}{}
+	if add {
+		updates["un_review_record_count"] = old.UnReviewRecordCount + 1
+	} else {
+		updates["un_review_record_count"] = old.UnReviewRecordCount - 1
+	}
+	if latest != nil {
+		updates["review_blocked_latest_time"] = *latest
+	}
+
+	result = db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).Update(updates)
+	if result.Error != nil {
+		log.Errorf("update live about censor information error %v", result.Error)
+		return api.ErrDatabase
+	} else {
+		return nil
+	}
 }
 
 func (s *Service) JoinLiveRoom(context context.Context, liveId string, userId string) (err error) {
