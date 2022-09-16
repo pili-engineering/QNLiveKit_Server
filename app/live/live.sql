@@ -221,3 +221,46 @@ CREATE TABLE `censor_image`(
      `review_time` datetime DEFAULT NULL,
      PRIMARY KEY (`id`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `live_like` (
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `live_id` varchar(64) NOT NULL  COMMENT '直播间ID',
+     `user_id` varchar(64) NOT NULL  COMMENT '用户ID，空表示直播间内总点赞数',
+     `count` int NOT NULL  COMMENT '点赞数量',
+     `created_at` datetime DEFAULT NULL,
+     `updated_at` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `live_user` (`live_id`, `user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `live_gift` (
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `biz_id` varchar(64) NOT NULL COMMENT '业务ID，用于接口幂等处理',
+     `live_id` varchar(64) NOT NULL COMMENT '直播间ID',
+     `user_id` varchar(64) NOT NULL COMMENT '用户ID',
+     `type` int NOT NULL  COMMENT '礼物类型',
+     `amount` int NOT NULL DEFAULT 0 COMMENT '礼物金额',
+     `created_at` datetime DEFAULT NULL,
+     `updated_at` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `uix_biz` (`biz_id`),
+     KEY `idx_live_user` (`live_id`,`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `gift_config` (
+     `id` int unsigned NOT NULL AUTO_INCREMENT,
+     `type` int NOT NULL COMMENT '礼物类型',
+     `name` varchar(64) NOT NULL COMMENT '礼物名称',
+     `amount` int NOT NULL COMMENT '礼物金额，0 表示自定义金额',
+     `img` varchar(512) NOT NULL DEFAULT '' COMMENT '礼物图片',
+     `animation_type` int NOT NULL DEFAULT 0 '动态效果类型',
+     `animation_img` varchar(512) NOT NULL DEFAULT '' COMMENT '动态效果图片',
+     `order` int NOT NULL DEFAULT 0 COMMENT '排序，从小到大排序，相同order 根据创建时间排序',
+     `created_at` datetime DEFAULT NULL,
+     `updated_at` datetime DEFAULT NULL,
+     `deleted_at` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `uix_type` (`type`),
+     KEY `idx_order` (`order`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

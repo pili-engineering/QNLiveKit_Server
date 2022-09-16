@@ -606,3 +606,44 @@ GET /client/live/room/user_list
         ]
     }
 }
+```
+
+# 点赞
+用户对直播间进行点赞。只有加入直播间的用户才能对直播间进行点赞。
+
+## 路径
+PUT /client/live/{live_id}/like
+
+路径参数
+
+| 参数            | 类型     | 必填   | 说明             | 举例       |
+| ---------      | ------  |  ----- |   ------          |----------|
+| live_id       | string  |  是 | 直播间ID    | live_123 |
+
+## 请求头
+| 参数           | 说明            | 举例              |
+|----           | ---            | ---               |
+| Authorization | 鉴权token |      |
+
+## Body 参数
+```
+{
+    "count":1   //点赞的数量
+}
+```
+body 参数不带，默认为点赞数 +1。
+
+## 返回
+```
+{
+    "request_id": "xxxxx",
+    "code": 0,
+    "message": "success",
+    "data": {
+        "total": 123,    //直播间总点赞数
+        "count": 3       //我在直播间内的总点赞数
+    }
+}
+```
+
+
