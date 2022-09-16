@@ -24,6 +24,7 @@ type CCService interface {
 	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
+	GetUnauditCount(ctx context.Context, liveId string) (len int, err error)
 }
 
 type CensorService struct {
@@ -170,6 +171,13 @@ func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.Censor
 		return err
 	}
 	return nil
+}
+
+func (c *CensorService) GetUnauditCount(ctx context.Context, liveId string) (len int, err error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+	err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ? ", 0, liveId).Count(&len).Error
+	return
 }
 
 // SearchCensorImage 0： 没审核 1：审核 2：都需要list出来/*
