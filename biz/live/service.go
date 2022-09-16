@@ -63,6 +63,8 @@ type IService interface {
 	FindLiveRoomUser(context context.Context, liveId string, userId string) (liveRoomUser *model.LiveRoomUserEntity, err error)
 
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
+
+	UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error)
 }
 
 type Service struct {
@@ -307,6 +309,27 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 	live.Extends = extends
 	err = db.Save(live).Error
 	return
+}
+
+func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
+	unauditCount, err := admin.GetCensorService().GetUnauditCount(context, liveId)
+	if err != nil {
+		return err
+	}
+	updates := map[string]interface{}{}
+	updates["unaudit_censor_count"] = unauditCount
+	if latest != nil {
+		updates["last_censor_time"] = *latest
+	}
+	result := db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).Update(updates)
+	if result.Error != nil {
+		log.Errorf("update live about censor information error %v", result.Error)
+		return api.ErrDatabase
+	} else {
+		return nil
+	}
 }
 
 func (s *Service) JoinLiveRoom(context context.Context, liveId string, userId string) (err error) {

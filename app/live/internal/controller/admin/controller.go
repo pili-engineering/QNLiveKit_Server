@@ -216,11 +216,12 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 	err = censorService.SaveCensorImage(ctx, m)
 	if err != nil {
 		log.Errorf("SaveCensorImage error %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "switch mic failed",
-			RequestId: log.ReqID(),
-		})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 	ctx.JSON(http.StatusOK, api.Response{
@@ -347,7 +348,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	// 1，只查看有未审核记录的直播间；0，全部直播间
-	Audit := ctx.DefaultQuery("audit", "0")
+	audit := ctx.DefaultQuery("audit", "0")
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -370,7 +371,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		})
 		return
 	}
-	AuditInt, err := strconv.Atoi(Audit)
+	auditInt, err := strconv.Atoi(audit)
 	if err != nil {
 		log.Errorf("page_size is not int, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -381,7 +382,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		return
 	}
 	// 1，只查看有未审核记录的直播间；0，全部直播间
-	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, AuditInt, pageNumInt, pageSizeInt)
+	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, auditInt, pageNumInt, pageSizeInt)
 	if err != nil {
 		log.Errorf("search censor image  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -471,26 +472,22 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		return
 	}
 	censorService := admin.GetCensorService()
-	for _, idx := range req.Images {
-		image, err := censorService.GetCensorImageById(ctx, idx)
-		if err != nil {
-			log.Errorf("AuditRecordImage fail %v", err)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-			return
-		}
-		if image.IsReview == 1 {
-			continue
-		}
-		image.IsReview = 1
-		image.ReviewAnswer = req.ReviewAnswer
-		image.ReviewTime = timestamp.Now()
-		image.ReviewUserId = userInfo.UserId
-		err = censorService.SaveCensorImage(ctx, image)
-		if err != nil {
-			log.Errorf("AuditRecordImage fail %v", err)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-			return
-		}
+	updates := map[string]interface{}{}
+	updates["is_review"] = 1
+	updates["review_answer"] = req.ReviewAnswer
+	updates["review_time"] = timestamp.Now()
+	updates["review_user_id"] = userInfo.UserId
+	err := censorService.BatchUpdateCensorImage(ctx, req.Images, updates)
+	if err != nil {
+		log.Errorf("update audit censor image info  error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
+	if err != nil {
+		log.Errorf("update Live Related Review error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
 	}
 	ctx.JSON(http.StatusOK, api.Response{
 		Code:      http.StatusOK,
@@ -509,6 +506,7 @@ type CensorCreateRequest struct {
 }
 
 type CensorAuditRequest struct {
+	LiveId       string `json:"live_id"`
 	Images       []uint `json:"image_list"`
 	ReviewAnswer int    `json:"review_answer"`
 }

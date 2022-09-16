@@ -21,8 +21,10 @@ type CCService interface {
 	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
 	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
+	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
+	GetUnauditCount(ctx context.Context, liveId string) (len int, err error)
 }
 
 type CensorService struct {
@@ -171,6 +173,13 @@ func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.Censor
 	return nil
 }
 
+func (c *CensorService) GetUnauditCount(ctx context.Context, liveId string) (len int, err error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+	err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ? ", 0, liveId).Count(&len).Error
+	return
+}
+
 // SearchCensorImage 0： 没审核 1：审核 2：都需要list出来/*
 func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
@@ -211,45 +220,46 @@ const AuditAll = 0
 func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
-	var sql string
-
+	lives := make([]model.LiveEntity, 0)
+	var db2 *gorm.DB
 	if audit == AuditNo {
-		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review= 1 or is_review = 0\n    GROUP BY live_id "
+		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
 	} else {
-		sql = " SELECT DISTINCT live_id,count(*) as count\n    FROM  censor_image \n    WHERE  is_review = 0\n    GROUP BY live_id "
+		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count >= 0")
+	}
+	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
+	err = db2.Count(&totalCount).Error
+	if err != nil {
+		log.Errorf("SearchCensorLive %v", err)
+		return nil, 0, err
 	}
 
-	sqlTime := " SELECT  MAX(review_time)  AS time \n    FROM censor_image\n    WHERE is_review = 1 and review_answer =2  and live_id = ? \n    GROUP BY live_id"
-	sqlLive := "SELECT title,anchor_id \nFROM  live_entities \nWHERE live_id = ?"
-	sqlTotal := "SELECT COUNT(*) AS Count \nFROM (" + sql + ") a"
-	err = db.DB().QueryRow(sqlTotal).Scan(&totalCount)
-	if err != nil {
-		log.Errorf("SearchCensorLive %v", err)
-		return nil, 0, err
-	}
-	rows, err := db.DB().Query(sql+" Limit ? OFFSET ?", pageSize, (pageNum-1)*pageSize)
-	if err != nil {
-		log.Errorf("SearchCensorLive %v", err)
-		return nil, 0, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		cl := CensorLive{}
-		err = rows.Scan(&cl.LiveId, &cl.Count)
-		err = db.DB().QueryRow(sqlTime, cl.LiveId).Scan(&cl.Time)
-		err = db.DB().QueryRow(sqlLive, cl.LiveId).Scan(&cl.Title, &cl.AnchorId)
-		if err != nil {
-			log.Errorf("SearchCensorLive %v", err)
-			return nil, 0, err
+	for _, live := range lives {
+		cl := CensorLive{
+			LiveId:   live.LiveId,
+			Title:    live.Title,
+			AnchorId: live.AnchorId,
+			Status:   live.Status,
+			Count:    live.UnauditCensorCount,
+			Time:     live.LastCensorTime,
 		}
 		censorLive = append(censorLive, cl)
 	}
-	rows.Close()
-	if err = rows.Err(); err != nil {
-		log.Errorf("SearchCensorLive %v", err)
-		return nil, 0, err
-	}
 	return
+}
+
+func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	db = db.Model(model.CensorImage{})
+
+	result := db.Where(" id in (?) ", images).Update(updates)
+	if result.Error != nil {
+		log.Errorf("update user error %v", result.Error)
+		return api.ErrDatabase
+	} else {
+		return nil
+	}
 }
 
 type CensorLive struct {

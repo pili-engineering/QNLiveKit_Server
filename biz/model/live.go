@@ -30,6 +30,9 @@ type LiveEntity struct {
 	StopReason string               `json:"stop_reason"`  //关闭原因：censor 内容违规
 	StopUserId string               `json:"stop_user_id"` //关闭直播的管理员用户ID
 	StopAt     *timestamp.Timestamp `json:"stop_at"`      //关闭时间
+
+	UnauditCensorCount int                 `json:"unaudit_censor_count"`
+	LastCensorTime     timestamp.Timestamp `json:"last_censor_time"`
 }
 
 type LiveRoomUserStatus int
