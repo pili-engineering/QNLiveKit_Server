@@ -11,32 +11,29 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/qbox/livekit/app/live/internal/report"
-	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/live"
-	"github.com/qbox/livekit/common/prome"
-	"github.com/qbox/livekit/common/trace"
 	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/qbox/livekit/biz/callback"
-
-	"github.com/qbox/livekit/common/rtc"
-
-	"github.com/qbox/livekit/common/im"
-
-	"github.com/qbox/livekit/biz/token"
-
-	"github.com/qbox/livekit/utils/uuid"
+	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/biz/admin"
+	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/common/cache"
+	"github.com/qbox/livekit/common/prome"
+	"github.com/qbox/livekit/common/trace"
 
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/app/live/internal/controller"
 	"github.com/qbox/livekit/app/live/internal/cron"
+	"github.com/qbox/livekit/biz/callback"
+	"github.com/qbox/livekit/biz/token"
+	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/common/rtc"
 	log "github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/uuid"
 )
 
 var confPath = flag.String("f", "", "live -f /path/to/config")
@@ -117,5 +114,5 @@ func initAllService() {
 		CensorCallback: config.AppConfig.CensorCallback,
 		CensorBucket:   config.AppConfig.CensorBucket,
 	})
-
+	cache.Init(&config.AppConfig.CacheConfig)
 }

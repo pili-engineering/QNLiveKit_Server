@@ -9,6 +9,7 @@ package config
 
 import (
 	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/common/prome"
@@ -33,6 +34,7 @@ type Config struct {
 	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`
 	ImConfig    im.Config       `mapstructure:"im_config"`
 	PromeConfig prome.Config    `mapstructure:"prome_config"`
+	CacheConfig cache.Config    `mapstructure:"cache_config"`
 }
 
 // Server service port and host
