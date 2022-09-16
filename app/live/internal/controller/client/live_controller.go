@@ -9,12 +9,14 @@ package client
 
 import (
 	"context"
-	"github.com/qbox/livekit/app/live/internal/report"
 	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/qbox/livekit/app/live/internal/report"
+
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
@@ -40,6 +42,7 @@ func RegisterLiveRoutes(group *gin.RouterGroup) {
 		liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
 		liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
 		liveGroup.GET("/room/user_list", LiveController.LiveUserList)
+		liveGroup.PUT("/room/:live_id/like", LiveController.LiveUserList)
 	}
 }
 
@@ -962,4 +965,49 @@ func (*liveController) LiveUserList(context *gin.Context) {
 	response.Data.EndPage = endPage
 	response.Data.List = userInfoList
 	context.JSON(http.StatusOK, response)
+}
+
+type PutLikeRequest struct {
+	Count int `json:"count"`
+}
+
+type PutLikeResponse struct {
+	api.Response
+	Data struct {
+		Count int `json:"count"` //我在直播间内的点赞总数
+		Total int `json:"total"` //直播间的点赞总数
+	} `json:"data"`
+}
+
+func (*liveController) PutLike(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	userInfo := ctx.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	req := PutLikeRequest{}
+	ctx.ShouldBindJSON(&req)
+	if req.Count == 0 {
+		req.Count = 1
+	}
+
+	liveId := ctx.Param("live_id")
+	liveInfo, err := live.GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get liveInfo info failed, err: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "get liveInfo info failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+
+	if liveInfo.AnchorId == userInfo.UserId {
+		log.Errorf("anchor can not like self")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "anchor can not like self",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+
 }

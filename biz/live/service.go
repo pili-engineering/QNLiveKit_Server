@@ -3,8 +3,9 @@ package live
 import (
 	"context"
 	"errors"
-	"github.com/qbox/livekit/biz/admin"
 	"time"
+
+	"github.com/qbox/livekit/biz/admin"
 
 	"github.com/qbox/livekit/biz/callback"
 
@@ -67,6 +68,8 @@ type IService interface {
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
 
 	UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error)
+
+	AddLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error)
 }
 
 type Service struct {
@@ -636,4 +639,37 @@ func (s *Service) CheckLiveAnchor(ctx context.Context, liveId string, userId str
 	}
 
 	return nil
+}
+
+func (s *Service) AddLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error) {
+	log := logger.ReqLogger(ctx)
+	liveInfo, err := s.LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get liveInfo info failed, err: %v", err)
+		return 0, 0, api.ErrDatabase
+	}
+
+	if liveInfo.AnchorId == userId {
+		log.Errorf("anchor can not like self")
+		return 0, 0, api.ErrInvalidArgument
+	}
+
+	liveUser, err := s.getOrCreateLiveRoomUser(ctx, userId)
+	if err != nil {
+		log.Errorf("get live user error %v", err)
+		return 0, 0, err
+	}
+
+	if liveUser.Status != model.LiveRoomUserStatusOnline || liveUser.LiveId != liveId {
+		log.Errorf("user live room (liveId: %s, status: %d), not in %s", liveUser.LiveId, liveUser.Status, liveId)
+		return 0, 0, errors.New("user not in live room")
+	}
+
+	return s.cacheLike(ctx, liveId, userId, count)
+}
+
+func (s *Service) cacheLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error) {
+	//log := logger.ReqLogger(ctx)
+
+	return 0, 0, nil
 }
