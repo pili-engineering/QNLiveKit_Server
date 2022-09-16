@@ -25,8 +25,8 @@ CREATE TABLE `live_entities` (
    `stop_user_id` varchar(64) DEFAULT '',
    `stop_at` datetime DEFAULT NULL,
 
-   `un_review_record_count` int DEFAULT  NULL,
-   `review_blocked_latest_time` datetime DEFAULT NULL,
+   `unaudit_censor_count` int DEFAULT  NULL,
+   `last_censor_time` int DEFAULT NULL,
    PRIMARY KEY (`id`),
    UNIQUE KEY `live_id` (`live_id`),
    KEY `idx_status_deleted_at` (`status`,`deleted_at`),

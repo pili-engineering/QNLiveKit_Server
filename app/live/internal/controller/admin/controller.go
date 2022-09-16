@@ -219,8 +219,7 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-
-	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, 0, nil)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, 1, &req.Image.Timestamp)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
@@ -473,36 +472,18 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		return
 	}
 	censorService := admin.GetCensorService()
-	entities := make([]*model.CensorImage, 0, len(req.Images))
-	var latest *timestamp.Timestamp
-	length := 0
-	for _, idx := range req.Images {
-		image, err := censorService.GetCensorImageById(ctx, idx)
-		if err != nil {
-			log.Errorf("AuditRecordImage fail %v", err)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-			return
-		}
-		if image.IsReview == 1 {
-			continue
-		}
-		length++
-		image.IsReview = 1
-		image.ReviewAnswer = req.ReviewAnswer
-		image.ReviewTime = timestamp.Now()
-		image.ReviewUserId = userInfo.UserId
-		entities = append(entities, image)
-		if req.ReviewAnswer == 2 {
-			latest = &image.ReviewTime
-		}
-	}
-	err := censorService.BatchSaveCensorImage(ctx, entities)
+	updates := map[string]interface{}{}
+	updates["is_review"] = 1
+	updates["review_answer"] = req.ReviewAnswer
+	updates["review_time"] = timestamp.Now()
+	updates["review_user_id"] = userInfo.UserId
+	err := censorService.BatchUpdateCensorImage(ctx, req.Images, updates)
 	if err != nil {
 		log.Errorf("update audit censor image info  error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, length, latest)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, -len(req.Images), nil)
 	if err != nil {
 		log.Errorf("update Live Related Review error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
