@@ -311,6 +311,7 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 	return
 }
 
+// UpdateLiveRelatedReview change:-1 原先未审核数-1   ; change>=0 直接替换未审核数
 func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, change int, latest *int) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
@@ -326,7 +327,11 @@ func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string
 	}
 
 	updates := map[string]interface{}{}
-	updates["unaudit_censor_count"] = old.UnauditCensorCount + change
+	if change == -1 {
+		updates["unaudit_censor_count"] = old.UnauditCensorCount + 1
+	} else {
+		updates["unaudit_censor_count"] = change
+	}
 	if latest != nil {
 		updates["last_censor_time"] = *latest
 	}
