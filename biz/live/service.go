@@ -33,6 +33,8 @@ type IService interface {
 
 	LiveInfo(context context.Context, liveId string) (live *model.LiveEntity, err error)
 
+	LiveListAnchor(context context.Context, pageNum, pageSize int, anchorId string) (lives []model.LiveEntity, totalCount int, err error)
+
 	LiveList(context context.Context, pageNum, pageSize int) (lives []model.LiveEntity, totalCount int, err error)
 
 	LiveUserList(context context.Context, liveId string, pageNum, pageSize int) (users []model.LiveRoomUserEntity, totalCount int, err error)
@@ -277,6 +279,15 @@ func (s *Service) LiveInfo(context context.Context, liveId string) (live *model.
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	live = &model.LiveEntity{}
 	err = db.Where("live_id = ? ", liveId).First(live).Error
+	return
+}
+
+func (s *Service) LiveListAnchor(context context.Context, pageNum, pageSize int, anchorId string) (lives []model.LiveEntity, totalCount int, err error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+	lives = make([]model.LiveEntity, 0)
+	err = db.Where("anchor_id = ?", anchorId).Order("start_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
+	err = db.Model(&model.LiveEntity{}).Where("anchor_id = ?", anchorId).Count(&totalCount).Error
 	return
 }
 
