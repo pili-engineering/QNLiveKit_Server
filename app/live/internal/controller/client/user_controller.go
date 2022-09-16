@@ -15,6 +15,7 @@ import (
 	"github.com/qbox/livekit/biz/user"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -103,7 +104,7 @@ func (*userController) PutUserInfo(ctx *gin.Context) {
 
 type GetUserInfoResponse struct {
 	api.Response
-	Data *dto.UserDto
+	Data *dto.UserDto `json:"data"`
 }
 
 //获取其他用户信息
@@ -142,7 +143,7 @@ type GetUsersInfoRequest struct {
 
 type GetUsersInfoResponse struct {
 	api.Response
-	Data []*dto.UserDto
+	Data []*dto.UserDto `json:"data"`
 }
 
 //批量获取其他用户信息

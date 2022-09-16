@@ -562,16 +562,16 @@ type DelDemonItemResponse struct {
 
 type StopItemDemonstrateLogResponse struct {
 	api.Response
-	Data *dto.RecordDto
+	Data *dto.RecordDto `json:"data"`
 }
 
 type ListDemonstrateLog struct {
 	api.Response
-	Data *dto.RecordDto
+	Data *dto.RecordDto `json:"data"`
 }
 type ListLiveDemonstrateLog struct {
 	api.Response
-	Data []*dto.RecordDto
+	Data []*dto.RecordDto `json:"data"`
 }
 
 func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {

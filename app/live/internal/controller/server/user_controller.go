@@ -134,7 +134,7 @@ func (c *userController) PostRegisterBatch(ctx *gin.Context) {
 
 type GetUserInfoResponse struct {
 	api.Response
-	Data *dto.UserDto
+	Data *dto.UserDto `json:"data"`
 }
 
 // GET /server/user/:id
@@ -166,7 +166,7 @@ type GetUsersInfoRequest struct {
 
 type GetUsersInfoResponse struct {
 	api.Response
-	Data []*dto.UserDto
+	Data []*dto.UserDto `json:"data"`
 }
 
 //批量获取其他用户信息
