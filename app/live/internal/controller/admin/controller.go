@@ -219,7 +219,7 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, -1, &req.Image.Timestamp)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
@@ -483,13 +483,7 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	unauditLen, err := censorService.GetUnauditCount(ctx, req.LiveId)
-	if err != nil {
-		log.Errorf(".GetUnauditCount  error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
-	}
-	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, unauditLen, nil)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
 	if err != nil {
 		log.Errorf("update Live Related Review error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))

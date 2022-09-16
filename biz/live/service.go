@@ -64,7 +64,7 @@ type IService interface {
 
 	CheckLiveAnchor(ctx context.Context, liveId string, userId string) error
 
-	UpdateLiveRelatedReview(context context.Context, liveId string, change int, latest *int) (err error)
+	UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error)
 }
 
 type Service struct {
@@ -311,32 +311,19 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 	return
 }
 
-// UpdateLiveRelatedReview change:-1 原先未审核数-1   ; change>=0 直接替换未审核数
-func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, change int, latest *int) (err error) {
+func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	old := &model.LiveEntity{}
-	result := db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).First(old)
-	if result.Error != nil {
-		log.Errorf("find old live information error %+v", result.Error)
-		if result.RecordNotFound() {
-			return api.ErrNotFound
-		} else {
-			return api.ErrDatabase
-		}
+	unauditCount, err := admin.GetCensorService().GetUnauditCount(context, liveId)
+	if err != nil {
+		return err
 	}
-
 	updates := map[string]interface{}{}
-	if change == -1 {
-		updates["unaudit_censor_count"] = old.UnauditCensorCount + 1
-	} else {
-		updates["unaudit_censor_count"] = change
-	}
+	updates["unaudit_censor_count"] = unauditCount
 	if latest != nil {
 		updates["last_censor_time"] = *latest
 	}
-
-	result = db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).Update(updates)
+	result := db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).Update(updates)
 	if result.Error != nil {
 		log.Errorf("update live about censor information error %v", result.Error)
 		return api.ErrDatabase
