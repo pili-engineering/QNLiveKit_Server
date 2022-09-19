@@ -35,6 +35,7 @@ func RegisterLiveRoutes(group *gin.RouterGroup) {
 		liveGroup.GET("/room", LiveController.SearchLive)
 		liveGroup.POST("/room/user/:live_id", LiveController.JoinLive)
 		liveGroup.GET("/room/list", LiveController.LiveList)
+		liveGroup.GET("/room/list/anchor", LiveController.LiveListAnchor)
 		liveGroup.DELETE("/room/user/:live_id", LiveController.LeaveLive)
 		liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
 		liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
@@ -572,6 +573,120 @@ func (c *liveController) LiveList(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, api.Response{
 			Code:      http.StatusInternalServerError,
 			Message:   "get live list failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	endPage := false
+	if len(liveList) < pageSizeInt {
+		endPage = true
+	}
+	response := &LiveListResponse{}
+	response.Response.Code = 200
+	response.Response.Message = "success"
+	response.Response.RequestId = log.ReqID()
+	response.Data.TotalCount = totalCount
+	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
+	response.Data.EndPage = endPage
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
+	for i := range liveList {
+		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
+		if err != nil {
+			log.Errorf("get liveInfo info failed, err: %v", err)
+			continue
+		}
+		log.Infof("liveInfo: %v", liveInfo)
+		user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+		log.Infof("user: %v", user)
+		if err != nil {
+			log.Errorf("find user failed, err: %v", err)
+			continue
+		}
+		anchorStatus, _ := c.getLiveAnchorStatus(context, liveInfo.LiveId, liveInfo.AnchorId)
+
+		list[i].LiveId = liveInfo.LiveId
+		list[i].Title = liveInfo.Title
+		list[i].Notice = liveInfo.Notice
+		list[i].CoverUrl = liveInfo.CoverUrl
+		list[i].Extends = liveInfo.Extends
+		list[i].AnchorInfo.UserId = user.UserId
+		list[i].AnchorInfo.ImUserid = user.ImUserid
+		list[i].AnchorInfo.Nick = user.Nick
+		list[i].AnchorInfo.Avatar = user.Avatar
+		list[i].AnchorInfo.Extends = user.Extends
+		list[i].AnchorStatus = anchorStatus
+		list[i].RoomToken = ""
+		list[i].PkId = liveInfo.PkId
+		list[i].OnlineCount = liveInfo.OnlineCount
+		list[i].StartTime = liveInfo.StartAt.Unix()
+		list[i].EndTime = liveInfo.EndAt.Unix()
+		list[i].ChatId = liveInfo.ChatId
+		list[i].PushUrl = liveInfo.PushUrl
+		list[i].HlsUrl = liveInfo.HlsPlayUrl
+		list[i].RtmpUrl = liveInfo.RtmpPlayUrl
+		list[i].FlvUrl = liveInfo.FlvPlayUrl
+		list[i].Pv = 0
+		list[i].Uv = 0
+		list[i].TotalCount = 0
+		list[i].TotalMics = 0
+		list[i].LiveStatus = liveInfo.Status
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
+		log.Infof("liveInfo: %v", liveInfo)
+	}
+	response.Data.List = list
+	context.JSON(http.StatusOK, response)
+}
+
+func (c *liveController) LiveListAnchor(context *gin.Context) {
+	log := logger.ReqLogger(context)
+	pageNum := context.DefaultQuery("page_num", "1")
+	pageSize := context.DefaultQuery("page_size", "10")
+	uInfo := liveauth.GetUserInfo(context)
+	if uInfo == nil {
+		log.Errorf("user info not exist")
+		context.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrNotFound))
+		return
+	}
+	anchorId := uInfo.UserId
+	pageNumInt, err := strconv.Atoi(pageNum)
+	if err != nil {
+		log.Errorf("page num is not int, err: %v", err)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page num is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		log.Errorf("page size is not int, err: %v", err)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page size is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	if pageNumInt <= 0 || pageSizeInt <= 0 {
+		log.Errorf("page num or page size is not right, page num: %v, page size: %v", pageNumInt, pageSizeInt)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page num or page size is not right",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	liveList, totalCount, err := live.GetService().LiveListAnchor(context, pageNumInt, pageSizeInt, anchorId)
+	if err != nil {
+		log.Errorf("get live list anchor failed, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "get live list anchor failed",
 			RequestId: log.ReqID(),
 		})
 		return
