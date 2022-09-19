@@ -64,10 +64,10 @@ GET /server/auth/admin/token
 }
 ```
 
-#修改审核设置
+# 修改审核设置
 修改审核设置信息。
 
-##路径
+## 路径
 POST /admin/censor/config
 
 
@@ -118,7 +118,7 @@ POST /admin/censor/config
 }
 ```
 
-#获取审核设置
+# 获取审核设置
 获取审核设置信息
 
 ##路径
