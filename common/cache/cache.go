@@ -138,3 +138,35 @@ func (c *Cache) Eval(script string, keys []string, args ...interface{}) (interfa
 func (c *Cache) ScriptLoad(script string) (string, error) {
 	return c.client.ScriptLoad(context.Background(), script).Result()
 }
+
+func (c *Cache) HIncrBy(key, field string, incr int64) (int64, error) {
+	return c.HIncrByCtx(context.Background(), key, field, incr)
+}
+
+func (c *Cache) HIncrByCtx(ctx context.Context, key, field string, incr int64) (int64, error) {
+	return c.client.HIncrBy(ctx, key, field, incr).Result()
+}
+
+func (c *Cache) HMGet(key string, fields []string) ([]interface{}, error) {
+	return c.HMGetCtx(context.Background(), key, fields)
+}
+
+func (c *Cache) HMGetCtx(ctx context.Context, key string, fields []string) ([]interface{}, error) {
+	return c.client.HMGet(ctx, key, fields...).Result()
+}
+
+func (c *Cache) SAdd(key string, members []interface{}) (int64, error) {
+	return c.SAddCtx(context.Background(), key, members)
+}
+
+func (c *Cache) SAddCtx(ctx context.Context, key string, members []interface{}) (int64, error) {
+	return c.client.SAdd(ctx, key, members...).Result()
+}
+
+func (c *Cache) SMembers(key string) ([]string, error) {
+	return c.SMembersCtx(context.Background(), key)
+}
+
+func (c *Cache) SMembersCtx(ctx context.Context, key string) ([]string, error) {
+	return c.client.SMembers(ctx, key).Result()
+}

@@ -69,7 +69,7 @@ type IService interface {
 
 	UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error)
 
-	AddLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error)
+	AddLike(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error)
 }
 
 type Service struct {
@@ -641,7 +641,7 @@ func (s *Service) CheckLiveAnchor(ctx context.Context, liveId string, userId str
 	return nil
 }
 
-func (s *Service) AddLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error) {
+func (s *Service) AddLike(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error) {
 	log := logger.ReqLogger(ctx)
 	liveInfo, err := s.LiveInfo(ctx, liveId)
 	if err != nil {
@@ -666,10 +666,4 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 	}
 
 	return s.cacheLike(ctx, liveId, userId, count)
-}
-
-func (s *Service) cacheLike(ctx context.Context, liveId string, userId string, count int) (my, total int, err error) {
-	//log := logger.ReqLogger(ctx)
-
-	return 0, 0, nil
 }
