@@ -12,12 +12,17 @@ import (
 
 func RegisterGiftRoute(group *gin.RouterGroup) {
 	giftGroup := group.Group("/gift")
-	giftGroup.GET("/config", GetAllGiftConfig)
-	giftGroup.POST("/config", AddGiftConfig)
-	giftGroup.DELETE("/config/:type", DeleteGiftConfig)
+	giftGroup.GET("/config", GiftConfigController.GetAllGiftConfig)
+	giftGroup.POST("/config", GiftConfigController.AddGiftConfig)
+	giftGroup.DELETE("/config/:type", GiftConfigController.DeleteGiftConfig)
 }
 
-func AddGiftConfig(context *gin.Context) {
+type GiftCController struct {
+}
+
+var GiftConfigController = &GiftCController{}
+
+func (*GiftCController) AddGiftConfig(context *gin.Context) {
 	log := logger.ReqLogger(context)
 	req := &dto.GiftConfigDto{}
 	if err := context.BindJSON(req); err != nil {
@@ -42,7 +47,7 @@ func AddGiftConfig(context *gin.Context) {
 	})
 }
 
-func DeleteGiftConfig(context *gin.Context) {
+func (*GiftCController) DeleteGiftConfig(context *gin.Context) {
 	log := logger.ReqLogger(context)
 	typeId := context.Param("type")
 	typeIdInt, err := strconv.Atoi(typeId)
@@ -77,7 +82,7 @@ type ListGiftConfigResponse struct {
 	Data []*dto.GiftConfigDto `json:"data"`
 }
 
-func GetAllGiftConfig(context *gin.Context) {
+func (*GiftCController) GetAllGiftConfig(context *gin.Context) {
 	log := logger.ReqLogger(context)
 	giftEntities, err := gift.GetService().GetListGiftEntity(context)
 	if err != nil {
