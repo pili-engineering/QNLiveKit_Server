@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/qbox/livekit/common/cache"
@@ -74,6 +75,29 @@ func (s *Service) incrRoomLikes(ctx context.Context, liveId string, userId strin
 	}
 
 	return my, total, err
+}
+
+func (s *Service) getRoomLikes(ctx context.Context, liveId string, userIds []string) (map[string]int64, error) {
+	log := logger.ReqLogger(ctx)
+	key := s.liveLikeKey(liveId)
+
+	likes, err := cache.Client.HMGetCtx(ctx, key, userIds)
+	if err != nil {
+		log.Errorf("cache error %s", err.Error())
+		return nil, err
+	}
+
+	ret := map[string]int64{}
+	for i, _ := range likes {
+		if l := likes[i]; l != nil {
+			if lstr, ok := l.(string); ok {
+				lint, _ := strconv.ParseInt(lstr, 10, 64)
+				ret[userIds[i]] = lint
+			}
+		}
+	}
+
+	return ret, nil
 }
 
 func (s *Service) cacheLikeRooms(ctx context.Context, now time.Time, liveId string) error {

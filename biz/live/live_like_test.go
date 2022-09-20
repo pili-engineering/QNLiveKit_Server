@@ -173,3 +173,43 @@ func likeCacheSetup() {
 func likeCacheTearDown() {
 
 }
+
+func TestService_getRoomLikes(t *testing.T) {
+	likeCacheSetup()
+	defer likeCacheTearDown()
+
+	ctx := context.Background()
+	now := time.Now()
+	liveId1 := fmt.Sprintf("live_%d_1", now.Unix())
+
+	userId1 := "user_1"
+	userId2 := "user_2"
+	userId3 := "user_3"
+
+	s := &Service{}
+	my, total, err := s.cacheLike(ctx, liveId1, userId1, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), my)
+	assert.Equal(t, int64(1), total)
+
+	my, total, _ = s.cacheLike(ctx, liveId1, userId1, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(3), my)
+	assert.Equal(t, int64(3), total)
+
+	my, total, _ = s.cacheLike(ctx, liveId1, userId2, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), my)
+	assert.Equal(t, int64(4), total)
+
+	my, total, _ = s.cacheLike(ctx, liveId1, userId2, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(3), my)
+	assert.Equal(t, int64(6), total)
+
+	likeMap, err := s.getRoomLikes(ctx, liveId1, []string{userId1, userId2, userId3})
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(likeMap))
+	assert.Equal(t, int64(3), likeMap[userId1])
+	assert.Equal(t, int64(3), likeMap[userId2])
+}
