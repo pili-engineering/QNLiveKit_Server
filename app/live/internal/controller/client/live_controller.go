@@ -42,7 +42,7 @@ func RegisterLiveRoutes(group *gin.RouterGroup) {
 		liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
 		liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
 		liveGroup.GET("/room/user_list", LiveController.LiveUserList)
-		liveGroup.PUT("/room/:live_id/like", LiveController.LiveUserList)
+		liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
 	}
 }
 
@@ -968,14 +968,14 @@ func (*liveController) LiveUserList(context *gin.Context) {
 }
 
 type PutLikeRequest struct {
-	Count int `json:"count"`
+	Count int64 `json:"count"`
 }
 
 type PutLikeResponse struct {
 	api.Response
 	Data struct {
-		Count int `json:"count"` //我在直播间内的点赞总数
-		Total int `json:"total"` //直播间的点赞总数
+		Count int64 `json:"count"` //我在直播间内的点赞总数
+		Total int64 `json:"total"` //直播间的点赞总数
 	} `json:"data"`
 }
 
@@ -989,25 +989,22 @@ func (*liveController) PutLike(ctx *gin.Context) {
 	}
 
 	liveId := ctx.Param("live_id")
-	liveInfo, err := live.GetService().LiveInfo(ctx, liveId)
+	my, total, err := live.GetService().AddLike(ctx, liveId, userInfo.UserId, req.Count)
 	if err != nil {
-		log.Errorf("get liveInfo info failed, err: %v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "get liveInfo info failed",
-			RequestId: log.ReqID(),
-		})
+		log.Errorf("add like error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 
-	if liveInfo.AnchorId == userInfo.UserId {
-		log.Errorf("anchor can not like self")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.Response{
-			Code:      http.StatusBadRequest,
-			Message:   "anchor can not like self",
-			RequestId: log.ReqID(),
-		})
-		return
+	resp := &PutLikeResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data: struct {
+			Count int64 `json:"count"`
+			Total int64 `json:"total"`
+		}{
+			Count: my,
+			Total: total,
+		},
 	}
-
+	ctx.JSON(http.StatusOK, resp)
 }
