@@ -13,13 +13,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/qbox/livekit/app/live/internal/report"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/report"
 	user2 "github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"

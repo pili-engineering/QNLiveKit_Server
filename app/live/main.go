@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/qbox/livekit/app/live/internal/report"
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/trace"

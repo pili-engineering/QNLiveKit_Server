@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
@@ -266,8 +267,11 @@ func (s *Service) flushRoomCacheLikes(ctx context.Context, room string, users ma
 			UpdatedAt: timestamp.Now(),
 		})
 	}
-
-	return nil
+	err = report.GetService().SaveStatsSingleLive(ctx, entities)
+	if err != nil {
+		log.Errorf("SaveStatsSingleLive error %s", err.Error())
+	}
+	return err
 }
 
 func (s *Service) combineRoomUsers(dst, src map[string]map[string]struct{}) {

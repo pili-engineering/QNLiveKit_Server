@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/mysql"
 )
@@ -350,6 +351,7 @@ func TestService_flushCacheLikes(t *testing.T) {
 		Addrs:    nil,
 		Password: "",
 	})
+	report.InitService()
 
 	from := int64(1663720421)
 	to := int64(1663720424)

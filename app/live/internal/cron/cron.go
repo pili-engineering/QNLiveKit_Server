@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/app/live/internal/report"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/apimonitor"
 
 	"gopkg.in/robfig/cron.v2"
