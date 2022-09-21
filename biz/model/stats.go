@@ -32,13 +32,17 @@ const (
 	StatsTypeLive    = 1 //观看直播
 	StatsTypeItem    = 2 //查看商品
 	StatsTypeComment = 3 //评论
-	StatsTypeLike    = 4 //点赞
+	StatsTypeRelay   = 4 //评论
+	StatsTypeMic     = 5 //评论
+	StatsTypeLike    = 6 //点赞
 )
 
 const (
 	StatsTypeDescLive    = "Live"
 	StatsTypeDescItem    = "Item"
 	StatsTypeDescComment = "Comment"
+	StatsTypeDescRelay   = "Relay"
+	StatsTypeDescMic     = "Mic"
 	StatsTypeDescLike    = "Like"
 )
 
@@ -46,5 +50,7 @@ var StatsTypeDescription map[int]string = map[int]string{
 	StatsTypeLive:    StatsTypeDescLive,
 	StatsTypeItem:    StatsTypeDescItem,
 	StatsTypeComment: StatsTypeDescComment,
+	StatsTypeRelay:   StatsTypeDescRelay,
+	StatsTypeMic:     StatsTypeDescMic,
 	StatsTypeLike:    StatsTypeDescLike,
 }
