@@ -59,6 +59,9 @@ const (
 	ErrorCodeLiveItemExceed = 20001 //直播间商品数量超过限制
 
 	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
+
+	ErrorCodeGiftBizIdRepeatedWrong    = 200002
+	ErrorCodeGiftRedoDataInconsistency = 200003
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -73,3 +76,6 @@ var ErrStatus = &Response{Code: ErrorCodeBadStatus, Message: "cant operate on th
 var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "items exceed in live room"}
 
 var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}
+
+var ErrorGiftBizIdRepeatedWrong = &Response{Code: ErrorCodeGiftBizIdRepeatedWrong, Message: "Same BizId is already executed But Redo is false"}
+var ErrorGiftRedoDataInconsistency = &Response{Code: ErrorCodeGiftRedoDataInconsistency, Message: "Redo Send Gift But Request Message Data Inconsistency"}
