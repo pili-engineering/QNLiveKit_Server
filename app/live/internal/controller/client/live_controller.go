@@ -490,7 +490,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	rService := report.GetService()
 	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
 		LiveId: liveId,
-		UserId: user.UserId,
+		UserId: userInfo.UserId,
 		Type:   1,
 		Count:  1,
 	}

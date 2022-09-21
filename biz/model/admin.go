@@ -67,3 +67,18 @@ type CensorImage struct {
 func (e CensorImage) TableName() string {
 	return "censor_image"
 }
+
+type LiveGift struct {
+	ID        uint                `gorm:"primary_key"`
+	BizId     string              `json:"biz_id"`
+	LiveID    string              `json:"live_id"`
+	UserId    string              `json:"user_id"`
+	Type      int                 `json:"type"`
+	Amount    int                 `json:"amount"`
+	CreatedAt timestamp.Timestamp `json:"created_at"`
+	UpdatedAt timestamp.Timestamp `json:"updated_at"`
+}
+
+func (e LiveGift) TableName() string {
+	return "live_gift"
+}

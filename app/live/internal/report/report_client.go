@@ -25,6 +25,8 @@ func InitStatsTypeDescription() {
 	model.StatsTypeDescription[1] = "Live"
 	model.StatsTypeDescription[2] = "Item"
 	model.StatsTypeDescription[3] = "Comment"
+	model.StatsTypeDescription[4] = "pk"
+	model.StatsTypeDescription[5] = "microphone"
 }
 
 func (s *RClient) ReportOnlineMessage(ctx context.Context) {
