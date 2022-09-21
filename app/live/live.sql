@@ -263,6 +263,7 @@ CREATE TABLE `gift_config` (
      `created_at` datetime DEFAULT NULL,
      `updated_at` datetime DEFAULT NULL,
      `deleted_at` datetime DEFAULT NULL,
+     `extends` varchar(1024) DEFAULT NULL,
      PRIMARY KEY (`id`),
      UNIQUE KEY `uix_type` (`type`),
      KEY `idx_order` (`order`,`created_at`)
