@@ -393,6 +393,31 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		return
 	}
 
+	for _, liveEntity := range lives {
+		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
+		if err != nil {
+			log.Errorf("search censor image  failed, err: %v", err)
+			ctx.JSON(http.StatusInternalServerError, api.Response{
+				Code:      http.StatusInternalServerError,
+				Message:   "FindLiveRoomUser failed",
+				RequestId: log.ReqID(),
+			})
+			return
+		}
+		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+		if err != nil {
+			log.Errorf("FindUser  failed, err: %v", err)
+			ctx.JSON(http.StatusInternalServerError, api.Response{
+				Code:      http.StatusInternalServerError,
+				Message:   "FindUser failed",
+				RequestId: log.ReqID(),
+			})
+			return
+		}
+		liveEntity.Nick = anchor2.Nick
+		liveEntity.AnchorStatus = int(anchor.Status)
+	}
+
 	endPage := false
 	if len(lives) < pageSizeInt {
 		endPage = true
