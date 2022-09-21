@@ -12,26 +12,26 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/live"
-	"github.com/qbox/livekit/biz/report"
-	"github.com/qbox/livekit/common/cache"
-	"github.com/qbox/livekit/common/prome"
-	"github.com/qbox/livekit/common/trace"
-
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/app/live/internal/controller"
 	"github.com/qbox/livekit/app/live/internal/cron"
+	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/callback"
+	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
+	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/rtc"
+	"github.com/qbox/livekit/common/trace"
 	log "github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/uuid"
 )
@@ -46,6 +46,7 @@ func main() {
 		panic(err)
 	}
 	initAllService()
+	uuid.Init(config.AppConfig.NodeID)
 	mysql.Init(config.AppConfig.Mysqls...)
 
 	errCh := make(chan error)
@@ -66,18 +67,6 @@ func main() {
 		err := prome.Start(context.Background(), config.AppConfig.PromeConfig)
 		errCh <- err
 	}()
-
-	//modelList := []interface{}{
-	//	&model.LiveEntity{},
-	//	&model.LiveRoomUserEntity{},
-	//	&model.LiveMicEntity{},
-	//	&model.LiveUserEntity{},
-	//	&model.RelaySession{},
-	//	&model.ItemEntity{},
-	//	&model.ItemDemonstrate{},
-	//}
-	//mysql.GetLive("").AutoMigrate(modelList...)
-	uuid.Init(config.AppConfig.NodeID)
 
 	cron.Run()
 
