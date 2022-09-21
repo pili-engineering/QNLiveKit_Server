@@ -241,8 +241,10 @@ CREATE TABLE `live_gift` (
      `biz_id` varchar(64) NOT NULL COMMENT '业务ID，用于接口幂等处理',
      `live_id` varchar(64) NOT NULL COMMENT '直播间ID',
      `user_id` varchar(64) NOT NULL COMMENT '用户ID',
-     `type` int NOT NULL  COMMENT '礼物类型',
+     `anchor_id` varchar(64)  NOT NULL COMMENT '主播ID',
+     `gift_id` int NOT NULL  COMMENT '礼物id',
      `amount` int NOT NULL DEFAULT 0 COMMENT '礼物金额',
+     `status` int NOT NULL DEFAULT 0 COMMENT '状态',
      `created_at` datetime DEFAULT NULL,
      `updated_at` datetime DEFAULT NULL,
      PRIMARY KEY (`id`),
@@ -253,7 +255,8 @@ CREATE TABLE `live_gift` (
 
 CREATE TABLE `gift_config` (
      `id` int unsigned NOT NULL AUTO_INCREMENT,
-     `type` int NOT NULL COMMENT '礼物类型',
+     `gift_id` int NOT NULL COMMENT '礼物id',
+     `type` int NOT NULL DEFAULT 0 COMMENT '礼物类型',
      `name` varchar(64) NOT NULL COMMENT '礼物名称',
      `amount` int NOT NULL COMMENT '礼物金额，0 表示自定义金额',
      `img` varchar(512) NOT NULL DEFAULT '' COMMENT '礼物图片',
@@ -265,6 +268,6 @@ CREATE TABLE `gift_config` (
      `deleted_at` datetime DEFAULT NULL,
      `extends` varchar(1024) DEFAULT NULL,
      PRIMARY KEY (`id`),
-     UNIQUE KEY `uix_type` (`type`),
+     UNIQUE KEY `uix_type` (`gift_id`),
      KEY `idx_order` (`order`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
