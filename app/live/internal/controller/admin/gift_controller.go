@@ -30,6 +30,15 @@ func (*GiftCController) AddGiftConfig(context *gin.Context) {
 		context.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
+	if req.Type == 0 || req.Name == "" {
+		context.AbortWithStatusJSON(http.StatusBadRequest, &api.Response{
+			Code:      http.StatusBadRequest,
+			RequestId: log.ReqID(),
+			Message:   "Name 不能为空 且 Type 需要 >0 ",
+		})
+		return
+	}
+
 	err := gift.GetService().SaveGiftEntity(context, dto.GiftDtoToEntity(req))
 	if err != nil {
 		log.Errorf("add gift config  failed, err: %v", err)
