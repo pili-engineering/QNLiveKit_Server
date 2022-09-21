@@ -166,7 +166,7 @@ func TestService_cacheLike(t *testing.T) {
 func likeCacheSetup() {
 	cache.Init(&cache.Config{
 		Type:     cache.TypeNode,
-		Addr:     "",
+		Addr:     "127.0.0.1:6379",
 		Addrs:    nil,
 		Password: "",
 	})
@@ -324,4 +324,35 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 	got, err := s.getRoomLikeUsers(context.Background(), now)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, got)
+}
+
+func TestService_flushCacheLikes(t *testing.T) {
+	mysql.Init(&mysql.ConfigStructure{
+		Host:     "localhost",
+		Port:     3306,
+		Username: "root",
+		Password: "123456",
+		Database: "live",
+		Default:  "live",
+	}, &mysql.ConfigStructure{
+		Host:     "localhost",
+		Port:     3306,
+		Username: "root",
+		Password: "123456",
+		Database: "live",
+		Default:  "live",
+		ReadOnly: true,
+	})
+
+	cache.Init(&cache.Config{
+		Type:     cache.TypeNode,
+		Addr:     "127.0.0.1:6379",
+		Addrs:    nil,
+		Password: "",
+	})
+
+	from := int64(1663720421)
+	to := int64(1663720424)
+	s := &Service{}
+	s.flushCacheLikes(context.Background(), from, to)
 }

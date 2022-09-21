@@ -228,7 +228,7 @@ func (s *Service) flushCacheLikes(ctx context.Context, from, to int64) error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(roomUsers))
 	for room, users := range roomUsers {
-		go func() {
+		go func(room string, users map[string]struct{}) {
 			defer wg.Done()
 
 			err1 := s.flushRoomCacheLikes(ctx, room, users)
@@ -236,7 +236,7 @@ func (s *Service) flushCacheLikes(ctx context.Context, from, to int64) error {
 				log.Errorf("flushRoomCacheLikes for %s error %s", room, err.Error())
 				err = err1
 			}
-		}()
+		}(room, users)
 	}
 	wg.Wait()
 	return err
