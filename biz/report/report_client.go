@@ -2,13 +2,14 @@ package report
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
-	"strconv"
 )
 
 type RClient struct {
@@ -16,15 +17,7 @@ type RClient struct {
 
 func NewReportClient() *RClient {
 	r := &RClient{}
-	InitStatsTypeDescription()
 	return r
-}
-
-func InitStatsTypeDescription() {
-	model.StatsTypeDescription = make(map[int]string)
-	model.StatsTypeDescription[1] = "Live"
-	model.StatsTypeDescription[2] = "Item"
-	model.StatsTypeDescription[3] = "Comment"
 }
 
 func (s *RClient) ReportOnlineMessage(ctx context.Context) {
@@ -141,8 +134,24 @@ func (s *RClient) createSingleLiveInfo(ctx context.Context, entity *model.StatsS
 	db := mysql.GetLive(log.ReqID())
 	result := db.Create(entity)
 	if result.Error != nil {
-		log.Errorf("create user %+v, error %+v", result.Error)
+		log.Errorf("create single live info %+v, error %+v", entity, result.Error)
 		return api.ErrDatabase
 	}
 	return nil
+}
+
+func (s *RClient) SaveStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLive(log.ReqID())
+	tx := db.Begin()
+
+	for _, entity := range entities {
+		sql, params := entity.SaveSql()
+		if err := tx.Exec(sql, params...).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }

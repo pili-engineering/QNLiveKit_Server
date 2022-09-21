@@ -12,12 +12,14 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	"github.com/qbox/livekit/common/auth/qiniumac"
-	"github.com/qbox/livekit/utils/rpc"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+
+	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/utils/rpc"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
@@ -596,14 +598,14 @@ func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string
 func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonId int) (demonstrateLog *model.ItemDemonstrateRecord, err error) {
 	info, err := GetService().LiveInfo(ctx, liveId)
 	if err != nil {
-		log.Info("get Live_entities table error %s", err.Error())
+		log.Infof("get Live_entities table error %s", err.Error())
 		return nil, err
 	}
 	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
 	split := strings.Split(info.PushUrl, "/")
 	demonstrateLog, err = s.getRecordVideo(ctx, demonId)
 	if err != nil {
-		log.Info("get DemonstrateLog table error %s", err.Error())
+		log.Infof("get DemonstrateLog table error %s", err.Error())
 		return nil, err
 	}
 	if demonstrateLog == nil {
@@ -619,7 +621,7 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 	encodedStreamTitle := base64.StdEncoding.EncodeToString([]byte(split[len(split)-1]))
 	streamResp, err := s.postDemonstrateStreams(ctx, reqValue, encodedStreamTitle)
 	if err != nil {
-		log.Info("POST DemonstrateLog  error %s", err.Error())
+		log.Infof("POST DemonstrateLog  error %s", err.Error())
 		demonstrateLog.Status = model.RecordStatusFail
 		s.UpdateRecordVideo(ctx, demonstrateLog)
 		return nil, err

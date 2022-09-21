@@ -25,7 +25,7 @@ func main() {
 		Transport: transport,
 	}
 
-	resp, err := client.Get("http://localhost:8099/server/auth/token?app_id=test_app&user_id=test_user_33333&device_id=testDevice")
+	resp, err := client.Get("http://localhost:8099/server/auth/token?app_id=test_app&user_id=user_092002&device_id=testDevice")
 	if err != nil {
 		fmt.Printf("request error %v", err)
 		return

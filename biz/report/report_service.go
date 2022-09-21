@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+
 	"github.com/qbox/livekit/biz/model"
 )
 
@@ -10,6 +11,8 @@ type RService interface {
 	PostStatsSingleLive(context.Context, []*model.StatsSingleLiveEntity) error
 	GetStatsSingleLive(ctx context.Context, liveId string) (*CommonStats, error)
 	UpdateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error
+
+	SaveStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error
 }
 
 var service RService

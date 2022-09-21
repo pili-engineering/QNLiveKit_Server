@@ -9,6 +9,7 @@ package config
 
 import (
 	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/common/cache"
 	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/common/prome"
@@ -29,16 +30,22 @@ type Config struct {
 	ReportHost     string                   `mapstructure:"report_host"`
 	Mysqls         []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
+	CronConfig  CronConfig      `mapstructure:"cron_config"`
 	MacConfig   qiniumac.Config `mapstructure:"mac_config"`
 	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`
 	ImConfig    im.Config       `mapstructure:"im_config"`
 	PromeConfig prome.Config    `mapstructure:"prome_config"`
+	CacheConfig cache.Config    `mapstructure:"cache_config"`
 }
 
 // Server service port and host
 type Server struct {
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
+}
+
+type CronConfig struct {
+	SingleTaskNode int64 `mapstructure:"single_task_node"`
 }
 
 func LoadConfig(confPath string) error {

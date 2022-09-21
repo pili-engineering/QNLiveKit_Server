@@ -1,13 +1,15 @@
 package client
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/dto"
-	"github.com/qbox/livekit/app/live/internal/report"
 	"github.com/qbox/livekit/biz/model"
+	report2 "github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
-	"net/http"
 )
 
 func RegisterStatsRoutes(group *gin.RouterGroup) {
@@ -41,7 +43,7 @@ func (c *statsController) PostStatsSingleLive(ctx *gin.Context) {
 		entities = append(entities, dto.StatsSLDtoToEntity(d))
 	}
 
-	rService := report.GetService()
+	rService := report2.GetService()
 	err := rService.PostStatsSingleLive(ctx, entities)
 	if err != nil {
 		log.Errorf("post statistic single live error %s", err.Error())
@@ -58,7 +60,7 @@ type SingleLiveRequest struct {
 func (c *statsController) GetStatsSingleLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("live_id")
-	rService := report.GetService()
+	rService := report2.GetService()
 	message, err := rService.GetStatsSingleLive(ctx, liveId)
 	if err != nil {
 		log.Errorf("get statistic single live error %s", err.Error())
@@ -74,5 +76,5 @@ func (c *statsController) GetStatsSingleLive(ctx *gin.Context) {
 
 type StatsSingleLiveResponse struct {
 	api.Response
-	Data report.CommonStats `json:"data"`
+	Data report2.CommonStats `json:"data"`
 }

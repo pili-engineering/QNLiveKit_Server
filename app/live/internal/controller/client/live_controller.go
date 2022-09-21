@@ -9,15 +9,17 @@ package client
 
 import (
 	"context"
-	"github.com/qbox/livekit/app/live/internal/report"
 	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/notify"
+	"github.com/qbox/livekit/biz/report"
 	user2 "github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
@@ -40,6 +42,7 @@ func RegisterLiveRoutes(group *gin.RouterGroup) {
 		liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
 		liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
 		liveGroup.GET("/room/user_list", LiveController.LiveUserList)
+		liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
 	}
 }
 
@@ -962,4 +965,62 @@ func (*liveController) LiveUserList(context *gin.Context) {
 	response.Data.EndPage = endPage
 	response.Data.List = userInfoList
 	context.JSON(http.StatusOK, response)
+}
+
+type PutLikeRequest struct {
+	Count int64 `json:"count"`
+}
+
+type PutLikeResponse struct {
+	api.Response
+	Data struct {
+		Count int64 `json:"count"` //我在直播间内的点赞总数
+		Total int64 `json:"total"` //直播间的点赞总数
+	} `json:"data"`
+}
+
+func (*liveController) PutLike(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	userInfo := ctx.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	req := PutLikeRequest{}
+	ctx.ShouldBindJSON(&req)
+	if req.Count == 0 {
+		req.Count = 1
+	}
+
+	liveId := ctx.Param("live_id")
+	liveInfo, err := live.GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get liveInfo info failed, err: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+	}
+
+	my, total, err := live.GetService().AddLike(ctx, liveId, userInfo.UserId, req.Count)
+	if err != nil {
+		log.Errorf("add like error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	u, err := user2.GetService().FindUser(ctx, userInfo.UserId)
+	if err == nil {
+		item := &notify.LikeNotifyItem{
+			LiveId: liveId,
+			UserId: userInfo.UserId,
+			Count:  req.Count,
+		}
+		go notify.SendNotifyToLive(ctx, u, liveInfo, notify.ActionTypeLikeNotify, item)
+	}
+
+	resp := &PutLikeResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data: struct {
+			Count int64 `json:"count"`
+			Total int64 `json:"total"`
+		}{
+			Count: my,
+			Total: total,
+		},
+	}
+	ctx.JSON(http.StatusOK, resp)
 }

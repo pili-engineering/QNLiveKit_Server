@@ -257,7 +257,7 @@ CREATE TABLE `gift_config` (
      `name` varchar(64) NOT NULL COMMENT '礼物名称',
      `amount` int NOT NULL COMMENT '礼物金额，0 表示自定义金额',
      `img` varchar(512) NOT NULL DEFAULT '' COMMENT '礼物图片',
-     `animation_type` int NOT NULL DEFAULT 0 '动态效果类型',
+     `animation_type` int NOT NULL DEFAULT 0 COMMENT '动态效果类型',
      `animation_img` varchar(512) NOT NULL DEFAULT '' COMMENT '动态效果图片',
      `order` int NOT NULL DEFAULT 0 COMMENT '排序，从小到大排序，相同order 根据创建时间排序',
      `created_at` datetime DEFAULT NULL,

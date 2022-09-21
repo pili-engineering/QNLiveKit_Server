@@ -3,6 +3,7 @@ package notify
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/im"
@@ -14,6 +15,8 @@ type ActionType string
 const (
 	ActionTypeCensorNotify ActionType = "censor_notify"
 	ActionTypeCensorStop   ActionType = "censor_stop"
+	ActionTypeLikeNotify   ActionType = "like_notify"
+	ActionTypeGiftNotify   ActionType = "gift_notify"
 )
 
 var actionTypeMap = map[ActionType]bool{
@@ -52,16 +55,16 @@ func SendNotifyToUser(ctx context.Context, user *model.LiveUserEntity, action Ac
 	return err
 }
 
-// SendNotifyToLive 以主播的身份，给直播间发送通知消息
-func SendNotifyToLive(ctx context.Context, anchor *model.LiveUserEntity, live *model.LiveEntity, action ActionType, data interface{}) error {
+// SendNotifyToLive 以指定用户的身份，给直播间发送通知消息
+func SendNotifyToLive(ctx context.Context, user *model.LiveUserEntity, live *model.LiveEntity, action ActionType, data interface{}) error {
 	log := logger.ReqLogger(ctx)
 	if live == nil || live.ChatId == 0 {
 		log.Errorf("no live group info ")
 		return api.ErrInvalidArgument
 	}
 
-	if anchor == nil || anchor.ImUserid == 0 {
-		log.Errorf("no live anchor im info")
+	if user == nil || user.ImUserid == 0 {
+		log.Errorf("no user im info")
 		return api.ErrInvalidArgument
 	}
 
@@ -71,7 +74,7 @@ func SendNotifyToLive(ctx context.Context, anchor *model.LiveUserEntity, live *m
 	}
 	content, _ := json.Marshal(command)
 
-	err := im.GetService().SendCommandMessageToGroup(ctx, anchor.ImUserid, live.ChatId, string(content))
+	err := im.GetService().SendCommandMessageToGroup(ctx, user.ImUserid, live.ChatId, string(content))
 	if err != nil {
 		log.Errorf("SendCommandMessageToGroup error %s", err.Error())
 	}
