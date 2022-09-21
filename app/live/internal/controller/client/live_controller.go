@@ -18,6 +18,7 @@ import (
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/report"
 	user2 "github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
@@ -988,11 +989,27 @@ func (*liveController) PutLike(ctx *gin.Context) {
 	}
 
 	liveId := ctx.Param("live_id")
+	liveInfo, err := live.GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get liveInfo info failed, err: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+	}
+
 	my, total, err := live.GetService().AddLike(ctx, liveId, userInfo.UserId, req.Count)
 	if err != nil {
 		log.Errorf("add like error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
+	}
+
+	u, err := user2.GetService().FindUser(ctx, userInfo.UserId)
+	if err == nil {
+		item := &notify.LikeNotifyItem{
+			LiveId: liveId,
+			UserId: userInfo.UserId,
+			Count:  req.Count,
+		}
+		go notify.SendNotifyToLive(ctx, u, liveInfo, notify.ActionTypeLikeNotify, item)
 	}
 
 	resp := &PutLikeResponse{

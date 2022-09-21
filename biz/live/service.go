@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/admin"
-
 	"github.com/qbox/livekit/biz/callback"
 
 	"github.com/qbox/livekit/biz/model"
@@ -667,5 +666,10 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 		return 0, 0, errors.New("user not in live room")
 	}
 
-	return s.cacheLike(ctx, liveId, userId, count)
+	my, total, err = s.cacheLike(ctx, liveId, userId, count)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return my, total, nil
 }
