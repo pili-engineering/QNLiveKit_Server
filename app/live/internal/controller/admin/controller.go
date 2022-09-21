@@ -396,7 +396,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	for _, liveEntity := range lives {
 		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
-			log.Errorf("search censor image  failed, err: %v", err)
+			log.Errorf("FindLiveRoomUser failed, err: %v", err)
 			ctx.JSON(http.StatusInternalServerError, api.Response{
 				Code:      http.StatusInternalServerError,
 				Message:   "FindLiveRoomUser failed",
