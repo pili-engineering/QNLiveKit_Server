@@ -12,9 +12,9 @@ import (
 
 func RegisterGiftRoute(group *gin.RouterGroup) {
 	giftGroup := group.Group("/gift")
-	giftGroup.GET("/config", GiftConfigController.GetAllGiftConfig)
+	giftGroup.GET("/config/:type", GiftConfigController.GetGiftConfig)
 	giftGroup.POST("/config", GiftConfigController.AddGiftConfig)
-	giftGroup.DELETE("/config/:type", GiftConfigController.DeleteGiftConfig)
+	giftGroup.DELETE("/config/:gift_id", GiftConfigController.DeleteGiftConfig)
 }
 
 type GiftCController struct {
@@ -30,11 +30,11 @@ func (*GiftCController) AddGiftConfig(context *gin.Context) {
 		context.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	if req.Type == 0 || req.Name == "" {
+	if req.GiftId == 0 || req.Name == "" {
 		context.AbortWithStatusJSON(http.StatusBadRequest, &api.Response{
 			Code:      http.StatusBadRequest,
 			RequestId: log.ReqID(),
-			Message:   "Name 不能为空 且 Type 需要 >0 ",
+			Message:   "Name 不能为空 且 GiftId 需要 >0 ",
 		})
 		return
 	}
@@ -58,13 +58,13 @@ func (*GiftCController) AddGiftConfig(context *gin.Context) {
 
 func (*GiftCController) DeleteGiftConfig(context *gin.Context) {
 	log := logger.ReqLogger(context)
-	typeId := context.Param("type")
+	typeId := context.Param("gift_id")
 	typeIdInt, err := strconv.Atoi(typeId)
 	if err != nil {
-		log.Errorf("type is not int, err: %v", err)
+		log.Errorf("gift_id is not int, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
 			Code:      http.StatusInternalServerError,
-			Message:   "type is not int",
+			Message:   "gift_id is not int",
 			RequestId: log.ReqID(),
 		})
 		return
@@ -91,9 +91,20 @@ type ListGiftConfigResponse struct {
 	Data []*dto.GiftConfigDto `json:"data"`
 }
 
-func (*GiftCController) GetAllGiftConfig(context *gin.Context) {
+func (*GiftCController) GetGiftConfig(context *gin.Context) {
 	log := logger.ReqLogger(context)
-	giftEntities, err := gift.GetService().GetListGiftEntity(context)
+	typeId := context.Param("type")
+	typeIdInt, err := strconv.Atoi(typeId)
+	if err != nil {
+		log.Errorf("type is not int, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "type is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	giftEntities, err := gift.GetService().GetListGiftEntity(context, typeIdInt)
 	if err != nil {
 		log.Errorf("get all gift config  failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
