@@ -15,10 +15,11 @@ var moduleManager = &ModuleManager{
 }
 
 const (
-	statusInit   = int32(0)
-	statusConfig = int32(1)
-	statusStart  = int32(2)
-	statusStop   = int32(3)
+	statusInit     = int32(0)
+	statusConfig   = int32(1)
+	statusPreStart = int32(2)
+	statusStart    = int32(3)
+	statusStop     = int32(4)
 )
 
 type ModuleManager struct {
@@ -62,6 +63,22 @@ func (m *ModuleManager) configAllModules() error {
 		if err := module.Config(c); err != nil {
 			log.Errorf("config module %s error %v", name, err)
 			return fmt.Errorf("config module %s error %v", name, err)
+		}
+	}
+
+	return nil
+}
+
+func (m *ModuleManager) preStartAllModules() error {
+	log := logger.New()
+	atomic.StoreInt32(&m.status, statusConfig)
+	m.moduleLock.RLock()
+	defer m.moduleLock.RUnlock()
+
+	for name, module := range m.modules {
+		if err := module.PreStart(); err != nil {
+			log.Errorf("pre start module %s error %v", name, err)
+			return fmt.Errorf("pre start module %s error %v", name, err)
 		}
 	}
 
