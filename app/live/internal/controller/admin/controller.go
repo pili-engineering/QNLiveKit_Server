@@ -393,7 +393,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		return
 	}
 
-	for _, liveEntity := range lives {
+	for i, liveEntity := range lives {
 		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
 			log.Errorf("FindLiveRoomUser failed, err: %v", err)
@@ -414,8 +414,8 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 			})
 			return
 		}
-		liveEntity.Nick = anchor2.Nick
-		liveEntity.AnchorStatus = int(anchor.Status)
+		lives[i].Nick = anchor2.Nick
+		lives[i].AnchorStatus = int(anchor.Status)
 	}
 
 	endPage := false
