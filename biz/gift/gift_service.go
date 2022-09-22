@@ -15,7 +15,7 @@ type SendGiftRequest struct {
 	BizId  string `json:"biz_id"`
 	UserId string `json:"user_id"`
 	LiveId string `json:"live_id"`
-	Type   int    `json:"type"`
+	GiftId int    `json:"gift_id"`
 	Amount int    `json:"amount"`
 	Redo   bool   `json:"redo"`
 }
@@ -31,7 +31,7 @@ func SendGift(context context.Context, req SendGiftRequest) error {
 			LiveID: req.LiveId,
 			UserId: req.UserId,
 			BizId:  req.BizId,
-			Type:   req.Type,
+			GiftId: req.GiftId,
 			Amount: req.Amount,
 		})
 		if err != nil {
@@ -49,10 +49,12 @@ func SendGift(context context.Context, req SendGiftRequest) error {
 		}
 
 		notifyItem := BroadcastGiftNotifyItem{
-			LiveId:  liveEntity.LiveId,
-			Message: req.UserId + "打赏",
+			LiveId: liveEntity.LiveId,
+			UserId: req.UserId,
+			GiftId: req.GiftId,
+			Amount: req.Amount,
 		}
-		err = notify.SendNotifyToLive(context, anchorInfo, liveEntity, notify.ActionTypeGiftBroadcast, &notifyItem)
+		err = notify.SendNotifyToLive(context, anchorInfo, liveEntity, notify.ActionTypeGiftNotify, &notifyItem)
 		if err != nil {
 			log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
 		}
@@ -71,12 +73,14 @@ func SendGift(context context.Context, req SendGiftRequest) error {
 }
 
 type BroadcastGiftNotifyItem struct {
-	LiveId  string
-	Message string
+	UserId string `json:"user_id"`
+	LiveId string `json:"live_id"`
+	GiftId int    `json:"gift_id"`
+	Amount int    `json:"amount"`
 }
 
 func EqualsGiftRequest(req *SendGiftRequest, liveGift *model.LiveGift) bool {
-	if req.UserId != liveGift.UserId || req.LiveId != liveGift.LiveID || req.Type != liveGift.Type || req.Amount != liveGift.Amount {
+	if req.UserId != liveGift.UserId || req.LiveId != liveGift.LiveID || req.GiftId != liveGift.GiftId || req.Amount != liveGift.Amount {
 		return false
 	}
 	return true
@@ -104,4 +108,47 @@ func SaveLiveGift(context context.Context, liveGift *model.LiveGift) error {
 		return api.ErrDatabase
 	}
 	return nil
+}
+
+func UpdateGiftStatus(context context.Context, giftId int, status int) error {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
+	err := db.Model(&model.LiveGift{}).Where("gift_id = ?", giftId).Update("status", status).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetGiftByAnchorId(context context.Context, anchorId int) ([]*model.LiveGift, error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
+	gifts := make([]*model.LiveGift, 0)
+	err := db.Model(&model.LiveGift{}).Find(&gifts, "anchor_id = ?", anchorId).Error
+	if err != nil {
+		return nil, err
+	}
+	return gifts, nil
+}
+
+func GetGiftByLiveId(context context.Context, liveId int) ([]*model.LiveGift, error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
+	gifts := make([]*model.LiveGift, 0)
+	err := db.Model(&model.LiveGift{}).Find(&gifts, "live_id = ?", liveId).Error
+	if err != nil {
+		return nil, err
+	}
+	return gifts, nil
+}
+
+func GetGiftByUserId(context context.Context, userId int) ([]*model.LiveGift, error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLive(log.ReqID())
+	gifts := make([]*model.LiveGift, 0)
+	err := db.Model(&model.LiveGift{}).Find(&gifts, "user_id = ?", userId).Error
+	if err != nil {
+		return nil, err
+	}
+	return gifts, nil
 }
