@@ -268,6 +268,6 @@ CREATE TABLE `gift_config` (
      `deleted_at` datetime DEFAULT NULL,
      `extends` varchar(1024) DEFAULT NULL,
      PRIMARY KEY (`id`),
-     UNIQUE KEY `uix_type` (`gift_id`),
-     KEY `idx_order` (`order`,`created_at`)
+     UNIQUE KEY uid_gift_id (`gift_id`),
+     KEY idx_type_order (`type`,`order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
