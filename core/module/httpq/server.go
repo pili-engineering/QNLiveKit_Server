@@ -3,32 +3,34 @@ package httpq
 import (
 	"fmt"
 	"net"
-	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/core/application"
 )
 
-var instance *server
+var instance *Server
 
-type server struct {
-	c      *Config
-	engine *gin.Engine
+type Server struct {
+	c *Config
+
+	engine        *gin.Engine
+	clientGroup   *gin.RouterGroup
+	serverGroup   *gin.RouterGroup
+	adminGroup    *gin.RouterGroup
+	callbackGroup *gin.RouterGroup
 }
 
-func newServer(c *Config) *server {
-	s := &server{
+func newServer(c *Config) *Server {
+	s := &Server{
 		c: c,
 	}
+	s.createEngin()
 
-	s.engine = gin.New()
-	s.engine.Use(Cors())
 	return s
 }
 
-func (s *server) Start() error {
+func (s *Server) Start() error {
 	addr, err := net.ResolveTCPAddr("tcp", s.c.Addr)
 	if err != nil {
 		return fmt.Errorf("resolve addr %s error %v", s.c.Addr, err)
@@ -45,16 +47,5 @@ func (s *server) Start() error {
 	return nil
 }
 
-func (s *server) Stop(err error) {
-}
-
-func Cors() gin.HandlerFunc {
-	c := cors.Config{
-		AllowAllOrigins: true,
-		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"},
-		AllowHeaders:    []string{"Content-Type", "Access-Token", "Authorization"},
-		MaxAge:          6 * time.Hour,
-	}
-
-	return cors.New(c)
+func (s *Server) Stop(err error) {
 }
