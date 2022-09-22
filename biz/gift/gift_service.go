@@ -20,7 +20,7 @@ type SendGiftRequest struct {
 	Redo   bool   `json:"redo"`
 }
 
-func SendGift(context context.Context, req SendGiftRequest) error {
+func (s *Service) SendGift(context context.Context, req SendGiftRequest) error {
 	log := logger.ReqLogger(context)
 	gift, err := GetGiftByBizId(context, req.BizId)
 	if err != nil {
@@ -110,7 +110,7 @@ func SaveLiveGift(context context.Context, liveGift *model.LiveGift) error {
 	return nil
 }
 
-func UpdateGiftStatus(context context.Context, giftId int, status int) error {
+func (s *Service) UpdateGiftStatus(context context.Context, giftId int, status int) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err := db.Model(&model.LiveGift{}).Where("gift_id = ?", giftId).Update("status", status).Error
@@ -120,35 +120,41 @@ func UpdateGiftStatus(context context.Context, giftId int, status int) error {
 	return nil
 }
 
-func GetGiftByAnchorId(context context.Context, anchorId int) ([]*model.LiveGift, error) {
+func (s *Service) SearchGiftByAnchorId(context context.Context, anchorId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	gifts := make([]*model.LiveGift, 0)
-	err := db.Model(&model.LiveGift{}).Find(&gifts, "anchor_id = ?", anchorId).Error
+	liveGifts = make([]*model.LiveGift, 0)
+	err = db.Model(&model.LiveGift{}).Where("anchor_id = ?", anchorId).Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&liveGifts).Error
+	err = db.Model(&model.LiveGift{}).Where("anchor_id = ?", anchorId).Count(&totalCount).Error
 	if err != nil {
-		return nil, err
+		log.Errorf("SearchGiftByAnchorId %v", err)
+		return nil, 0, err
 	}
-	return gifts, nil
+	return
 }
 
-func GetGiftByLiveId(context context.Context, liveId int) ([]*model.LiveGift, error) {
+func (s *Service) SearchGiftByLiveId(context context.Context, liveId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	gifts := make([]*model.LiveGift, 0)
-	err := db.Model(&model.LiveGift{}).Find(&gifts, "live_id = ?", liveId).Error
+	liveGifts = make([]*model.LiveGift, 0)
+	err = db.Model(&model.LiveGift{}).Where("live_id = ?", liveId).Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&liveGifts).Error
+	err = db.Model(&model.LiveGift{}).Where("live_id = ?", liveId).Count(&totalCount).Error
 	if err != nil {
-		return nil, err
+		log.Errorf("SearchGiftByLiveId %v", err)
+		return nil, 0, err
 	}
-	return gifts, nil
+	return
 }
 
-func GetGiftByUserId(context context.Context, userId int) ([]*model.LiveGift, error) {
+func (s *Service) SearchGiftByUserId(context context.Context, userId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	gifts := make([]*model.LiveGift, 0)
-	err := db.Model(&model.LiveGift{}).Find(&gifts, "user_id = ?", userId).Error
+	liveGifts = make([]*model.LiveGift, 0)
+	err = db.Model(&model.LiveGift{}).Where("user_id = ?", userId).Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&liveGifts).Error
+	err = db.Model(&model.LiveGift{}).Where("user_id = ?", userId).Count(&totalCount).Error
 	if err != nil {
-		return nil, err
+		log.Errorf("SearchGiftByUserId %v", err)
+		return nil, 0, err
 	}
-	return gifts, nil
+	return
 }

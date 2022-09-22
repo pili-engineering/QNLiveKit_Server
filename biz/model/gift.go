@@ -21,3 +21,20 @@ type GiftEntity struct {
 func (e GiftEntity) TableName() string {
 	return "gift_config"
 }
+
+type LiveGift struct {
+	ID        uint                `gorm:"primary_key" json:"id"`
+	BizId     string              `json:"biz_id"`
+	UserId    string              `json:"user_id"`
+	GiftId    int                 `json:"gift_id"`
+	Amount    int                 `json:"amount"`
+	Status    int                 `json:"status"`
+	LiveID    string              `json:"live_id"`
+	AnchorId  string              `json:"anchor_id"`
+	CreatedAt timestamp.Timestamp `json:"created_at"`
+	UpdatedAt timestamp.Timestamp `json:"updated_at"`
+}
+
+func (e LiveGift) TableName() string {
+	return "live_gift"
+}
