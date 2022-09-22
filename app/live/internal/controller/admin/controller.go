@@ -384,10 +384,10 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	// 1，只查看有未审核记录的直播间；0，全部直播间
 	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, auditInt, pageNumInt, pageSizeInt)
 	if err != nil {
-		log.Errorf("search censor image  failed, err: %v", err)
+		log.Errorf("search censor live  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
 			Code:      http.StatusInternalServerError,
-			Message:   "search  censor image failed",
+			Message:   "search  censor live failed",
 			RequestId: log.ReqID(),
 		})
 		return
