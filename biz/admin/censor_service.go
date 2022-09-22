@@ -238,12 +238,13 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 
 	for _, live := range lives {
 		cl := CensorLive{
-			LiveId:   live.LiveId,
-			Title:    live.Title,
-			AnchorId: live.AnchorId,
-			Status:   live.Status,
-			Count:    live.UnauditCensorCount,
-			Time:     live.LastCensorTime,
+			LiveId:     live.LiveId,
+			Title:      live.Title,
+			AnchorId:   live.AnchorId,
+			Status:     live.Status,
+			Count:      live.UnauditCensorCount,
+			Time:       live.LastCensorTime,
+			StopReason: live.StopReason,
 		}
 		censorLive = append(censorLive, cl)
 	}
@@ -265,12 +266,15 @@ func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uin
 }
 
 type CensorLive struct {
-	LiveId   string              `json:"live_id"`
-	Title    string              `json:"title"`
-	AnchorId string              `json:"anchor_id"`
-	Status   int                 `json:"live_status"`
-	Count    int                 `json:"count"`
-	Time     timestamp.Timestamp `json:"time"`
+	LiveId       string              `json:"live_id"`
+	Title        string              `json:"title"`
+	AnchorId     string              `json:"anchor_id"`
+	Nick         string              `json:"nick"`
+	Status       int                 `json:"live_status"`
+	AnchorStatus int                 `json:"anchor_status"`
+	StopReason   string              `json:"stop_reason"`
+	Count        int                 `json:"count"`
+	Time         timestamp.Timestamp `json:"time"`
 }
 
 type JobQueryRequest struct {

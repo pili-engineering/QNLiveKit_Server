@@ -384,13 +384,38 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	// 1，只查看有未审核记录的直播间；0，全部直播间
 	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, auditInt, pageNumInt, pageSizeInt)
 	if err != nil {
-		log.Errorf("search censor image  failed, err: %v", err)
+		log.Errorf("search censor live  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
 			Code:      http.StatusInternalServerError,
-			Message:   "search  censor image failed",
+			Message:   "search  censor live failed",
 			RequestId: log.ReqID(),
 		})
 		return
+	}
+
+	for i, liveEntity := range lives {
+		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
+		if err != nil {
+			log.Errorf("FindLiveRoomUser failed, err: %v", err)
+			ctx.JSON(http.StatusInternalServerError, api.Response{
+				Code:      http.StatusInternalServerError,
+				Message:   "FindLiveRoomUser failed",
+				RequestId: log.ReqID(),
+			})
+			return
+		}
+		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+		if err != nil {
+			log.Errorf("FindUser  failed, err: %v", err)
+			ctx.JSON(http.StatusInternalServerError, api.Response{
+				Code:      http.StatusInternalServerError,
+				Message:   "FindUser failed",
+				RequestId: log.ReqID(),
+			})
+			return
+		}
+		lives[i].Nick = anchor2.Nick
+		lives[i].AnchorStatus = int(anchor.Status)
 	}
 
 	endPage := false
