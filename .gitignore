@@ -38,7 +38,6 @@ flvdump/
 dump.rdb
 jobs.json
 forwardJobs.json
-core
 
 # devspace
 .devspace/
