@@ -10,7 +10,7 @@ package live
 import (
 	"context"
 
-	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/utils/uuid"
 
