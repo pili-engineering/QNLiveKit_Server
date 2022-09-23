@@ -23,6 +23,8 @@ import (
 type IService interface {
 	CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error)
 
+	GetLiveAuthor(ctx context.Context, liveId string) (*model.LiveUserEntity, error)
+
 	DeleteLive(context context.Context, liveId string, anchorId string) (err error)
 
 	StartLive(context context.Context, liveId string, anchorId string) (roomToken string, err error)
@@ -145,6 +147,23 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
 	}
 	return
+}
+
+func (s *Service) GetLiveAuthor(ctx context.Context, liveId string) (*model.LiveUserEntity, error) {
+	log := logger.ReqLogger(ctx)
+	liveInfo, err := s.LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get live %s error %v", liveId, err)
+		return nil, err
+	}
+
+	userInfo, err := user.GetService().FindUser(ctx, liveInfo.AnchorId)
+	if err != nil {
+		log.Errorf("get user %s error %v", liveInfo.AnchorId, err)
+		return nil, err
+	}
+
+	return userInfo, nil
 }
 
 func (s *Service) DeleteLive(context context.Context, liveId string, anchorId string) (err error) {
