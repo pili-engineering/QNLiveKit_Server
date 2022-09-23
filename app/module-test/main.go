@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	_ "github.com/qbox/livekit/app/module-test/modules/httptest"
 	"github.com/qbox/livekit/core/application"
 )
 

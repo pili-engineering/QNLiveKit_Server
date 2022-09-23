@@ -38,7 +38,7 @@ func (m *Module) PreStart() error {
 }
 
 func (m *Module) Start() error {
-	return nil
+	return instance.Start()
 }
 
 func (m *Module) Stop() error {

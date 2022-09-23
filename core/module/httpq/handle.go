@@ -22,7 +22,15 @@ func makeHandle(f HandlerFunc) gin.HandlerFunc {
 
 		defer func() {
 			if err != nil {
-
+				restErr, ok := err.(*rest.Error)
+				if ok {
+					if restErr.StatusCode == 0 {
+						restErr = restErr.WithStatusCode(http.StatusInternalServerError)
+					}
+				} else {
+					restErr = rest.ErrInternal.WithMessage(err.Error())
+				}
+				ctx.JSON(restErr.StatusCode, restErr.WithRequestId(log.ReqID()))
 			} else {
 				resp := &rest.Response{
 					RequestId: log.ReqID(),

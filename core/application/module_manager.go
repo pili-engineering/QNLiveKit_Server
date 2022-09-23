@@ -40,6 +40,11 @@ func (m *ModuleManager) Start() error {
 			return
 		}
 
+		err = m.preStartAllModules()
+		if err != nil {
+			return
+		}
+
 		err = m.startAllModules()
 		if err != nil {
 			return
