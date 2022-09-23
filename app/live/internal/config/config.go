@@ -9,9 +9,9 @@ package config
 
 import (
 	"github.com/qbox/livekit/common/auth/qiniumac"
-	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/prome"
-	"github.com/qbox/livekit/common/rtc"
+	"github.com/qbox/livekit/module/fun/im"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/cache"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/config"

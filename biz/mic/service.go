@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/rtc"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 )

@@ -11,10 +11,10 @@ import (
 	"net/http"
 
 	"github.com/qbox/livekit/biz/live"
-
-	"github.com/qbox/livekit/common/rtc"
+	"github.com/qbox/livekit/module/fun/rtc"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"

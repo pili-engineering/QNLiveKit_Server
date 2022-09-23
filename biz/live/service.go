@@ -7,14 +7,14 @@ import (
 
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/callback"
+	"github.com/qbox/livekit/module/fun/im"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
-	"github.com/qbox/livekit/common/im"
-	"github.com/qbox/livekit/common/rtc"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 	"github.com/qbox/livekit/utils/uuid"

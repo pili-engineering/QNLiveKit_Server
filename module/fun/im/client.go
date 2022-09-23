@@ -10,7 +10,7 @@ package im
 import (
 	"context"
 
-	"github.com/qbox/livekit/common/im/maxim"
+	"github.com/qbox/livekit/module/fun/im/maxim"
 )
 
 type Service interface {
