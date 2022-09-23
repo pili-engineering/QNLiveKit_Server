@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/qbox/livekit/common/mysql"
+	mysql2 "github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/stretchr/testify/assert"
 
@@ -24,7 +24,7 @@ func (BatchTest) TableName() string {
 }
 
 func TestBatchInsert(t *testing.T) {
-	mysql.Init(&mysql.ConfigStructure{
+	mysql2.Init(&mysql2.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -32,8 +32,8 @@ func TestBatchInsert(t *testing.T) {
 		Database: "live_test",
 	})
 
-	mysql.Get().DropTableIfExists(&BatchTest{})
-	mysql.Get().AutoMigrate(&BatchTest{})
+	mysql2.Get().DropTableIfExists(&BatchTest{})
+	mysql2.Get().AutoMigrate(&BatchTest{})
 
 	bts := make([]interface{}, 0)
 	for i := 0; i < 100; i++ {
@@ -44,7 +44,7 @@ func TestBatchInsert(t *testing.T) {
 		})
 	}
 
-	rows, err := mysql.BatchInsert(mysql.Get(), bts)
+	rows, err := mysql2.BatchInsert(mysql2.Get(), bts)
 	assert.Nil(t, err)
 	assert.Equal(t, rows, int64(100))
 }
