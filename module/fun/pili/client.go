@@ -5,16 +5,18 @@
 // @Date: 2022/5/25 10:17 上午
 // Copyright 2021 QINIU. All rights reserved
 
-package rtc
+package pili
+
+import "time"
 
 type Service interface {
-	GetRoomToken(userId, roomId string) string
+	StreamPubURL(roomId string, expectAt *time.Time) (url string)
 
-	GetRelayToken(userId, roomId string) string
+	StreamRtmpPlayURL(roomId string) (url string)
 
-	ListUser(roomId string) (res []string, err error)
+	StreamFlvPlayURL(roomId string) (url string)
 
-	Online(userId, roomId string) bool
+	StreamHlsPlayURL(roomId string) (url string)
 }
 
 type Config struct {
