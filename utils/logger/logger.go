@@ -72,6 +72,7 @@ func GetLoggerFromReq(req *http.Request) *Logger {
 	reqID := req.Header.Get(RequestIDHeaderKey)
 	if reqID == "" {
 		reqID = GenReqID()
+		req.Header.Set(RequestIDHeaderKey, reqID)
 	}
 	return New(reqID)
 }
