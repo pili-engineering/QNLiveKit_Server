@@ -10,16 +10,9 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"math/rand"
 	_ "net/http/pprof"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/app/live/internal/controller"
 	"github.com/qbox/livekit/app/live/internal/cron"
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/callback"
@@ -28,40 +21,24 @@ import (
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/trace"
+	"github.com/qbox/livekit/core/application"
+	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/cache"
-	"github.com/qbox/livekit/module/store/mysql"
 	log "github.com/qbox/livekit/utils/logger"
-	"github.com/qbox/livekit/utils/uuid"
 )
 
 var confPath = flag.String("f", "", "live -f /path/to/config")
 
 func main() {
 	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
+	application.StartWithConfig(*confPath)
 
-	if err := config.LoadConfig(*confPath); err != nil {
-		panic(err)
-	}
 	initAllService()
 	uuid.Init(config.AppConfig.NodeID)
-	mysql.Init(config.AppConfig.Mysqls...)
 
 	errCh := make(chan error)
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		errCh <- fmt.Errorf("%s", <-c)
-	}()
-
-	engine := controller.Engine()
-	go func() {
-		addr := fmt.Sprintf("%s:%d", config.AppConfig.Server.Host, config.AppConfig.Server.Port)
-		err := engine.Run(addr)
-		errCh <- err
-	}()
 
 	go func() {
 		err := prome.Start(context.Background(), config.AppConfig.PromeConfig)

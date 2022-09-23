@@ -7,6 +7,7 @@ import (
 
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/callback"
+	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/pili"
 	"github.com/qbox/livekit/module/fun/rtc"
@@ -18,7 +19,6 @@ import (
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
-	"github.com/qbox/livekit/utils/uuid"
 )
 
 type IService interface {

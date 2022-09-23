@@ -1,3 +1,6 @@
+node:
+  node_id: 1
+  
 httpq:
   addr: ":8088"
 
