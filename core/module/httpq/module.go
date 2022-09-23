@@ -19,6 +19,10 @@ type Module struct {
 }
 
 func (m *Module) Config(c *config.Config) error {
+	if c == nil {
+		return nil
+	}
+
 	conf := Config{}
 	if err := c.Unmarshal(&conf); err != nil {
 		return fmt.Errorf("unmarshal config error %v", err)

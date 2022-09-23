@@ -5,6 +5,10 @@ import (
 	"net/url"
 )
 
+type Config struct {
+	Databases []*ConfigStructure `mapstructure:"databases"`
+}
+
 // ConfigStructure mysql config
 type ConfigStructure struct {
 	Host            string `mapstructure:"host"`

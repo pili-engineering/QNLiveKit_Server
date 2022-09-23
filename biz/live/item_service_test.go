@@ -15,20 +15,20 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/mysql"
+	mysql2 "github.com/qbox/livekit/module/store/mysql"
 )
 
 const testLiveId = "test_live_1"
 
 func itemSetup() {
-	mysql.Init(&mysql.ConfigStructure{
+	mysql2.Init(&mysql2.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql.ConfigStructure{
+	}, &mysql2.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -38,12 +38,12 @@ func itemSetup() {
 		ReadOnly: true,
 	})
 
-	mysql.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
+	mysql2.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
 
 	liveEntity := model.LiveEntity{
 		LiveId: testLiveId,
 	}
-	mysql.GetLive().Save(&liveEntity)
+	mysql2.GetLive().Save(&liveEntity)
 
 	items := make([]*model.ItemEntity, 0, 50)
 	for i := uint(1); i <= 50; i++ {
@@ -71,7 +71,7 @@ func itemSetup() {
 }
 
 func itemTearDown() {
-	db := mysql.GetLive()
+	db := mysql2.GetLive()
 	db.DropTableIfExists(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
 }
 
@@ -79,7 +79,7 @@ func TestItemService_countItems(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	db := mysql.GetLive()
+	db := mysql2.GetLive()
 
 	tests := []struct {
 		name    string
@@ -115,7 +115,7 @@ func TestItemService_checkItemsExist(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	db := mysql.GetLive()
+	db := mysql2.GetLive()
 
 	tests := []struct {
 		name    string

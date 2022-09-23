@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -16,10 +17,10 @@ type Cache struct {
 }
 
 // Client ...
-var Client = &Cache{}
+var Client *Cache
 
 // Init  initialize cache client
-func Init(conf *Config) {
+func Init(conf *Config) error {
 	var client redis.Cmdable
 	switch conf.Type {
 	case TypeCluster:
@@ -27,11 +28,13 @@ func Init(conf *Config) {
 	case TypeNode:
 		client = getClient(conf)
 	default:
-		panic("invalid type " + conf.Type)
+		return fmt.Errorf("invalid type %s", conf.Type)
 	}
 	Client = &Cache{
 		client: client,
 	}
+
+	return nil
 }
 
 func getClient(conf *Config) redis.Cmdable {

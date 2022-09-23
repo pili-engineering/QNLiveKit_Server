@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/timestamp"
 
 	"github.com/qbox/livekit/utils/logger"
