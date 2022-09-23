@@ -2,15 +2,17 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
-	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/auth/liveauth"
-	"github.com/qbox/livekit/common/mysql"
-	"github.com/qbox/livekit/utils/logger"
-	"github.com/qbox/livekit/utils/timestamp"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/store/mysql"
+	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/timestamp"
 )
 
 // OperatorLogMiddleware 用于记录管理员后台的操作日志

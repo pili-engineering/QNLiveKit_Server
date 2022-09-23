@@ -9,8 +9,8 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/report"
-	"github.com/qbox/livekit/common/cache"
-	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/module/store/cache"
+	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
