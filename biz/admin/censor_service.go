@@ -243,6 +243,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 			Count:      live.UnauditCensorCount,
 			Time:       live.LastCensorTime,
 			StopReason: live.StopReason,
+			StopAt:     *live.StopAt,
 		}
 		censorLive = append(censorLive, cl)
 	}
@@ -271,6 +272,7 @@ type CensorLive struct {
 	Status       int                 `json:"live_status"`
 	AnchorStatus int                 `json:"anchor_status"`
 	StopReason   string              `json:"stop_reason"`
+	StopAt       timestamp.Timestamp `json:"stop_at"`
 	Count        int                 `json:"count"`
 	Time         timestamp.Timestamp `json:"time"`
 }
