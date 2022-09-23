@@ -12,37 +12,21 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/qiniu/go-sdk/v7/auth"
-	"github.com/qiniu/go-sdk/v7/pili"
 	"github.com/qiniu/go-sdk/v7/rtc"
 
 	"github.com/qbox/livekit/common/auth/qiniumac"
 )
 
 type QiniuClient struct {
-	RoomTokenExpireS int64
-	RtcPlayBackUrl   string
-	Hub              string
-	StreamPattern    string
-	PublishUrl       string
-	PublishDomain    string
-	RtmpPlayUrl      string
-	FlvPlayUrl       string
-	HlsPlayUrl       string
-	AppId            string
-	Ak               string
-	Sk               string
-	securityType     string //expiry, expiry_sk, none
-	publishKey       string // 七牛RTC生成推流地址需要验算公共Key
-	publishExpireS   int64  // 推流地址过期时间，秒
-	client           *http.Client
+	AppId  string
+	Ak     string
+	Sk     string
+	client *http.Client
 }
-
-const RtcHost = "https://rtc.qiniuapi.com"
 
 func NewQiniuClient(conf Config) *QiniuClient {
 	mac := &qiniumac.Mac{
@@ -52,25 +36,13 @@ func NewQiniuClient(conf Config) *QiniuClient {
 	tr := qiniumac.NewTransport(mac, nil)
 
 	c := &QiniuClient{
-		AppId:            conf.AppId,
-		Ak:               conf.AccessKey,
-		Sk:               conf.SecretKey,
-		RoomTokenExpireS: conf.RoomTokenExpireS,
-		RtcPlayBackUrl:   conf.RtcPlayBackUrl,
-		Hub:              conf.Hub,
-		StreamPattern:    conf.StreamPattern,
-		PublishUrl:       conf.PublishUrl,
-		PublishDomain:    conf.PublishDomain,
-		RtmpPlayUrl:      conf.RtmpPlayUrl,
-		FlvPlayUrl:       conf.FlvPlayUrl,
-		HlsPlayUrl:       conf.HlsPlayUrl,
+		AppId: conf.AppId,
+		Ak:    conf.AccessKey,
+		Sk:    conf.SecretKey,
 		client: &http.Client{
 			Transport: tr,
 			Timeout:   3 * time.Second,
 		},
-		securityType:   conf.SecurityType,
-		publishKey:     conf.PublishKey,
-		publishExpireS: conf.PublishExpireS,
 	}
 	return c
 }
@@ -120,44 +92,6 @@ func (c *QiniuClient) signToken(roomAccess interface{}) string {
 	encodedSign := base64.URLEncoding.EncodeToString(sign)
 	token := c.Ak + ":" + encodedSign + ":" + string(buf)
 	return token
-}
-
-func (c *QiniuClient) StreamPubURL(roomId string, expectAt *time.Time) (url string) {
-	rtmp := pili.RTMPPublishURL(c.Hub, c.PublishDomain, c.streamName(roomId))
-	var expireAt int64
-	if expectAt != nil {
-		expireAt = expectAt.Unix()
-	} else {
-		expireAt = time.Now().Add(time.Second * time.Duration(c.publishExpireS)).Unix()
-	}
-	url, _ = pili.SignPublishURL(rtmp, pili.SignPublishURLArgs{
-		SecurityType: c.securityType,
-		PublishKey:   c.publishKey,
-		ExpireAt:     expireAt,
-		Nonce:        0,
-		AccessKey:    c.Ak,
-		SecretKey:    c.Sk,
-	})
-	return
-}
-
-func (c *QiniuClient) StreamRtmpPlayURL(roomId string) (url string) {
-	url = fmt.Sprintf(c.RtmpPlayUrl + "/" + c.Hub + "/" + c.streamName(roomId))
-	return
-}
-
-func (c *QiniuClient) StreamFlvPlayURL(roomId string) (url string) {
-	url = fmt.Sprintf(c.FlvPlayUrl + "/" + c.Hub + "/" + c.streamName(roomId) + ".flv")
-	return
-}
-
-func (c *QiniuClient) StreamHlsPlayURL(roomId string) (url string) {
-	url = fmt.Sprintf(c.HlsPlayUrl + "/" + c.Hub + "/" + c.streamName(roomId) + ".m3u8")
-	return
-}
-
-func (c *QiniuClient) streamName(roomId string) string {
-	return fmt.Sprintf(c.StreamPattern, roomId)
 }
 
 func (c *QiniuClient) ListUser(roomId string) (res []string, err error) {
