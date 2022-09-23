@@ -31,12 +31,6 @@ type Service interface {
 
 var service Service
 
-type Config struct {
-	AppId    string `mapstructure:"app_id"`
-	Endpoint string `mapstructure:"endpoint"`
-	Token    string `mapstructure:"token"` //管理员AccessToken
-}
-
 func InitService(conf Config) {
 	service = maxim.NewMaximClient(conf.AppId, conf.Token, conf.Endpoint)
 }
