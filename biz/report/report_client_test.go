@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/mysql"
+	mysql2 "github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
@@ -54,14 +54,14 @@ func TestRClient_SaveStatsSingleLive(t *testing.T) {
 }
 
 func saveStatsSingleLiveSetup() {
-	mysql.Init(&mysql.ConfigStructure{
+	mysql2.Init(&mysql2.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql.ConfigStructure{
+	}, &mysql2.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
