@@ -1,3 +1,35 @@
 httpq:
   addr: ":8088"
 
+cache:
+  type: node
+  addr: 127.0.0.1:6379
+  addrs:
+    - 127.0.0.1:7000
+    - 127.0.0.1:7001
+    - 127.0.0.1:7002
+    - 127.0.0.1:7003
+    - 127.0.0.1:7004
+    - 127.0.0.1:7005
+
+mysql:
+  databases:
+    - host: 127.0.0.1
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+    - host: 127.0.0.1
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+      read_only: true
