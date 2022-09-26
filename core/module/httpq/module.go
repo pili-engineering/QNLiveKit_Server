@@ -42,6 +42,8 @@ func (m *Module) PreStart() error {
 }
 
 func (m *Module) Start() error {
+	registerMonitorTask()
+
 	return instance.Start()
 }
 
