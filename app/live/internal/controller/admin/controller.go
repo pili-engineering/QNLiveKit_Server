@@ -2,11 +2,9 @@ package admin
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"math"
 	"net/http"
-	"strconv"
-
-	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/controller/server"
 	"github.com/qbox/livekit/app/live/internal/dto"
@@ -285,43 +283,30 @@ func (c *CensorController) CloseJob(ctx *gin.Context) {
 	})
 }
 
+type SearchRecordRequest struct {
+	PageNum  int     `json:"page_num" form:"page_num"`
+	PageSize int     `json:"page_size" form:"page_size"`
+	LiveId   *string `json:"live_id" form:"live_id"`
+	IsReview *int    `json:"is_review" form:"is_review"`
+}
+
 func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	audit := ctx.DefaultQuery("audit", strconv.Itoa(admin.AuditAll))
-	pageNum := ctx.DefaultQuery("page_num", "1")
-	pageSize := ctx.DefaultQuery("page_size", "10")
-	liveId := ctx.Query("live_id")
-	pageNumInt, err := strconv.Atoi(pageNum)
-	if err != nil {
-		log.Errorf("page_num is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "page_num is not int",
-			RequestId: log.ReqID(),
-		})
+	req := &SearchRecordRequest{}
+	if err := ctx.BindQuery(req); err != nil {
+		log.Errorf("bind request error %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	pageSizeInt, err := strconv.Atoi(pageSize)
-	if err != nil {
-		log.Errorf("page_size is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "page_size is not int",
-			RequestId: log.ReqID(),
-		})
-		return
+
+	if req.IsReview != nil {
+		if *req.IsReview != admin.IsReviewNo && *req.IsReview != admin.IsReviewYes {
+			log.Errorf(" invalid argument")
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+			return
+		}
 	}
-	auditInt, err := strconv.Atoi(audit)
-	if err != nil {
-		log.Errorf("page_size is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "is_review is not int",
-			RequestId: log.ReqID(),
-		})
-		return
-	}
-	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, auditInt, pageNumInt, pageSizeInt, liveId)
+	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, req.IsReview, req.PageNum, req.PageSize, req.LiveId)
 	if err != nil {
 		log.Errorf("search censor image  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -333,7 +318,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	}
 
 	endPage := false
-	if len(images) < pageSizeInt {
+	if len(images) < req.PageSize {
 		endPage = true
 	}
 	response := &CensorImageListResponse{}
@@ -341,54 +326,36 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	response.Response.Message = "success"
 	response.Response.RequestId = log.ReqID()
 	response.Data.TotalCount = count
-	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
+	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(req.PageSize)))
 	response.Data.EndPage = endPage
 	response.Data.List = images
 	ctx.JSON(http.StatusOK, response)
 }
 
+type SearchCensorLiveRequest struct {
+	PageNum  int  `json:"page_num" form:"page_num"`
+	PageSize int  `json:"page_size" form:"page_size"`
+	IsReview *int `json:"is_review" form:"is_review"`
+}
+
 func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	audit := ctx.DefaultQuery("audit", strconv.Itoa(admin.AuditAll))
-	pageNum := ctx.DefaultQuery("page_num", "1")
-	pageSize := ctx.DefaultQuery("page_size", "10")
-	pageNumInt, err := strconv.Atoi(pageNum)
-	if err != nil {
-		log.Errorf("page_num is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "page_num is not int",
-			RequestId: log.ReqID(),
-		})
-		return
-	}
-	pageSizeInt, err := strconv.Atoi(pageSize)
-	if err != nil {
-		log.Errorf("page_size is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "page_size is not int",
-			RequestId: log.ReqID(),
-		})
-		return
-	}
-	auditInt, err := strconv.Atoi(audit)
-	if err != nil {
-		log.Errorf("page_size is not int, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "is_review is not int",
-			RequestId: log.ReqID(),
-		})
-		return
-	}
-
-	if auditInt != admin.AuditAll && auditInt != admin.AuditNo {
-		log.Errorf(" invalid argument %v", err)
+	req := &SearchCensorLiveRequest{}
+	if err := ctx.BindQuery(req); err != nil {
+		log.Errorf("bind request error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, auditInt, pageNumInt, pageSizeInt)
+
+	if req.IsReview != nil {
+		if *req.IsReview != admin.IsReviewNo {
+			log.Errorf(" invalid argument")
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+			return
+		}
+	}
+
+	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, req.IsReview, req.PageNum, req.PageSize)
 	if err != nil {
 		log.Errorf("search censor live  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -425,7 +392,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	}
 
 	endPage := false
-	if len(lives) < pageSizeInt {
+	if len(lives) < req.PageSize {
 		endPage = true
 	}
 	response := &CensorLiveListResponse{}
@@ -433,7 +400,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	response.Response.Message = "success"
 	response.Response.RequestId = log.ReqID()
 	response.Data.TotalCount = count
-	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
+	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(req.PageSize)))
 	response.Data.EndPage = endPage
 	response.Data.List = lives
 	ctx.JSON(http.StatusOK, response)
@@ -568,7 +535,7 @@ type CensorAuditRequest struct {
 	LiveId       string `json:"live_id"`
 	Images       []uint `json:"image_list"`
 	Notify       bool   `json:"notify"` //是否发送违规警告
-	ReviewAnswer int    `json:"audit_answer"`
+	ReviewAnswer int    `json:"review_answer"`
 }
 
 type CensorListRequest struct {

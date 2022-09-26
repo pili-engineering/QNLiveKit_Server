@@ -22,8 +22,8 @@ type CCService interface {
 	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
-	SearchCensorImage(ctx context.Context, audit, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
-	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
+	SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error)
+	SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
 	GetUnreviewCount(ctx context.Context, liveId string) (len int, err error)
 }
 
@@ -180,19 +180,14 @@ func (c *CensorService) GetUnreviewCount(ctx context.Context, liveId string) (le
 	return
 }
 
-func (c *CensorService) SearchCensorImage(ctx context.Context, audit, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error) {
+func (c *CensorService) SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	image = make([]model.CensorImage, 0)
-	var isReview int
-	if audit == AuditNo {
-		isReview = 0
-	} else if audit == AuditYes {
-		isReview = 1
-	}
+
 	var where *gorm.DB
 	var all *gorm.DB
-	if liveId == "" {
+	if liveId == nil {
 		where = db.Model(&model.CensorImage{}).Where(" is_review = ? ", isReview)
 		all = db.Model(&model.CensorImage{})
 	} else {
@@ -200,15 +195,15 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, audit, pageNum, p
 		all = db.Model(&model.CensorImage{}).Where(" live_id = ? ", liveId)
 	}
 
-	if audit == AuditNo {
-		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-		err = where.Count(&totalCount).Error
-	} else if audit == AuditYes {
-		err = where.Count(&totalCount).Error
-		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-	} else {
+	if isReview == nil {
 		err = all.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 		err = all.Count(&totalCount).Error
+	} else if *isReview == IsReviewNo {
+		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
+		err = where.Count(&totalCount).Error
+	} else if *isReview == IsReviewYes {
+		err = where.Count(&totalCount).Error
+		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 	}
 
 	if err != nil {
@@ -218,19 +213,19 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, audit, pageNum, p
 	return
 }
 
-const AuditAll = 0
-const AuditNo = 1
-const AuditYes = 2
+const IsReviewNo = 0
+const IsReviewYes = 1
 
-func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	lives := make([]model.LiveEntity, 0)
 	var db2 *gorm.DB
-	if audit == AuditNo {
-		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
-	} else if audit == AuditAll {
+	if isReview == nil {
 		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count >= 0")
+	} else if *isReview == IsReviewNo {
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
 	}
 	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
 	err = db2.Count(&totalCount).Error
