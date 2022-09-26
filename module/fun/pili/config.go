@@ -1,9 +1,7 @@
 package pili
 
 type Config struct {
-	Hub       string `mapstructure:"hub"`
-	AccessKey string `mapstructure:"access_key"` // AK
-	SecretKey string `mapstructure:"secret_key"` // SK
+	Hub string `mapstructure:"hub"`
 
 	RoomTokenExpireS int64  `mapstructure:"room_token_expire_s"`
 	RtcPlayBackUrl   string `mapstructure:"playback_url"`

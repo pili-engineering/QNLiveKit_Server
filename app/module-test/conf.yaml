@@ -44,13 +44,9 @@ im:
 
 rtc:
   app_id: fleqfq6yc
-  access_key: QxZugR8TAhI38AiJ_cptTl3RbzLyca3t-AAiH-Hh
-  secret_key: 4yv8mE9kFeoE31PVlIjWvi3nfTytwT0JiAxWjCDa
 
 pili:
   hub: sdk-live
-  access_key: QxZugR8TAhI38AiJ_cptTl3RbzLyca3t-AAiH-Hh
-  secret_key: 4yv8mE9kFeoE31PVlIjWvi3nfTytwT0JiAxWjCDa
   room_token_expire_s: 3600
   playback_url: https://pili-playback.qnsdk.com
   security_type: none

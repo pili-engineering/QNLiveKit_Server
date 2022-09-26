@@ -19,6 +19,7 @@ import (
 	"github.com/qiniu/go-sdk/v7/rtc"
 
 	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/core/module/account"
 )
 
 type QiniuClient struct {
@@ -30,15 +31,15 @@ type QiniuClient struct {
 
 func NewQiniuClient(conf Config) *QiniuClient {
 	mac := &qiniumac.Mac{
-		AccessKey: conf.AccessKey,
-		SecretKey: []byte(conf.SecretKey),
+		AccessKey: account.AccessKey(),
+		SecretKey: []byte(account.SecretKey()),
 	}
 	tr := qiniumac.NewTransport(mac, nil)
 
 	c := &QiniuClient{
 		AppId: conf.AppId,
-		Ak:    conf.AccessKey,
-		Sk:    conf.SecretKey,
+		Ak:    account.AccessKey(),
+		Sk:    account.SecretKey(),
 		client: &http.Client{
 			Transport: tr,
 			Timeout:   3 * time.Second,

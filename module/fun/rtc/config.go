@@ -5,9 +5,7 @@ import (
 )
 
 type Config struct {
-	AppId     string `mapstructure:"app_id" validate:"nonzero"`     // RTC AppId
-	AccessKey string `mapstructure:"access_key" validate:"nonzero"` // AK
-	SecretKey string `mapstructure:"secret_key" validate:"nonzero"` // SK
+	AppId string `mapstructure:"app_id" validate:"nonzero"` // RTC AppId
 }
 
 func (c *Config) Validate() error {
