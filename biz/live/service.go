@@ -329,12 +329,12 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	unauditCount, err := admin.GetCensorService().GetUnauditCount(context, liveId)
+	unreviewCount, err := admin.GetCensorService().GetUnreviewCount(context, liveId)
 	if err != nil {
 		return err
 	}
 	updates := map[string]interface{}{}
-	updates["unaudit_censor_count"] = unauditCount
+	updates["unreview_censor_count"] = unreviewCount
 	if latest != nil {
 		updates["last_censor_time"] = *latest
 	}
