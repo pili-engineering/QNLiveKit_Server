@@ -6,11 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/core/module/httpq/middleware"
+	"github.com/qbox/livekit/core/module/httpq/monitor"
 )
 
 func (s *Server) createEngin() {
 	s.engine = gin.New()
-	s.engine.Use(middleware.Cors(), middleware.Logger())
+	s.engine.Use(middleware.Cors(), middleware.Logger(), middleware.Prometheus(), monitor.Middleware())
 
 	s.clientGroup = s.engine.Group("/client")
 	s.serverGroup = s.engine.Group("/server")

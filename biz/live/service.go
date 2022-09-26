@@ -6,18 +6,19 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/callback"
+	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/module/base/callback"
+	"github.com/qbox/livekit/module/fun/im"
+	"github.com/qbox/livekit/module/fun/pili"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
-	"github.com/qbox/livekit/common/im"
-	"github.com/qbox/livekit/common/rtc"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
-	"github.com/qbox/livekit/utils/uuid"
 )
 
 type IService interface {
@@ -105,7 +106,6 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		log.Errorf("create live failed, user not found, userId: %s, err: %v", req.AnchorId, err)
 		return
 	}
-	rtcClient := rtc.GetService()
 	imClient := im.GetService()
 	chatroom, err := imClient.CreateChatroom(context, liveUser.ImUserid, liveId)
 	if err != nil {
@@ -115,9 +115,9 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 	exp := req.PublishExpireAt
 	var url string
 	if exp != nil && exp.After(time.Now()) {
-		url = rtcClient.StreamPubURL(liveId, &exp.Time)
+		url = pili.GetService().StreamPubURL(liveId, &exp.Time)
 	} else {
-		url = rtcClient.StreamPubURL(liveId, nil)
+		url = pili.GetService().StreamPubURL(liveId, nil)
 	}
 
 	live = &model.LiveEntity{
@@ -134,9 +134,9 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		EndAt:       req.EndAt,    //timestamp.Now(),
 		ChatId:      chatroom,
 		PushUrl:     url,
-		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),
-		FlvPlayUrl:  rtcClient.StreamFlvPlayURL(liveId),
-		HlsPlayUrl:  rtcClient.StreamHlsPlayURL(liveId),
+		RtmpPlayUrl: pili.GetService().StreamRtmpPlayURL(liveId),
+		FlvPlayUrl:  pili.GetService().StreamFlvPlayURL(liveId),
+		HlsPlayUrl:  pili.GetService().StreamHlsPlayURL(liveId),
 	}
 	err = db.Create(live).Error
 	if err == nil {

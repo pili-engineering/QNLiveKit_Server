@@ -4,12 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/biz/mic"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
-	"github.com/qbox/livekit/common/rtc"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/utils/logger"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/trace"
+	"github.com/qbox/livekit/core/module/trace"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
