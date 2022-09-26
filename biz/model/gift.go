@@ -5,6 +5,7 @@ import "github.com/qbox/livekit/utils/timestamp"
 type GiftEntity struct {
 	ID            uint                 `gorm:"primary_key"`
 	Type          int                  `json:"type"`
+	GiftId        int                  `json:"gift_id"`
 	Name          string               `json:"name"`
 	Amount        int                  `json:"amount"`
 	Img           string               `json:"img"`

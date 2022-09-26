@@ -6,7 +6,7 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/im"
+	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/utils/logger"
 )
 

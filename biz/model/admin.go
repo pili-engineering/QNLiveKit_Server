@@ -43,6 +43,11 @@ func (e LiveCensor) TableName() string {
 	return "live_censor"
 }
 
+const (
+	AuditResultPass  = 1 //审核结果为通过
+	AuditResultBlock = 2 //审核结果违规
+)
+
 type CensorImage struct {
 	ID        uint   `gorm:"primary_key"`
 	Url       string `json:"url"`
