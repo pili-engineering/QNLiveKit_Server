@@ -3,16 +3,20 @@ package application
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/qbox/livekit/core/config"
 	"github.com/qbox/livekit/utils/logger"
 )
 
 func StartWithConfig(path string) error {
+	rand.Seed(time.Now().UnixNano())
+
 	if len(path) == 0 {
 		return fmt.Errorf("empty config path")
 	}
