@@ -10,14 +10,13 @@ package controller
 import (
 	"time"
 
-	"github.com/qbox/livekit/app/live/internal/controller/admin"
-	"github.com/qbox/livekit/utils/logger"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"github.com/qbox/livekit/app/live/internal/controller/admin"
 	"github.com/qbox/livekit/app/live/internal/controller/client"
 	"github.com/qbox/livekit/app/live/internal/controller/server"
+	"github.com/qbox/livekit/utils/logger"
 )
 
 func Engine() *gin.Engine {
