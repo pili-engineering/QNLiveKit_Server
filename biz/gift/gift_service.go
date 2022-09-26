@@ -9,67 +9,111 @@ import (
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/rpc"
+	"github.com/qbox/livekit/utils/uuid"
 )
 
 type SendGiftRequest struct {
-	BizId  string `json:"biz_id"`
-	UserId string `json:"user_id"`
 	LiveId string `json:"live_id"`
 	GiftId int    `json:"gift_id"`
 	Amount int    `json:"amount"`
-	Redo   bool   `json:"redo"`
 }
 
-func (s *Service) SendGift(context context.Context, req SendGiftRequest) error {
+func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId string) (*SendGiftResponse, error) {
 	log := logger.ReqLogger(context)
-	gift, err := GetGiftByBizId(context, req.BizId)
+	bizId := uuid.Gen()
+	liveEntity, err := live.GetService().LiveInfo(context, req.LiveId)
 	if err != nil {
-		return err
+		log.Errorf("find live error %s", err.Error())
+		return nil, api.ErrorGiftPay
 	}
-	if gift == nil {
-		err = SaveLiveGift(context, &model.LiveGift{
-			LiveID: req.LiveId,
-			UserId: req.UserId,
-			BizId:  req.BizId,
-			GiftId: req.GiftId,
-			Amount: req.Amount,
-		})
-		if err != nil {
-			return api.ErrDatabase
-		}
-
-		liveEntity, err := live.GetService().LiveInfo(context, req.LiveId)
-		if err != nil {
-			log.Errorf("find live error %s", err.Error())
-			return api.ErrDatabase
-		}
-		anchorInfo, err := user.GetService().FindUser(context, liveEntity.AnchorId)
-		if err != nil {
-			log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
-		}
-
-		notifyItem := BroadcastGiftNotifyItem{
-			LiveId: liveEntity.LiveId,
-			UserId: req.UserId,
-			GiftId: req.GiftId,
-			Amount: req.Amount,
-		}
-		err = notify.SendNotifyToLive(context, anchorInfo, liveEntity, notify.ActionTypeGiftNotify, &notifyItem)
-		if err != nil {
-			log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
-		}
-	} else {
-		if req.Redo == false {
-			return api.ErrorGiftBizIdRepeatedWrong
-		} else {
-			equals := EqualsGiftRequest(&req, gift)
-			if equals {
-				return nil
-			}
-			return api.ErrorGiftRedoDataInconsistency
-		}
+	anchorInfo, err := user.GetService().FindUser(context, liveEntity.AnchorId)
+	if err != nil {
+		log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
+		return nil, api.ErrorGiftPay
 	}
-	return nil
+	liveGift := &model.LiveGift{
+		LiveId:   req.LiveId,
+		UserId:   userId,
+		BizId:    bizId,
+		GiftId:   req.GiftId,
+		Amount:   req.Amount,
+		AnchorId: anchorInfo.UserId,
+	}
+	err = SaveLiveGift(context, liveGift)
+	if err != nil {
+		log.Errorf("save live gift error %s", err.Error())
+		return nil, api.ErrorGiftPay
+	}
+
+	payReq := &PayGiftRequest{
+		LiveId:   req.LiveId,
+		UserId:   userId,
+		BizId:    bizId,
+		GiftId:   req.GiftId,
+		Amount:   req.Amount,
+		AnchorId: anchorInfo.UserId,
+	}
+	payResp := PayGiftResponse{}
+	url := s.GiftHost
+	err = rpc.DefaultClient.CallWithJSON(log, &payResp, url, payReq)
+	if err != nil {
+		return nil, err
+	}
+
+	sResp := &SendGiftResponse{
+		LiveId:   req.LiveId,
+		UserId:   userId,
+		BizId:    bizId,
+		GiftId:   req.GiftId,
+		Amount:   req.Amount,
+		AnchorId: anchorInfo.UserId,
+		Status:   payResp.Status,
+	}
+	err = s.UpdateGiftStatus(context, bizId, payResp.Status)
+	if err != nil {
+		log.Errorf("update gift status error %s", err.Error())
+		//该错误没有返回
+	}
+	if payResp.Status == model.SendGiftLiveStatusFailure {
+		return sResp, api.ErrorGiftPayFromBiz
+	}
+	notifyItem := BroadcastGiftNotifyItem{
+		LiveId: liveEntity.LiveId,
+		UserId: userId,
+		GiftId: req.GiftId,
+		Amount: req.Amount,
+	}
+	err = notify.SendNotifyToLive(context, anchorInfo, liveEntity, notify.ActionTypeGiftNotify, &notifyItem)
+	if err != nil {
+		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
+		return sResp, api.ErrorGiftPayIMMessage
+	}
+	return sResp, nil
+}
+
+type PayGiftRequest struct {
+	BizId    string `json:"biz_id"`
+	UserId   string `json:"user_id"`
+	LiveId   string `json:"live_id"`
+	AnchorId string `json:"anchor_id"`
+	GiftId   int    `json:"gift_id"`
+	Amount   int    `json:"amount"`
+}
+
+type PayGiftResponse struct {
+	api.Response
+	Status int
+}
+
+type SendGiftResponse struct {
+	BizId    string `json:"biz_id"`
+	UserId   string `json:"user_id"`
+	LiveId   string `json:"live_id"`
+	AnchorId string `json:"anchor_id"`
+	GiftId   int    `json:"gift_id"`
+	Amount   int    `json:"amount"`
+	Status   int    `json:"status"`
 }
 
 type BroadcastGiftNotifyItem struct {
@@ -77,14 +121,6 @@ type BroadcastGiftNotifyItem struct {
 	LiveId string `json:"live_id"`
 	GiftId int    `json:"gift_id"`
 	Amount int    `json:"amount"`
-}
-
-func EqualsGiftRequest(req *SendGiftRequest, liveGift *model.LiveGift) bool {
-	if req.UserId != liveGift.UserId || req.LiveId != liveGift.LiveID || req.GiftId != liveGift.GiftId || req.Amount != liveGift.Amount {
-		return false
-	}
-	return true
-
 }
 
 func GetGiftByBizId(context context.Context, bizId string) (liveGift *model.LiveGift, err error) {
@@ -110,10 +146,10 @@ func SaveLiveGift(context context.Context, liveGift *model.LiveGift) error {
 	return nil
 }
 
-func (s *Service) UpdateGiftStatus(context context.Context, giftId int, status int) error {
+func (s *Service) UpdateGiftStatus(context context.Context, bizId string, status int) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	err := db.Model(&model.LiveGift{}).Where("gift_id = ?", giftId).Update("status", status).Error
+	err := db.Model(&model.LiveGift{}).Where("biz_id = ?", bizId).Update("status", status).Error
 	if err != nil {
 		return err
 	}

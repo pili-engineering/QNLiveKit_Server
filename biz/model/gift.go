@@ -29,7 +29,7 @@ type LiveGift struct {
 	GiftId    int                 `json:"gift_id"`
 	Amount    int                 `json:"amount"`
 	Status    int                 `json:"status"`
-	LiveID    string              `json:"live_id"`
+	LiveId    string              `json:"live_id"`
 	AnchorId  string              `json:"anchor_id"`
 	CreatedAt timestamp.Timestamp `json:"created_at"`
 	UpdatedAt timestamp.Timestamp `json:"updated_at"`
@@ -38,3 +38,9 @@ type LiveGift struct {
 func (e LiveGift) TableName() string {
 	return "live_gift"
 }
+
+const (
+	SendGiftStatusWait        = iota //刚创建
+	SendGiftLiveStatusSuccess        //直播中
+	SendGiftLiveStatusFailure        //直播结束
+)

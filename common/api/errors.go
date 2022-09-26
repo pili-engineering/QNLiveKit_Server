@@ -60,8 +60,9 @@ const (
 
 	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
 
-	ErrorCodeGiftBizIdRepeatedWrong    = 200002
-	ErrorCodeGiftRedoDataInconsistency = 200003
+	ErrorCodeGiftPay                 = 200002
+	ErrorCodeGiftPayFromBiz          = 200003
+	ErrorCodeGiftPayIMMessageFailure = 200004
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -77,5 +78,6 @@ var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "i
 
 var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}
 
-var ErrorGiftBizIdRepeatedWrong = &Response{Code: ErrorCodeGiftBizIdRepeatedWrong, Message: "Same BizId is already executed But Redo is false"}
-var ErrorGiftRedoDataInconsistency = &Response{Code: ErrorCodeGiftRedoDataInconsistency, Message: "Redo Send Gift But Request Message Data Inconsistency"}
+var ErrorGiftPay = &Response{Code: ErrorCodeGiftPay, Message: "PayGift Failure: Internal error"}
+var ErrorGiftPayFromBiz = &Response{Code: ErrorCodeGiftPayFromBiz, Message: "PayGift Failure: Biz Server error"}
+var ErrorGiftPayIMMessage = &Response{Code: ErrorCodeGiftPayIMMessageFailure, Message: "payGift: pay success: but broadcast  error"}

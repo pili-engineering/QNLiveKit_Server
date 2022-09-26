@@ -11,6 +11,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/qbox/livekit/biz/gift"
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
@@ -102,6 +103,9 @@ func initAllService() {
 		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
 		CensorCallback: config.AppConfig.CensorCallback,
 		CensorBucket:   config.AppConfig.CensorBucket,
+	})
+	gift.InitService(gift.Config{
+		GiftHost: config.AppConfig.GiftHost,
 	})
 	cache.Init(&config.AppConfig.CacheConfig)
 }
