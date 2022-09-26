@@ -36,4 +36,5 @@ func (m *Module) Config(c *config.Config) error {
 
 func (m *Module) PreStart() error {
 	trace.SetImAppID(service.AppId())
+	return nil
 }

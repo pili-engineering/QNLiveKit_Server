@@ -1,5 +1,9 @@
 node:
   node_id: 1
+
+account:
+  access_key: ak
+  secret_key: sk
   
 httpq:
   addr: ":8088"

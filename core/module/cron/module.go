@@ -7,6 +7,10 @@ import (
 
 const ModuleName = "cron"
 
+func init() {
+	application.RegisterModule(ModuleName, &Module{})
+}
+
 var _ application.Module = &Module{}
 
 type Module struct {

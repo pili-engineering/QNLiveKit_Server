@@ -38,11 +38,12 @@ func (m *Module) Config(c *config.Config) error {
 }
 
 func (m *Module) PreStart() error {
-	registerMonitorTask()
 	return nil
 }
 
 func (m *Module) Start() error {
+	registerMonitorTask()
+
 	return instance.Start()
 }
 
