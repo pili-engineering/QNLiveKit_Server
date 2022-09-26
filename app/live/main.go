@@ -14,12 +14,12 @@ import (
 
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/callback"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/core/application"
+	"github.com/qbox/livekit/module/base/callback"
 	log "github.com/qbox/livekit/utils/logger"
 )
 

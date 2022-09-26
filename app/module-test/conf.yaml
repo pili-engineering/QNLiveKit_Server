@@ -68,3 +68,6 @@ prome:
   client_mode: exporter
   exporter_config:
     listen_addr: ":9100"
+
+callback:
+  addr: "http://localhost:9999/callback"

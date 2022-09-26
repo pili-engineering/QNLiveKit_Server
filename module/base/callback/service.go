@@ -10,20 +10,10 @@ package callback
 import (
 	"context"
 	"encoding/json"
-	"net/http"
-
-	"github.com/qbox/livekit/utils/rpc"
 
 	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/rpc"
 )
-
-func InitService(addr string) {
-	header := http.Header{}
-	callService = &CallbackService{
-		addr:   addr,
-		client: rpc.NewClientHeader(header),
-	}
-}
 
 type ICallbackService interface {
 	Do(ctx context.Context, typ string, body interface{}) error
