@@ -58,6 +58,10 @@ type RoomAccess struct {
 	//Scenario   int    `json:"scenario,omitempty"`
 }
 
+func (c *QiniuClient) RtcAppId() string {
+	return c.AppId
+}
+
 func (c *QiniuClient) GetRoomToken(userId, roomName string) string {
 	roomAccess := &RoomAccess{
 		AppID:      c.AppId,

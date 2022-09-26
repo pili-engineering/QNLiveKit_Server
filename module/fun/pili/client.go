@@ -10,6 +10,8 @@ package pili
 import "time"
 
 type Service interface {
+	PiliHub() string
+
 	StreamPubURL(roomId string, expectAt *time.Time) (url string)
 
 	StreamRtmpPlayURL(roomId string) (url string)

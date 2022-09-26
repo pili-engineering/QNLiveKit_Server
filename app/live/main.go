@@ -17,7 +17,6 @@ import (
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/core/application"
 	log "github.com/qbox/livekit/utils/logger"
 )
@@ -43,14 +42,7 @@ func initAllService() {
 		JwtKey: config.AppConfig.JwtKey,
 	})
 	report.InitService()
-	trace.InitService(trace.Config{
-		IMAppID:    config.AppConfig.ImConfig.AppId,
-		RTCAppId:   config.AppConfig.RtcConfig.AppId,
-		PiliHub:    config.AppConfig.RtcConfig.Hub,
-		AccessKey:  config.AppConfig.RtcConfig.AccessKey,
-		SecretKey:  config.AppConfig.RtcConfig.SecretKey,
-		ReportHost: config.AppConfig.ReportHost,
-	})
+
 	live.InitService(live.Config{
 		AccessKey: config.AppConfig.RtcConfig.AccessKey,
 		SecretKey: config.AppConfig.RtcConfig.SecretKey,

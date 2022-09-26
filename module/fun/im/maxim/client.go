@@ -41,6 +41,10 @@ func (c *Client) rpcClientWithUserId(userId int64) *rpc.Client {
 	return rpc.NewClientHeader(header)
 }
 
+func (c *Client) AppId() string {
+	return c.appId
+}
+
 // RegisterUser /user/register/v2 注册用户,返回注册的用户id
 func (c *Client) RegisterUser(ctx context.Context, username, password string) (int64, error) {
 	log := logger.ReqLogger(ctx)

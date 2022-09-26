@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/qbox/livekit/common/trace"
+	"github.com/qbox/livekit/core/module/trace"
 )
 
 type MonitorItem struct {

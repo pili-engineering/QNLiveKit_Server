@@ -8,6 +8,8 @@
 package rtc
 
 type Service interface {
+	RtcAppId() string
+
 	GetRoomToken(userId, roomId string) string
 
 	GetRelayToken(userId, roomId string) string

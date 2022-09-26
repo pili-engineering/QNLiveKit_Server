@@ -64,6 +64,10 @@ func NewQiniuClient(conf Config) *QiniuClient {
 	return c
 }
 
+func (c *QiniuClient) PiliHub() string {
+	return c.Hub
+}
+
 func (c *QiniuClient) StreamPubURL(roomId string, expectAt *time.Time) (url string) {
 	rtmp := pili.RTMPPublishURL(c.Hub, c.PublishDomain, c.streamName(roomId))
 	var expireAt int64

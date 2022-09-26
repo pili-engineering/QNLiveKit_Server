@@ -14,6 +14,8 @@ import (
 )
 
 type Service interface {
+	AppId() string
+
 	RegisterUser(ctx context.Context, username, password string) (int64, error)
 
 	GetUserId(ctx context.Context, username string) (int64, error)
