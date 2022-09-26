@@ -125,7 +125,7 @@ func (s *Service) isSingleTaskNode() bool {
 //		ctx := context.Background()
 //		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
 //
-//		apimonitor.ReportMonitorItems(ctx)
+//		monitor.ReportMonitorItems(ctx)
 //	})
 //
 //	// 每秒统计缓存中的直播间点赞，写入DB

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/app/live/internal/controller/admin"
-	"github.com/qbox/livekit/common/apimonitor"
-	"github.com/qbox/livekit/core/module/httpq/middleware"
 	"github.com/qbox/livekit/utils/logger"
 
 	"github.com/gin-contrib/cors"
@@ -26,8 +24,6 @@ func Engine() *gin.Engine {
 	engine := gin.New()
 	engine.Use(Cors(),
 		logger.LoggerHandleFunc(),
-		middleware.Middleware(),
-		apimonitor.Middleware(),
 		gin.Recovery(),
 	)
 

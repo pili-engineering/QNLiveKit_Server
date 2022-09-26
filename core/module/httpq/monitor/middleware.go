@@ -1,8 +1,9 @@
-package apimonitor
+package monitor
 
 import (
-	"github.com/gin-gonic/gin"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Middleware set gin middleware
