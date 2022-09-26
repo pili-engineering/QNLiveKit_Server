@@ -13,7 +13,6 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/app/live/internal/cron"
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/callback"
 	"github.com/qbox/livekit/biz/live"
@@ -22,6 +21,7 @@ import (
 	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/core/application"
+	"github.com/qbox/livekit/core/module/cron"
 	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/rtc"

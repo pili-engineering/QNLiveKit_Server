@@ -44,10 +44,6 @@ type Server struct {
 	Port int    `mapstructure:"port"`
 }
 
-type CronConfig struct {
-	SingleTaskNode int64 `mapstructure:"single_task_node"`
-}
-
 func LoadConfig(confPath string) error {
 	return config.LoadConfig(confPath, &AppConfig)
 }

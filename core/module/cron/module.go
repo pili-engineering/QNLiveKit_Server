@@ -10,20 +10,29 @@ const ModuleName = "cron"
 var _ application.Module = &Module{}
 
 type Module struct {
+	application.EmptyModule
 }
 
 func (m *Module) Config(c *config.Config) error {
-	return nil
-}
+	singleTaskNode := int64(0)
+	if c != nil {
+		conf := &Config{}
+		if err := c.Unmarshal(&conf); err != nil {
+			return err
+		}
+		singleTaskNode = conf.SingleTaskNode
+	}
 
-func (m *Module) PreStart() error {
+	instance = newService(singleTaskNode)
+
 	return nil
 }
 
 func (m *Module) Start() error {
+	instance.StartCron()
 	return nil
 }
 
 func (m *Module) Stop() error {
-	return nil
+	return instance.StopCron()
 }
