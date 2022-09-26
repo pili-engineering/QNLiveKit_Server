@@ -48,7 +48,7 @@ type LoginRequest struct {
 func (c *CensorController) LoginManager(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	req := &LoginRequest{}
-	if err := ctx.BindQuery(req); err != nil {
+	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
@@ -284,7 +284,7 @@ func (c *CensorController) CloseJob(ctx *gin.Context) {
 
 func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	isReview := ctx.DefaultQuery("is_review", "2")
+	audit := ctx.DefaultQuery("audit", strconv.Itoa(admin.AuditAll))
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	liveId := ctx.Query("live_id")
@@ -308,7 +308,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 		})
 		return
 	}
-	isReviewInt, err := strconv.Atoi(isReview)
+	auditInt, err := strconv.Atoi(audit)
 	if err != nil {
 		log.Errorf("page_size is not int, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -318,8 +318,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 		})
 		return
 	}
-	//0： 没审核 1：审核 2：都需要list出来/*
-	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, isReviewInt, pageNumInt, pageSizeInt, liveId)
+	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, auditInt, pageNumInt, pageSizeInt, liveId)
 	if err != nil {
 		log.Errorf("search censor image  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -347,8 +346,7 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 
 func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	// 1，只查看有未审核记录的直播间；0，全部直播间
-	audit := ctx.DefaultQuery("audit", "0")
+	audit := ctx.DefaultQuery("audit", strconv.Itoa(admin.AuditAll))
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -381,7 +379,12 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 		})
 		return
 	}
-	// 1，只查看有未审核记录的直播间；0，全部直播间
+
+	if auditInt != admin.AuditAll && auditInt != admin.AuditNo {
+		log.Errorf(" invalid argument %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
 	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, auditInt, pageNumInt, pageSizeInt)
 	if err != nil {
 		log.Errorf("search censor live  failed, err: %v", err)
@@ -533,7 +536,7 @@ type CensorCreateRequest struct {
 type CensorAuditRequest struct {
 	LiveId       string `json:"live_id"`
 	Images       []uint `json:"image_list"`
-	ReviewAnswer int    `json:"review_answer"`
+	ReviewAnswer int    `json:"audit_answer"`
 }
 
 type CensorListRequest struct {

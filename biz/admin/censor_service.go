@@ -22,7 +22,7 @@ type CCService interface {
 	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
-	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
+	SearchCensorImage(ctx context.Context, audit, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
 	GetUnauditCount(ctx context.Context, liveId string) (len int, err error)
 }
@@ -180,12 +180,16 @@ func (c *CensorService) GetUnauditCount(ctx context.Context, liveId string) (len
 	return
 }
 
-// SearchCensorImage 0： 没审核 1：审核 2：都需要list出来/*
-func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error) {
+func (c *CensorService) SearchCensorImage(ctx context.Context, audit, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	image = make([]model.CensorImage, 0)
-
+	var isReview int
+	if audit == AuditNo {
+		isReview = 0
+	} else if audit == AuditYes {
+		isReview = 1
+	}
 	var where *gorm.DB
 	var all *gorm.DB
 	if liveId == "" {
@@ -196,10 +200,10 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 		all = db.Model(&model.CensorImage{}).Where(" live_id = ? ", liveId)
 	}
 
-	if isReview == 0 {
+	if audit == AuditNo {
 		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 		err = where.Count(&totalCount).Error
-	} else if isReview == 1 {
+	} else if audit == AuditYes {
 		err = where.Count(&totalCount).Error
 		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 	} else {
@@ -214,8 +218,9 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 	return
 }
 
-const AuditNo = 1
 const AuditAll = 0
+const AuditNo = 1
+const AuditYes = 2
 
 func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
@@ -224,7 +229,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 	var db2 *gorm.DB
 	if audit == AuditNo {
 		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
-	} else {
+	} else if audit == AuditAll {
 		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count >= 0")
 	}
 	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
