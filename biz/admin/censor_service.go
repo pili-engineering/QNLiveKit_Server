@@ -24,7 +24,7 @@ type CCService interface {
 	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
 	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
 	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
-	GetUnauditCount(ctx context.Context, liveId string) (len int, err error)
+	GetUnreviewCount(ctx context.Context, liveId string) (len int, err error)
 }
 
 type CensorService struct {
@@ -173,7 +173,7 @@ func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.Censor
 	return nil
 }
 
-func (c *CensorService) GetUnauditCount(ctx context.Context, liveId string) (len int, err error) {
+func (c *CensorService) GetUnreviewCount(ctx context.Context, liveId string) (len int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ? ", 0, liveId).Count(&len).Error
@@ -224,8 +224,8 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 	var db2 *gorm.DB
 	if audit == AuditNo {
 		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
-	} else {
-		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count >= 0")
+	} else if audit == AuditAll {
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count >= 0")
 	}
 	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
 	err = db2.Count(&totalCount).Error
@@ -240,7 +240,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 			Title:      live.Title,
 			AnchorId:   live.AnchorId,
 			Status:     live.Status,
-			Count:      live.UnauditCensorCount,
+			Count:      live.UnreviewCensorCount,
 			Time:       live.LastCensorTime,
 			StopReason: live.StopReason,
 			StopAt:     live.StopAt,
