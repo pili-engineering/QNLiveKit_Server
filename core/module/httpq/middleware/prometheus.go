@@ -1,15 +1,11 @@
-package prome
+package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
-)
 
-const (
-	metricsPath = "/metrics"
-	faviconPath = "/favicon.ico"
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -29,8 +25,8 @@ func init() {
 	prometheus.MustRegister(httpHistogram)
 }
 
-// Middleware set gin middleware
-func Middleware() gin.HandlerFunc {
+// Prometheus prometheus 监控
+func Prometheus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()

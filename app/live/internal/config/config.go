@@ -9,7 +9,6 @@ package config
 
 import (
 	"github.com/qbox/livekit/common/auth/qiniumac"
-	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/cache"
@@ -30,11 +29,9 @@ type Config struct {
 	ReportHost     string                   `mapstructure:"report_host"`
 	Mysqls         []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
-	CronConfig  CronConfig      `mapstructure:"cron_config"`
 	MacConfig   qiniumac.Config `mapstructure:"mac_config"`
 	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`
 	ImConfig    im.Config       `mapstructure:"im_config"`
-	PromeConfig prome.Config    `mapstructure:"prome_config"`
 	CacheConfig cache.Config    `mapstructure:"cache_config"`
 }
 

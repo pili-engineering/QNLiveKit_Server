@@ -63,3 +63,8 @@ pili:
   flv_play_url: https://pili-hdl.qnsdk.com
   hls_play_url: https://pili-hls.qnsdk.com
   media_url: https://pili-medai.qnsdk.com
+
+prome:
+  client_mode: exporter
+  exporter_config:
+    listen_addr: ":9100"

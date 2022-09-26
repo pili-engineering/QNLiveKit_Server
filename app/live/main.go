@@ -18,14 +18,8 @@ import (
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/common/prome"
 	"github.com/qbox/livekit/common/trace"
 	"github.com/qbox/livekit/core/application"
-	"github.com/qbox/livekit/core/module/cron"
-	"github.com/qbox/livekit/core/module/uuid"
-	"github.com/qbox/livekit/module/fun/im"
-	"github.com/qbox/livekit/module/fun/rtc"
-	"github.com/qbox/livekit/module/store/cache"
 	log "github.com/qbox/livekit/utils/logger"
 )
 
@@ -36,16 +30,8 @@ func main() {
 	application.StartWithConfig(*confPath)
 
 	initAllService()
-	uuid.Init(config.AppConfig.NodeID)
 
 	errCh := make(chan error)
-
-	go func() {
-		err := prome.Start(context.Background(), config.AppConfig.PromeConfig)
-		errCh <- err
-	}()
-
-	cron.Run()
 
 	report.GetService().ReportOnlineMessage(context.Background())
 
@@ -57,8 +43,6 @@ func initAllService() {
 	token.InitService(token.Config{
 		JwtKey: config.AppConfig.JwtKey,
 	})
-	im.InitService(config.AppConfig.ImConfig)
-	rtc.InitService(config.AppConfig.RtcConfig)
 	callback.InitService(config.AppConfig.Callback)
 	report.InitService()
 	trace.InitService(trace.Config{
@@ -80,5 +64,5 @@ func initAllService() {
 		CensorCallback: config.AppConfig.CensorCallback,
 		CensorBucket:   config.AppConfig.CensorBucket,
 	})
-	cache.Init(&config.AppConfig.CacheConfig)
+	//cache.Init(&config.AppConfig.CacheConfig)
 }

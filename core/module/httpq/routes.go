@@ -10,7 +10,7 @@ import (
 
 func (s *Server) createEngin() {
 	s.engine = gin.New()
-	s.engine.Use(middleware.Cors(), middleware.Logger())
+	s.engine.Use(middleware.Cors(), middleware.Logger(), middleware.Prometheus())
 
 	s.clientGroup = s.engine.Group("/client")
 	s.serverGroup = s.engine.Group("/server")
