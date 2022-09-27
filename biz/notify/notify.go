@@ -22,6 +22,7 @@ const (
 var actionTypeMap = map[ActionType]bool{
 	ActionTypeCensorNotify: true,
 	ActionTypeCensorStop:   true,
+	ActionTypeGiftNotify:   true,
 }
 
 func (t ActionType) IsValid() bool {

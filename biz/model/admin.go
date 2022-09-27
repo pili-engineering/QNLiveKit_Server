@@ -29,7 +29,7 @@ func (e CensorConfig) TableName() string {
 }
 
 type LiveCensor struct {
-	ID         uint   `gorm:"primary_key"`
+	ID         uint   `gorm:"primary_key" json:"id"`
 	LiveID     string `json:"live_id"`
 	JobID      string `json:"job_id"`
 	Pulp       bool   `json:"pulp"`
@@ -49,7 +49,7 @@ const (
 )
 
 type CensorImage struct {
-	ID        uint   `gorm:"primary_key"`
+	ID        uint   `gorm:"primary_key" json:"id"`
 	Url       string `json:"url"`
 	JobID     string `json:"job_id"`
 	CreatedAt int    `json:"created_at"`

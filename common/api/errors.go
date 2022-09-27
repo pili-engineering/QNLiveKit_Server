@@ -59,6 +59,9 @@ const (
 	ErrorCodeLiveItemExceed = 20001 //直播间商品数量超过限制
 
 	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
+
+	ErrorCodeGiftPay        = 200002
+	ErrorCodeGiftPayFromBiz = 200003
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -73,3 +76,6 @@ var ErrStatus = &Response{Code: ErrorCodeBadStatus, Message: "cant operate on th
 var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "items exceed in live room"}
 
 var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}
+
+var ErrorGiftPay = &Response{Code: ErrorCodeGiftPay, Message: "PayGift Failure: Internal error"}
+var ErrorGiftPayFromBiz = &Response{Code: ErrorCodeGiftPayFromBiz, Message: "PayGift Failure: Biz Server error"}
