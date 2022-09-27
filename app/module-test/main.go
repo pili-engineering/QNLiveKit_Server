@@ -8,6 +8,8 @@ import (
 	_ "github.com/qbox/livekit/app/module-test/modules/httptest"
 	"github.com/qbox/livekit/core/application"
 	_ "github.com/qbox/livekit/module/base/callback"
+	_ "github.com/qbox/livekit/module/base/user"
+	_ "github.com/qbox/livekit/module/base/user/module"
 	_ "github.com/qbox/livekit/module/extend/prome"
 	_ "github.com/qbox/livekit/module/fun/im"
 	_ "github.com/qbox/livekit/module/fun/pili"

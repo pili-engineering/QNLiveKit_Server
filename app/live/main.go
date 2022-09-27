@@ -13,8 +13,6 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/core/application"
@@ -43,15 +41,15 @@ func initAllService() {
 	})
 	report.InitService()
 
-	live.InitService(live.Config{
-		AccessKey: config.AppConfig.RtcConfig.AccessKey,
-		SecretKey: config.AppConfig.RtcConfig.SecretKey,
-		PiliHub:   config.AppConfig.RtcConfig.Hub,
-	})
-	admin.InitJobService(admin.Config{
-		AccessKey:      config.AppConfig.RtcConfig.AccessKey,
-		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
-		CensorCallback: config.AppConfig.CensorCallback,
-		CensorBucket:   config.AppConfig.CensorBucket,
-	})
+	//live.InitService(live.Config{
+	//	AccessKey: config.AppConfig.RtcConfig.AccessKey,
+	//	SecretKey: config.AppConfig.RtcConfig.SecretKey,
+	//	PiliHub:   config.AppConfig.RtcConfig.Hub,
+	//})
+	//admin.InitJobService(admin.Config{
+	//	AccessKey:      config.AppConfig.RtcConfig.AccessKey,
+	//	SecretKey:      config.AppConfig.RtcConfig.SecretKey,
+	//	CensorCallback: config.AppConfig.CensorCallback,
+	//	CensorBucket:   config.AppConfig.CensorBucket,
+	//})
 }

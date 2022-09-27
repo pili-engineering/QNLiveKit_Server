@@ -17,7 +17,7 @@ func TestConfig_Sub(t *testing.T) {
 	path := "config.yaml"
 	c, _ := LoadConfig(path)
 
-	sub := c.Sub("service")
+	sub := c.Sub("impl")
 	assert.NotNil(t, sub)
 }
 
@@ -25,7 +25,7 @@ func TestConfig_Unmarshal(t *testing.T) {
 	path := "config.yaml"
 	c, _ := LoadConfig(path)
 
-	sub := c.Sub("service")
+	sub := c.Sub("impl")
 	assert.NotNil(t, sub)
 
 	server := Server{}

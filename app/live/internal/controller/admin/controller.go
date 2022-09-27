@@ -15,7 +15,6 @@ import (
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -158,7 +157,7 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		return
 	}
 
-	anchorInfo, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+	anchorInfo, err := service.GetService().FindUser(ctx, liveEntity.AnchorId)
 	if err != nil {
 		log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
 	}
@@ -407,7 +406,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 			})
 			return
 		}
-		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+		anchor2, err := service.GetService().FindUser(ctx, liveEntity.AnchorId)
 		if err != nil {
 			log.Errorf("FindUser  failed, err: %v", err)
 			ctx.JSON(http.StatusInternalServerError, api.Response{
