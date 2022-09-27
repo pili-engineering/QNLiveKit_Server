@@ -35,6 +35,7 @@ const (
 	StatsTypeRelay   = 4 //评论
 	StatsTypeMic     = 5 //评论
 	StatsTypeLike    = 6 //点赞
+	StatsTypeGift    = 7 //礼物
 )
 
 const (
@@ -44,6 +45,7 @@ const (
 	StatsTypeDescRelay   = "Relay"
 	StatsTypeDescMic     = "Mic"
 	StatsTypeDescLike    = "Like"
+	StatsTypeDescGift    = "Gift"
 )
 
 var StatsTypeDescription map[int]string = map[int]string{
@@ -53,4 +55,5 @@ var StatsTypeDescription map[int]string = map[int]string{
 	StatsTypeRelay:   StatsTypeDescRelay,
 	StatsTypeMic:     StatsTypeDescMic,
 	StatsTypeLike:    StatsTypeDescLike,
+	StatsTypeGift:    StatsTypeDescGift,
 }

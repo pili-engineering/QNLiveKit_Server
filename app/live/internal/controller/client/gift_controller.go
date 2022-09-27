@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/biz/gift"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -215,6 +216,16 @@ func (c *giftController) SendGift(ctx *gin.Context) {
 			})
 		return
 	}
+
+	rService := report.GetService()
+	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
+		LiveId: request.LiveId,
+		UserId: uInfo.UserId,
+		BizId:  sendGift.AnchorId,
+		Type:   model.StatsTypeGift,
+		Count:  request.Amount,
+	}
+	rService.UpdateSingleLive(ctx, statsSingleLiveEntity)
 	ctx.JSON(http.StatusOK, &SendResponse{
 		Response: &api.Response{
 			RequestId: log.ReqID(),
@@ -246,6 +257,6 @@ func (c *giftController) Test(ctx *gin.Context) {
 			Code:      0,
 			Message:   "success",
 		},
-		Status: 2,
+		Status: model.SendGiftStatusSuccess,
 	})
 }

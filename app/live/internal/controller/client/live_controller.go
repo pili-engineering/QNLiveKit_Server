@@ -494,7 +494,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
 		LiveId: liveId,
 		UserId: userInfo.UserId,
-		Type:   1,
+		Type:   model.StatsTypeLive,
 		Count:  1,
 	}
 	rService.UpdateSingleLive(context, statsSingleLiveEntity)
