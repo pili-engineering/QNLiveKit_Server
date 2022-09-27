@@ -1,17 +1,19 @@
 // @Author: wangsheng
 // @Description:
-// @File:  service
+// @File:  impl
 // @Version: 1.0.0
 // @Date: 2022/5/20 9:21 上午
 // Copyright 2021 QINIU. All rights reserved
 
-package user
+package impl
 
 import (
 	"context"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/user/service"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
@@ -19,18 +21,9 @@ import (
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
-type IUserService interface {
-	FindUser(ctx context.Context, userId string) (*model.LiveUserEntity, error)
-	FindOrCreateUser(ctx context.Context, userId string) (*model.LiveUserEntity, error)
-	ListUser(ctx context.Context, userIds []string) ([]*model.LiveUserEntity, error)
-	ListImUser(ctx context.Context, imUserIds []int64) ([]*model.LiveUserEntity, error)
-	CreateUser(ctx context.Context, user *model.LiveUserEntity) error
-	UpdateUserInfo(ctx context.Context, user *model.LiveUserEntity) error
-}
+var userService service.IUserService = &UserService{}
 
-var userService IUserService = &UserService{}
-
-func GetService() IUserService {
+func GetService() service.IUserService {
 	return userService
 }
 
@@ -68,9 +61,10 @@ func (s *UserService) findUser(ctx context.Context, userId string) (*model.LiveU
 	result := db.Model(model.LiveUserEntity{}).First(ue, "user_id = ?", userId)
 	if result.Error != nil {
 		if result.RecordNotFound() {
-			return nil, api.ErrNotFound
+			return nil, rest.ErrNotFound
 		} else {
-			return nil, api.ErrDatabase
+			log.Errorf("find user error %s", result.Error.Error())
+			return nil, rest.ErrInternal
 		}
 	}
 
