@@ -14,7 +14,7 @@ import (
 
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/biz/item"
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
@@ -77,7 +77,7 @@ func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
 	if e.RecordId == 0 {
 		return i
 	}
-	record, err := live.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
+	record, err := item.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
 	if err != nil {
 		log.Info(err)
 	}

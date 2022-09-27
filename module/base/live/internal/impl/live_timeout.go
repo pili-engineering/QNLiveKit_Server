@@ -26,7 +26,7 @@ const LiveUserHeartBeatTimeout = 4 * LiveUserHeartBeatTime
 const LiveRoomHeartBeatTime = 5 * time.Second
 const LiveRoomHeartBeatTimeout = 10 * time.Minute
 
-func (s *service.Service) TimeoutLiveUser(ctx context.Context, now time.Time) {
+func (s *Service) TimeoutLiveUser(ctx context.Context, now time.Time) {
 	log := logger.ReqLogger(ctx)
 	defer func() {
 		if e := recover(); e != nil {
@@ -47,7 +47,7 @@ func (s *service.Service) TimeoutLiveUser(ctx context.Context, now time.Time) {
 	}
 }
 
-func (s *service.Service) listAllTimeoutLiveUsers(ctx context.Context) ([]*model.LiveRoomUserEntity, error) {
+func (s *Service) listAllTimeoutLiveUsers(ctx context.Context) ([]*model.LiveRoomUserEntity, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 
@@ -61,7 +61,7 @@ func (s *service.Service) listAllTimeoutLiveUsers(ctx context.Context) ([]*model
 	return liveUsers, nil
 }
 
-func (s *service.Service) TimeoutLiveRoom(ctx context.Context, now time.Time) {
+func (s *Service) TimeoutLiveRoom(ctx context.Context, now time.Time) {
 	log := logger.ReqLogger(ctx)
 	defer func() {
 		if e := recover(); e != nil {
@@ -82,7 +82,7 @@ func (s *service.Service) TimeoutLiveRoom(ctx context.Context, now time.Time) {
 	}
 }
 
-func (s *service.Service) listAllTimeoutLiveRooms(ctx context.Context) ([]*model.LiveEntity, error) {
+func (s *Service) listAllTimeoutLiveRooms(ctx context.Context) ([]*model.LiveEntity, error) {
 	log := logger.ReqLogger(ctx)
 	lives := make([]*model.LiveEntity, 0)
 	db := mysql.GetLive(log.ReqID())

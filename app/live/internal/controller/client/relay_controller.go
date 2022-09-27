@@ -10,7 +10,7 @@ package client
 import (
 	"net/http"
 
-	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/biz/relay"
 	"github.com/qbox/livekit/module/fun/rtc"
 
 	"github.com/gin-gonic/gin"
@@ -82,8 +82,8 @@ func (*relayController) PostRelayStart(ctx *gin.Context) {
 		return
 	}
 
-	relayService := live.GetRelayService()
-	relayParams := live.StartRelayParams{
+	relayService := relay.GetRelayService()
+	relayParams := relay.StartRelayParams{
 		InitUserId: uInfo.UserId,
 		InitRoomId: req.InitRoomId,
 		RecvRoomId: req.RecvRoomId,
@@ -131,7 +131,7 @@ func (*relayController) GetRelayToken(ctx *gin.Context) {
 	}
 	uInfo := liveauth.GetUserInfo(ctx)
 
-	relayService := live.GetRelayService()
+	relayService := relay.GetRelayService()
 	relaySession, relayRoom, err := relayService.GetRelayRoom(ctx, uInfo.UserId, id)
 	if err != nil {
 		log.Errorf("empty relay room error %v", err)
@@ -175,7 +175,7 @@ func (*relayController) GetRelaySession(ctx *gin.Context) {
 		return
 	}
 
-	relayService := live.GetRelayService()
+	relayService := relay.GetRelayService()
 	relaySession, err := relayService.GetRelaySession(ctx, id)
 	if err != nil {
 		log.Errorf("get relay session (%s) error %v", id, err)
@@ -204,7 +204,7 @@ func (*relayController) PostRelayStop(ctx *gin.Context) {
 	}
 	uInfo := liveauth.GetUserInfo(ctx)
 
-	relayService := live.GetRelayService()
+	relayService := relay.GetRelayService()
 	if err := relayService.StopRelay(ctx, uInfo.UserId, id); err != nil {
 		log.Errorf("stop relay error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), err))
@@ -234,7 +234,7 @@ func (*relayController) PostRelayStarted(ctx *gin.Context) {
 	}
 
 	uInfo := liveauth.GetUserInfo(ctx)
-	relayService := live.GetRelayService()
+	relayService := relay.GetRelayService()
 	if relaySession, err := relayService.ReportRelayStarted(ctx, uInfo.UserId, id); err != nil {
 		log.Errorf("report relay started error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -275,7 +275,7 @@ func (*relayController) PostRelayExtends(ctx *gin.Context) {
 		return
 	}
 
-	relayService := live.GetRelayService()
+	relayService := relay.GetRelayService()
 
 	if err := relayService.UpdateRelayExtends(ctx, id, req.Extends); err != nil {
 		log.Errorf("update relay extends error %v", err)

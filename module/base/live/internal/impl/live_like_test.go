@@ -10,8 +10,8 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/report"
-	cache2 "github.com/qbox/livekit/module/store/cache"
-	mysql2 "github.com/qbox/livekit/module/store/mysql"
+	"github.com/qbox/livekit/module/store/cache"
+	"github.com/qbox/livekit/module/store/mysql"
 )
 
 func TestService_cacheLikeRoomUsers(t *testing.T) {
@@ -27,7 +27,7 @@ func TestService_cacheLikeRoomUsers(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &service.Service{}
+	s := &Service{}
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId1)
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId2)
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId3)
@@ -55,7 +55,7 @@ func TestService_cacheLikeRooms(t *testing.T) {
 	liveId1 := fmt.Sprintf("live_%d_1", now.Unix())
 	liveId2 := fmt.Sprintf("live_%d_2", now.Unix())
 
-	s := &service.Service{}
+	s := &Service{}
 	err := s.cacheLikeRooms(ctx, now, liveId1)
 	assert.Nil(t, err)
 	err = s.cacheLikeRooms(ctx, now, liveId2)
@@ -86,7 +86,7 @@ func TestService_incrRoomLikes(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &service.Service{}
+	s := &Service{}
 	my, total, err := s.incrRoomLikes(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -132,7 +132,7 @@ func TestService_cacheLike(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &service.Service{}
+	s := &Service{}
 	my, total, err := s.cacheLike(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -165,8 +165,8 @@ func TestService_cacheLike(t *testing.T) {
 }
 
 func likeCacheSetup() {
-	cache2.Init(&cache2.Config{
-		Type:     cache2.TypeNode,
+	cache.Init(&cache.Config{
+		Type:     cache.TypeNode,
 		Addr:     "127.0.0.1:6379",
 		Addrs:    nil,
 		Password: "",
@@ -189,7 +189,7 @@ func TestService_getRoomLikes(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &service.Service{}
+	s := &Service{}
 	my, total, err := s.cacheLike(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -218,14 +218,14 @@ func TestService_getRoomLikes(t *testing.T) {
 }
 
 func TestService_updateLastFlushTime(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -234,8 +234,8 @@ func TestService_updateLastFlushTime(t *testing.T) {
 		Default:  "live",
 		ReadOnly: true,
 	})
-	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
-	s := &service.Service{}
+	mysql.GetLive().AutoMigrate(&model.LiveLikeFlush{})
+	s := &Service{}
 	tests := []struct {
 		name     string
 		lastTime int64
@@ -277,14 +277,14 @@ func TestService_updateLastFlushTime(t *testing.T) {
 }
 
 func TestService_getLastFlushTime(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -293,9 +293,9 @@ func TestService_getLastFlushTime(t *testing.T) {
 		Default:  "live",
 		ReadOnly: true,
 	})
-	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
+	mysql.GetLive().AutoMigrate(&model.LiveLikeFlush{})
 
-	s := &service.Service{}
+	s := &Service{}
 	got, err := s.getLastFlushTime(context.Background())
 	assert.Nil(t, err)
 	assert.Greater(t, got, int64(0))
@@ -314,7 +314,7 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &service.Service{}
+	s := &Service{}
 	s.cacheLike(ctx, liveId1, userId1, 1)
 	s.cacheLike(ctx, liveId1, userId2, 2)
 
@@ -328,14 +328,14 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 }
 
 func TestService_flushCacheLikes(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -345,8 +345,8 @@ func TestService_flushCacheLikes(t *testing.T) {
 		ReadOnly: true,
 	})
 
-	cache2.Init(&cache2.Config{
-		Type:     cache2.TypeNode,
+	cache.Init(&cache.Config{
+		Type:     cache.TypeNode,
 		Addr:     "127.0.0.1:6379",
 		Addrs:    nil,
 		Password: "",
@@ -355,6 +355,6 @@ func TestService_flushCacheLikes(t *testing.T) {
 
 	from := int64(1663720421)
 	to := int64(1663720424)
-	s := &service.Service{}
+	s := &Service{}
 	s.flushCacheLikes(context.Background(), from, to)
 }

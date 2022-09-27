@@ -8,8 +8,9 @@ import (
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/base/callback"
-	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/base/live/service"
+	"github.com/qbox/livekit/module/base/user"
+	"github.com/qbox/livekit/module/biz/item"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/pili"
 	"github.com/qbox/livekit/module/fun/rtc"
@@ -25,18 +26,16 @@ import (
 type Service struct {
 }
 
-var instance service.IService = &Service{}
-
 func GetInstance() service.IService {
-	return instance
+	return service.Instance
 }
 
-func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error) {
+func (s *Service) CreateLive(context context.Context, req *service.CreateLiveRequest) (live *model.LiveEntity, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveId := uuid.Gen()
 
-	liveUser, err := service2.GetService().FindUser(context, req.AnchorId)
+	liveUser, err := user.GetService().FindUser(context, req.AnchorId)
 	if err != nil {
 		log.Errorf("create live failed, user not found, userId: %s, err: %v", req.AnchorId, err)
 		return
@@ -92,7 +91,7 @@ func (s *Service) GetLiveAuthor(ctx context.Context, liveId string) (*model.Live
 		return nil, err
 	}
 
-	userInfo, err := service2.GetService().FindUser(ctx, liveInfo.AnchorId)
+	userInfo, err := user.GetService().FindUser(ctx, liveInfo.AnchorId)
 	if err != nil {
 		log.Errorf("get user %s error %v", liveInfo.AnchorId, err)
 		return nil, err
@@ -356,7 +355,7 @@ func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId s
 	}
 
 	if liveEntity != nil && liveEntity.AnchorId == userId {
-		itemService := live.GetItemService()
+		itemService := item.GetItemService()
 		err = itemService.DelDemonstrateItem(context, liveId)
 		if err != nil {
 			log.Errorf("delete demonstrate for live %s error %s", liveId, err.Error())

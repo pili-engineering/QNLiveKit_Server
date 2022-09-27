@@ -37,19 +37,19 @@ const (
 	liveLikeRoomUsersTTL = time.Hour
 )
 
-func (s *service.Service) liveLikeKey(liveId string) string {
+func (s *Service) liveLikeKey(liveId string) string {
 	return fmt.Sprintf(liveLikeFmt, liveId)
 }
 
-func (s *service.Service) liveLikeRoomsKey(now time.Time) string {
+func (s *Service) liveLikeRoomsKey(now time.Time) string {
 	return fmt.Sprintf(liveLikeRoomsFmt, now.Unix())
 }
 
-func (s *service.Service) liveLikeRoomUsersKey(now time.Time, liveId string) string {
+func (s *Service) liveLikeRoomUsersKey(now time.Time, liveId string) string {
 	return fmt.Sprintf(liveLikeUsersFmt, liveId, now.Unix())
 }
 
-func (s *service.Service) cacheLike(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error) {
+func (s *Service) cacheLike(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error) {
 	log := logger.ReqLogger(ctx)
 	my, total, err = s.incrRoomLikes(ctx, liveId, userId, count)
 	if err != nil {
@@ -64,7 +64,7 @@ func (s *service.Service) cacheLike(ctx context.Context, liveId string, userId s
 	return
 }
 
-func (s *service.Service) incrRoomLikes(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error) {
+func (s *Service) incrRoomLikes(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error) {
 	log := logger.ReqLogger(ctx)
 	key := s.liveLikeKey(liveId)
 	my, err = cache.Client.HIncrByCtx(ctx, key, userId, count)
@@ -82,7 +82,7 @@ func (s *service.Service) incrRoomLikes(ctx context.Context, liveId string, user
 	return my, total, err
 }
 
-func (s *service.Service) getRoomLikes(ctx context.Context, liveId string, userIds []string) (map[string]int64, error) {
+func (s *Service) getRoomLikes(ctx context.Context, liveId string, userIds []string) (map[string]int64, error) {
 	log := logger.ReqLogger(ctx)
 	key := s.liveLikeKey(liveId)
 
@@ -105,26 +105,26 @@ func (s *service.Service) getRoomLikes(ctx context.Context, liveId string, userI
 	return ret, nil
 }
 
-func (s *service.Service) cacheLikeRooms(ctx context.Context, now time.Time, liveId string) error {
+func (s *Service) cacheLikeRooms(ctx context.Context, now time.Time, liveId string) error {
 	key := s.liveLikeRoomsKey(now)
 	cache.Client.SAddCtx(ctx, key, []interface{}{liveId})
 	cache.Client.Expire(key, liveLikeRoomsTTL)
 	return nil
 }
 
-func (s *service.Service) getLikeRooms(ctx context.Context, now time.Time) ([]string, error) {
+func (s *Service) getLikeRooms(ctx context.Context, now time.Time) ([]string, error) {
 	key := s.liveLikeRoomsKey(now)
 	return cache.Client.SMembersCtx(ctx, key)
 }
 
-func (s *service.Service) cacheLikeRoomUsers(ctx context.Context, now time.Time, liveId string, userId string) error {
+func (s *Service) cacheLikeRoomUsers(ctx context.Context, now time.Time, liveId string, userId string) error {
 	key := s.liveLikeRoomUsersKey(now, liveId)
 	cache.Client.SAddCtx(ctx, key, []interface{}{userId})
 	cache.Client.Expire(key, liveLikeRoomUsersTTL)
 	return nil
 }
 
-func (s *service.Service) getLikeRoomUsers(ctx context.Context, now time.Time, liveId string) ([]string, error) {
+func (s *Service) getLikeRoomUsers(ctx context.Context, now time.Time, liveId string) ([]string, error) {
 	key := s.liveLikeRoomUsersKey(now, liveId)
 	return cache.Client.SMembersCtx(ctx, key)
 }
@@ -133,7 +133,7 @@ func (s *service.Service) getLikeRoomUsers(ctx context.Context, now time.Time, l
 // 为了避免服务器间的时钟不同步，这里重刷数秒
 const flushSeconds = 5
 
-func (s *service.Service) FlushCacheLikes(ctx context.Context) {
+func (s *Service) FlushCacheLikes(ctx context.Context) {
 	log := logger.ReqLogger(ctx)
 	for {
 		now := time.Now().Unix()
@@ -163,7 +163,7 @@ func (s *service.Service) FlushCacheLikes(ctx context.Context) {
 	}
 }
 
-func (s *service.Service) updateLastFlushTime(ctx context.Context, lastTime, now int64) (int64, error) {
+func (s *Service) updateLastFlushTime(ctx context.Context, lastTime, now int64) (int64, error) {
 	if lastTime >= now {
 		return lastTime, nil
 	}
@@ -188,7 +188,7 @@ func (s *service.Service) updateLastFlushTime(ctx context.Context, lastTime, now
 	return lastTime, err
 }
 
-func (s *service.Service) getLastFlushTime(ctx context.Context) (int64, error) {
+func (s *Service) getLastFlushTime(ctx context.Context) (int64, error) {
 	now := time.Now().Unix()
 	flush := model.LiveLikeFlush{
 		Id:             1,
@@ -204,7 +204,7 @@ func (s *service.Service) getLastFlushTime(ctx context.Context) (int64, error) {
 	return flush.LastUpdateTime, nil
 }
 
-func (s *service.Service) flushCacheLikes(ctx context.Context, from, to int64) error {
+func (s *Service) flushCacheLikes(ctx context.Context, from, to int64) error {
 	log := logger.ReqLogger(ctx)
 	roomUsers := map[string]map[string]struct{}{} //room -> user
 	for t := from; t <= to; t++ {
@@ -243,7 +243,7 @@ func (s *service.Service) flushCacheLikes(ctx context.Context, from, to int64) e
 	return err
 }
 
-func (s *service.Service) flushRoomCacheLikes(ctx context.Context, room string, users map[string]struct{}) error {
+func (s *Service) flushRoomCacheLikes(ctx context.Context, room string, users map[string]struct{}) error {
 	log := logger.ReqLogger(ctx)
 	userIds := make([]string, 0, len(users))
 	for user, _ := range users {
@@ -274,7 +274,7 @@ func (s *service.Service) flushRoomCacheLikes(ctx context.Context, room string, 
 	return err
 }
 
-func (s *service.Service) combineRoomUsers(dst, src map[string]map[string]struct{}) {
+func (s *Service) combineRoomUsers(dst, src map[string]map[string]struct{}) {
 	for room, users := range src {
 		old := dst[room]
 		if old == nil {
@@ -289,7 +289,7 @@ func (s *service.Service) combineRoomUsers(dst, src map[string]map[string]struct
 }
 
 // getRoomLikeUsers 获取某一个秒内，对房间点赞的用户
-func (s *service.Service) getRoomLikeUsers(ctx context.Context, now time.Time) (map[string]map[string]struct{}, error) {
+func (s *Service) getRoomLikeUsers(ctx context.Context, now time.Time) (map[string]map[string]struct{}, error) {
 	log := logger.ReqLogger(ctx)
 	rooms, err := s.getLikeRooms(ctx, now)
 	if err != nil {

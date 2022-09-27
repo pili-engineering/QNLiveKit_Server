@@ -8,6 +8,8 @@ import (
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
+var Instance IService
+
 type IService interface {
 	CreateLive(context context.Context, req *CreateLiveRequest) (live *model.LiveEntity, err error)
 

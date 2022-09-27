@@ -15,7 +15,7 @@ import (
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/biz/item"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -61,7 +61,7 @@ func (c *itemController) PostItemAdd(ctx *gin.Context) {
 		entities = append(entities, dto.ItemDtoToEntity(d))
 	}
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	err := itemService.AddItems(ctx, request.LiveId, entities)
 	if err != nil {
 		log.Errorf("add items error %s", err.Error())
@@ -92,7 +92,7 @@ func (c *itemController) PostItemDelete(ctx *gin.Context) {
 		return
 	}
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	err := itemService.DelItems(ctx, request.LiveId, request.Items)
 	if err != nil {
 		log.Errorf("delete items error %s", err.Error())
@@ -123,7 +123,7 @@ func (c *itemController) PostItemStatus(ctx *gin.Context) {
 		return
 	}
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	err := itemService.UpdateItemStatus(ctx, request.LiveId, request.Items)
 	if err != nil {
 		log.Errorf("update item status error %s", err.Error())
@@ -154,7 +154,7 @@ func (c *itemController) PostItemOrder(ctx *gin.Context) {
 		return
 	}
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	err := itemService.UpdateItemOrder(ctx, request.LiveId, request.Items)
 	if err != nil {
 		log.Errorf("update item order error %s", err.Error())
@@ -174,7 +174,7 @@ func (c *itemController) GetItems(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	entities, err := itemService.ListItems(ctx, liveId, true)
 	if err != nil {
 		log.Errorf("list item error %s", err.Error())
@@ -208,7 +208,7 @@ func (c *itemController) PutItem(ctx *gin.Context) {
 	}
 	itemDto.ItemId = itemId
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	itemEntity := dto.ItemDtoToEntity(&itemDto)
 	err := itemService.UpdateItemInfo(ctx, liveId, itemEntity)
 	if err != nil {
@@ -232,7 +232,7 @@ func (c *itemController) PutItemExtends(ctx *gin.Context) {
 		return
 	}
 
-	itemService := live.GetItemService()
+	itemService := item.GetItemService()
 	err := itemService.UpdateItemExtends(ctx, liveId, itemId, extends)
 	if err != nil {
 		log.Errorf("update item extends error %s", err.Error())

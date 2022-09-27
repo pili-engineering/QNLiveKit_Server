@@ -5,7 +5,7 @@
 // @Date: 2022/7/5 10:15 上午
 // Copyright 2021 QINIU. All rights reserved
 
-package live
+package item
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/qbox/livekit/common/auth/qiniumac"
-	"github.com/qbox/livekit/module/base/live/service"
+	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/rpc"
 
@@ -92,7 +92,7 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 		return
 	}
 
-	_, err = service.GetService().LiveInfo(ctx, liveId)
+	_, err = live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %s", liveId, err.Error())
 		return api.ErrNotFound
@@ -597,7 +597,7 @@ func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string
 }
 
 func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonId int) (demonstrateLog *model.ItemDemonstrateRecord, err error) {
-	info, err := service.GetService().LiveInfo(ctx, liveId)
+	info, err := live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Infof("get Live_entities table error %s", err.Error())
 		return nil, err

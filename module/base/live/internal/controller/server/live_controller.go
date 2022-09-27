@@ -22,13 +22,7 @@ import (
 	"github.com/qbox/livekit/utils/logger"
 )
 
-func RegisterLiveRoutes(group *gin.RouterGroup) {
-	//userGroup := group.Group("/live")
-	//userGroup.POST("", LiveController.PostLiveCreate)
-	//userGroup.GET("/:id", LiveController.GetLive)
-	//userGroup.POST("/:id/stop", LiveController.PostLiveStop)
-	//userGroup.DELETE("/:id", LiveController.DeleteLive)
-
+func RegisterRoutes() {
 	httpq.ServerHandle(http.MethodPost, "/live", LiveController.PostLiveCreate)
 	httpq.ServerHandle(http.MethodGet, "/live/:id", LiveController.GetLive)
 	httpq.ServerHandle(http.MethodPost, "/live/:id/stop", LiveController.PostLiveStop)

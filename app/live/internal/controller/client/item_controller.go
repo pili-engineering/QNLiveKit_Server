@@ -11,8 +11,8 @@ import (
 	"net/http"
 
 	"github.com/qbox/livekit/common/auth/liveauth"
-	live2 "github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/base/live/service"
+	live2 "github.com/qbox/livekit/module/biz/item"
 
 	"github.com/gin-gonic/gin"
 

@@ -29,25 +29,7 @@ import (
 	"github.com/qbox/livekit/utils/logger"
 )
 
-func RegisterRoutes(group *gin.RouterGroup) {
-	//liveGroup := group.Group("/live")
-	//{
-	//liveGroup.POST("/room/instance", LiveController.CreateLive)
-	//liveGroup.DELETE("/room/instance/:live_id", LiveController.DeleteLive)
-	//liveGroup.GET("/room/info/:live_id", LiveController.LiveRoomInfo)
-	//liveGroup.DELETE("/room/:live_id", LiveController.StopLive)
-	//liveGroup.PUT("/room/:live_id", LiveController.StartLive)
-	//liveGroup.GET("/room", LiveController.SearchLive)
-	//liveGroup.POST("/room/user/:live_id", LiveController.JoinLive)
-	//liveGroup.GET("/room/list", LiveController.LiveList)
-	//liveGroup.GET("/room/list/anchor", LiveController.LiveListAnchor)
-	//liveGroup.DELETE("/room/user/:live_id", LiveController.LeaveLive)
-	//liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
-	//liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
-	//liveGroup.GET("/room/user_list", LiveController.LiveUserList)
-	//liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
-	//}
-
+func RegisterRoutes() {
 	httpq.ClientHandle(http.MethodPost, "/live/room/instance", LiveController.CreateLive)
 	httpq.ClientHandle(http.MethodDelete, "/live/room/instance/:live_id", LiveController.DeleteLive)
 	httpq.ClientHandle(http.MethodGet, "/live/room/info/:live_id", LiveController.LiveRoomInfo)
