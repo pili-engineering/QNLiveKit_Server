@@ -235,15 +235,22 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 	}
 
 	for _, live := range lives {
+		violationC := 0
+		err = db.Model(&model.CensorImage{}).Where("live_id = ? and review_answer = ?", live.LiveId, model.AuditResultBlock).Count(&violationC).Error
+		if err != nil {
+			return nil, 0, err
+		}
 		cl := CensorLive{
-			LiveId:     live.LiveId,
-			Title:      live.Title,
-			AnchorId:   live.AnchorId,
-			Status:     live.Status,
-			Count:      live.UnreviewCensorCount,
-			Time:       live.LastCensorTime,
-			StopReason: live.StopReason,
-			StopAt:     live.StopAt,
+			LiveId:         live.LiveId,
+			Title:          live.Title,
+			AnchorId:       live.AnchorId,
+			Status:         live.Status,
+			Count:          live.UnreviewCensorCount,
+			Time:           live.LastCensorTime,
+			StopReason:     live.StopReason,
+			StartAt:        live.StartAt,
+			StopAt:         live.StopAt,
+			ViolationCount: violationC,
 		}
 		censorLive = append(censorLive, cl)
 	}
@@ -265,16 +272,18 @@ func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uin
 }
 
 type CensorLive struct {
-	LiveId       string               `json:"live_id"`
-	Title        string               `json:"title"`
-	AnchorId     string               `json:"anchor_id"`
-	Nick         string               `json:"nick"`
-	Status       int                  `json:"live_status"`
-	AnchorStatus int                  `json:"anchor_status"`
-	StopReason   string               `json:"stop_reason"`
-	StopAt       *timestamp.Timestamp `json:"stop_at"`
-	Count        int                  `json:"count"`
-	Time         timestamp.Timestamp  `json:"time"`
+	LiveId         string               `json:"live_id"`
+	Title          string               `json:"title"`
+	AnchorId       string               `json:"anchor_id"`
+	Nick           string               `json:"nick"`
+	Status         int                  `json:"live_status"`
+	AnchorStatus   int                  `json:"anchor_status"`
+	StopReason     string               `json:"stop_reason"`
+	StopAt         *timestamp.Timestamp `json:"stop_at"`
+	StartAt        timestamp.Timestamp  `json:"start_at"`
+	Count          int                  `json:"count"`
+	ViolationCount int                  `json:"violation_count"`
+	Time           timestamp.Timestamp  `json:"time"`
 }
 
 type JobQueryRequest struct {
