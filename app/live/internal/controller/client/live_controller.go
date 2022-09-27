@@ -20,7 +20,6 @@ import (
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/report"
-	user2 "github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -89,7 +88,7 @@ func (*liveController) CreateLive(context *gin.Context) {
 		})
 		return
 	}
-	user, err := user2.GetService().FindUser(context, userInfo.UserId)
+	user, err := service.GetService().FindUser(context, userInfo.UserId)
 	if err != nil {
 		log.Errorf("find user failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -165,7 +164,7 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 		})
 		return
 	}
-	user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+	user, err := service.GetService().FindUser(context, liveInfo.AnchorId)
 	if err != nil {
 		log.Errorf("find user failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -291,7 +290,7 @@ func (*liveController) StartLive(context *gin.Context) {
 		})
 		return
 	}
-	user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+	user, err := service.GetService().FindUser(context, liveInfo.AnchorId)
 	if err != nil {
 		log.Errorf("find user failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -411,7 +410,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 			log.Errorf("get liveInfo info failed, err: %v", err)
 			continue
 		}
-		user, err := user2.GetService().FindUser(context, userInfo.UserId)
+		user, err := service.GetService().FindUser(context, userInfo.UserId)
 		if err != nil {
 			log.Errorf("find user failed, err: %v", err)
 			continue
@@ -480,7 +479,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 		})
 		return
 	}
-	user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+	user, err := service.GetService().FindUser(context, liveInfo.AnchorId)
 	if err != nil {
 		log.Errorf("find user failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -599,7 +598,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 			continue
 		}
 		log.Infof("liveInfo: %v", liveInfo)
-		user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+		user, err := service.GetService().FindUser(context, liveInfo.AnchorId)
 		log.Infof("user: %v", user)
 		if err != nil {
 			log.Errorf("find user failed, err: %v", err)
@@ -713,7 +712,7 @@ func (c *liveController) LiveListAnchor(context *gin.Context) {
 			continue
 		}
 		log.Infof("liveInfo: %v", liveInfo)
-		user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+		user, err := service.GetService().FindUser(context, liveInfo.AnchorId)
 		log.Infof("user: %v", user)
 		if err != nil {
 			log.Errorf("find user failed, err: %v", err)
@@ -940,7 +939,7 @@ func (*liveController) LiveUserList(context *gin.Context) {
 	}
 	userInfoList := make([]UserInfo, len(liveUserList), len(liveUserList))
 	for i := range liveUserList {
-		userInfo, err := user2.GetService().FindUser(context, liveUserList[i].UserId)
+		userInfo, err := service.GetService().FindUser(context, liveUserList[i].UserId)
 		if err != nil {
 			log.Errorf("get user info failed, err: %v", err)
 			continue
@@ -1002,7 +1001,7 @@ func (*liveController) PutLike(ctx *gin.Context) {
 		return
 	}
 
-	u, err := user2.GetService().FindUser(ctx, userInfo.UserId)
+	u, err := service.GetService().FindUser(ctx, userInfo.UserId)
 	if err == nil {
 		item := &notify.LikeNotifyItem{
 			LiveId: liveId,

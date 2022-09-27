@@ -10,11 +10,11 @@ package server
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/dto"
 
-	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/biz/live"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -50,7 +50,7 @@ func (c *liveController) PostLiveCreate(ctx *gin.Context) {
 		return
 	}
 
-	anchor, err := user.GetService().FindUser(ctx, request.AnchorId)
+	anchor, err := service.GetService().FindUser(ctx, request.AnchorId)
 	if err != nil {
 		log.Errorf("find anchor failed, err: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -116,7 +116,7 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 		return
 	}
 
-	anchor, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
+	anchor, err := service.GetService().FindUser(ctx, liveEntity.AnchorId)
 	if err != nil {
 		log.Errorf("find anchor failed, err: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))

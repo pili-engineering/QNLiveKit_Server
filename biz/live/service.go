@@ -8,13 +8,13 @@ import (
 	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/base/callback"
+	service2 "github.com/qbox/livekit/module/base/user/internal/impl"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/pili"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -101,7 +101,7 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 	db := mysql.GetLive(log.ReqID())
 	liveId := uuid.Gen()
 
-	liveUser, err := user.GetService().FindUser(context, req.AnchorId)
+	liveUser, err := service2.GetService().FindUser(context, req.AnchorId)
 	if err != nil {
 		log.Errorf("create live failed, user not found, userId: %s, err: %v", req.AnchorId, err)
 		return
@@ -157,7 +157,7 @@ func (s *Service) GetLiveAuthor(ctx context.Context, liveId string) (*model.Live
 		return nil, err
 	}
 
-	userInfo, err := user.GetService().FindUser(ctx, liveInfo.AnchorId)
+	userInfo, err := service2.GetService().FindUser(ctx, liveInfo.AnchorId)
 	if err != nil {
 		log.Errorf("get user %s error %v", liveInfo.AnchorId, err)
 		return nil, err
