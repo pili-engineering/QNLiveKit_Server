@@ -7,7 +7,6 @@ import (
 
 	"github.com/qbox/livekit/biz/mic"
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/module/fun/rtc"
@@ -135,7 +134,7 @@ func (*micController) GetMicList(context *gin.Context) {
 		if !rtcClient.Online(micList[i].UserId, liveId) {
 			continue
 		}
-		user, err := user.GetService().FindUser(context, micList[i].UserId)
+		user, err := service.GetService().FindUser(context, micList[i].UserId)
 		if err != nil {
 			log.Errorf("get user failed, err: %v", err)
 			continue

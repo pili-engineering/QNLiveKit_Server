@@ -21,7 +21,7 @@ var AppConfig Config
 
 type Config struct {
 	NodeID         int64                    `mapstructure:"node_id"`
-	Server         Server                   `mapstructure:"service"`
+	Server         Server                   `mapstructure:"impl"`
 	JwtKey         string                   `mapstructure:"jwt_key"`
 	CensorCallback string                   `mapstructure:"censor_callback"`
 	CensorBucket   string                   `mapstructure:"censor_bucket"`
@@ -35,7 +35,7 @@ type Config struct {
 	CacheConfig cache.Config    `mapstructure:"cache_config"`
 }
 
-// Server service port and host
+// Server impl port and host
 type Server struct {
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
