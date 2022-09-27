@@ -251,6 +251,10 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 			StartAt:        live.StartAt,
 			StopAt:         live.StopAt,
 			ViolationCount: violationC,
+			PushUrl:        live.PushUrl,
+			RtmpPlayUrl:    live.RtmpPlayUrl,
+			FlvPlayUrl:     live.FlvPlayUrl,
+			HlsPlayUrl:     live.HlsPlayUrl,
 		}
 		censorLive = append(censorLive, cl)
 	}
@@ -284,6 +288,10 @@ type CensorLive struct {
 	Count          int                  `json:"count"`
 	ViolationCount int                  `json:"violation_count"`
 	Time           timestamp.Timestamp  `json:"time"`
+	PushUrl        string               `json:"push_url"`
+	RtmpPlayUrl    string               `json:"rtmp_play_url"`
+	FlvPlayUrl     string               `json:"flv_play_url"`
+	HlsPlayUrl     string               `json:"hls_play_url"`
 }
 
 type JobQueryRequest struct {
