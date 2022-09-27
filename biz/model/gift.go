@@ -40,7 +40,7 @@ func (e LiveGift) TableName() string {
 }
 
 const (
-	SendGiftStatusWait        = iota //刚创建
-	SendGiftLiveStatusSuccess        //直播中
-	SendGiftLiveStatusFailure        //直播结束
+	SendGiftStatusWait    = iota //刚创建
+	SendGiftStatusSuccess        //发送礼物成功
+	SendGiftStatusFailure        //发送礼物失败
 )

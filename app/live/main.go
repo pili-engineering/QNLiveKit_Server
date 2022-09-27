@@ -105,7 +105,7 @@ func initAllService() {
 		CensorBucket:   config.AppConfig.CensorBucket,
 	})
 	gift.InitService(gift.Config{
-		GiftHost: config.AppConfig.GiftHost,
+		GiftAddr: config.AppConfig.GiftAddr,
 	})
 	cache.Init(&config.AppConfig.CacheConfig)
 }

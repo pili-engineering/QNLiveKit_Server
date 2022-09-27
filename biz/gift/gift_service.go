@@ -27,18 +27,13 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		log.Errorf("find live error %s", err.Error())
 		return nil, api.ErrorGiftPay
 	}
-	anchorInfo, err := user.GetService().FindUser(context, liveEntity.AnchorId)
-	if err != nil {
-		log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
-		return nil, api.ErrorGiftPay
-	}
 	liveGift := &model.LiveGift{
 		LiveId:   req.LiveId,
 		UserId:   userId,
 		BizId:    bizId,
 		GiftId:   req.GiftId,
 		Amount:   req.Amount,
-		AnchorId: anchorInfo.UserId,
+		AnchorId: liveEntity.AnchorId,
 	}
 	err = SaveLiveGift(context, liveGift)
 	if err != nil {
@@ -52,12 +47,17 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		BizId:    bizId,
 		GiftId:   req.GiftId,
 		Amount:   req.Amount,
-		AnchorId: anchorInfo.UserId,
+		AnchorId: liveEntity.AnchorId,
 	}
 	payResp := PayGiftResponse{}
-	url := s.GiftHost
+	url := s.GiftAddr
 	err = rpc.DefaultClient.CallWithJSON(log, &payResp, url, payReq)
 	if err != nil {
+		log.Errorf("send gift error %s", err.Error())
+		err = s.UpdateGiftStatus(context, bizId, model.SendGiftStatusFailure)
+		if err != nil {
+			log.Errorf("update gift status error %s", err.Error())
+		}
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		BizId:    bizId,
 		GiftId:   req.GiftId,
 		Amount:   req.Amount,
-		AnchorId: anchorInfo.UserId,
+		AnchorId: liveEntity.AnchorId,
 		Status:   payResp.Status,
 	}
 	err = s.UpdateGiftStatus(context, bizId, payResp.Status)
@@ -75,7 +75,7 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		log.Errorf("update gift status error %s", err.Error())
 		//该错误没有返回
 	}
-	if payResp.Status == model.SendGiftLiveStatusFailure {
+	if payResp.Status == model.SendGiftStatusFailure {
 		return sResp, api.ErrorGiftPayFromBiz
 	}
 	notifyItem := BroadcastGiftNotifyItem{
@@ -84,10 +84,14 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		GiftId: req.GiftId,
 		Amount: req.Amount,
 	}
-	err = notify.SendNotifyToLive(context, anchorInfo, liveEntity, notify.ActionTypeGiftNotify, &notifyItem)
+	userInfo, err := user.GetService().FindUser(context, userId)
+	if err != nil {
+		log.Errorf("get user info for %s error %s", userId, err.Error())
+		return sResp, nil
+	}
+	err = notify.SendNotifyToLive(context, userInfo, liveEntity, notify.ActionTypeGiftNotify, &notifyItem)
 	if err != nil {
 		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
-		return sResp, api.ErrorGiftPayIMMessage
 	}
 	return sResp, nil
 }

@@ -28,7 +28,7 @@ type Config struct {
 	CensorBucket   string                   `mapstructure:"censor_bucket"`
 	Callback       string                   `mapstructure:"callback"`
 	ReportHost     string                   `mapstructure:"report_host"`
-	GiftHost       string                   `mapstructure:"gift_host"`
+	GiftAddr       string                   `mapstructure:"gift_addr"`
 	Mysqls         []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
 	CronConfig  CronConfig      `mapstructure:"cron_config"`

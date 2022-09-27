@@ -31,7 +31,7 @@ func GetService() GService {
 }
 
 type Config struct {
-	GiftHost string
+	GiftAddr string
 }
 
 func InitService(conf Config) {

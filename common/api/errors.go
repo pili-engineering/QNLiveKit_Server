@@ -60,9 +60,8 @@ const (
 
 	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
 
-	ErrorCodeGiftPay                 = 200002
-	ErrorCodeGiftPayFromBiz          = 200003
-	ErrorCodeGiftPayIMMessageFailure = 200004
+	ErrorCodeGiftPay        = 200002
+	ErrorCodeGiftPayFromBiz = 200003
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -80,4 +79,3 @@ var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or
 
 var ErrorGiftPay = &Response{Code: ErrorCodeGiftPay, Message: "PayGift Failure: Internal error"}
 var ErrorGiftPayFromBiz = &Response{Code: ErrorCodeGiftPayFromBiz, Message: "PayGift Failure: Biz Server error"}
-var ErrorGiftPayIMMessage = &Response{Code: ErrorCodeGiftPayIMMessageFailure, Message: "payGift: pay success: but broadcast  error"}
