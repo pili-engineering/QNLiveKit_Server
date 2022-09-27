@@ -10,7 +10,7 @@ package client
 import (
 	"net/http"
 
-	"github.com/qbox/livekit/biz/live"
+	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/fun/rtc"
 
 	"github.com/gin-gonic/gin"

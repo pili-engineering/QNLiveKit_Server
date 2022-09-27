@@ -19,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/rpc"
 
@@ -91,7 +92,7 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 		return
 	}
 
-	_, err = GetService().LiveInfo(ctx, liveId)
+	_, err = service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %s", liveId, err.Error())
 		return api.ErrNotFound
@@ -596,7 +597,7 @@ func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string
 }
 
 func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonId int) (demonstrateLog *model.ItemDemonstrateRecord, err error) {
-	info, err := GetService().LiveInfo(ctx, liveId)
+	info, err := service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Infof("get Live_entities table error %s", err.Error())
 		return nil, err

@@ -12,9 +12,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/app/live/internal/dto"
+	"github.com/qbox/livekit/module/base/live/dto"
+	"github.com/qbox/livekit/module/base/live/service"
 
-	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -39,7 +39,7 @@ type LiveResponse struct {
 
 func (c *liveController) PostLiveCreate(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	request := &live.CreateLiveRequest{}
+	request := &service.CreateLiveRequest{}
 	if err := ctx.BindJSON(request); err != nil {
 		log.Errorf("bind request error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.Response{
@@ -57,7 +57,7 @@ func (c *liveController) PostLiveCreate(ctx *gin.Context) {
 		return
 	}
 
-	liveEntity, err := live.GetService().CreateLive(ctx, request)
+	liveEntity, err := service.GetService().CreateLive(ctx, request)
 	if err != nil {
 		log.Errorf("create liveEntity failed, err: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.Response{
@@ -105,7 +105,7 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 
 	liveId := ctx.Param("id")
-	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
+	liveEntity, err := service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("create liveEntity failed, err: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusOK, api.Response{
@@ -164,14 +164,14 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 func (c *liveController) PostLiveStop(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("id")
-	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
+	liveEntity, err := service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 
-	err = live.GetService().StopLive(ctx, liveId, liveEntity.AnchorId)
+	err = service.GetService().StopLive(ctx, liveId, liveEntity.AnchorId)
 	if err != nil {
 		log.Errorf("stop live failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -189,14 +189,14 @@ func (c *liveController) DeleteLive(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("id")
 
-	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
+	liveEntity, err := service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
 
-	err = live.GetService().DeleteLive(ctx, liveId, liveEntity.AnchorId)
+	err = service.GetService().DeleteLive(ctx, liveId, liveEntity.AnchorId)
 	if err != nil {
 		log.Errorf("delete live failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{

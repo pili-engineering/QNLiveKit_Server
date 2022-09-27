@@ -10,13 +10,12 @@ package server
 import (
 	"net/http"
 
-	"github.com/qbox/livekit/biz/live"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/utils/logger"
 )
 

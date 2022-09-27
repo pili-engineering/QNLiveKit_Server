@@ -1,4 +1,4 @@
-package live
+package impl
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func TestService_cacheLikeRoomUsers(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &Service{}
+	s := &service.Service{}
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId1)
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId2)
 	s.cacheLikeRoomUsers(ctx, now, liveId1, userId3)
@@ -55,7 +55,7 @@ func TestService_cacheLikeRooms(t *testing.T) {
 	liveId1 := fmt.Sprintf("live_%d_1", now.Unix())
 	liveId2 := fmt.Sprintf("live_%d_2", now.Unix())
 
-	s := &Service{}
+	s := &service.Service{}
 	err := s.cacheLikeRooms(ctx, now, liveId1)
 	assert.Nil(t, err)
 	err = s.cacheLikeRooms(ctx, now, liveId2)
@@ -86,7 +86,7 @@ func TestService_incrRoomLikes(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &Service{}
+	s := &service.Service{}
 	my, total, err := s.incrRoomLikes(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -132,7 +132,7 @@ func TestService_cacheLike(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &Service{}
+	s := &service.Service{}
 	my, total, err := s.cacheLike(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -189,7 +189,7 @@ func TestService_getRoomLikes(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &Service{}
+	s := &service.Service{}
 	my, total, err := s.cacheLike(ctx, liveId1, userId1, 1)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), my)
@@ -235,7 +235,7 @@ func TestService_updateLastFlushTime(t *testing.T) {
 		ReadOnly: true,
 	})
 	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
-	s := &Service{}
+	s := &service.Service{}
 	tests := []struct {
 		name     string
 		lastTime int64
@@ -295,7 +295,7 @@ func TestService_getLastFlushTime(t *testing.T) {
 	})
 	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
 
-	s := &Service{}
+	s := &service.Service{}
 	got, err := s.getLastFlushTime(context.Background())
 	assert.Nil(t, err)
 	assert.Greater(t, got, int64(0))
@@ -314,7 +314,7 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 	userId2 := "user_2"
 	userId3 := "user_3"
 
-	s := &Service{}
+	s := &service.Service{}
 	s.cacheLike(ctx, liveId1, userId1, 1)
 	s.cacheLike(ctx, liveId1, userId2, 2)
 
@@ -355,6 +355,6 @@ func TestService_flushCacheLikes(t *testing.T) {
 
 	from := int64(1663720421)
 	to := int64(1663720424)
-	s := &Service{}
+	s := &service.Service{}
 	s.flushCacheLikes(context.Background(), from, to)
 }

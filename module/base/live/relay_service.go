@@ -11,6 +11,7 @@ import (
 	"context"
 
 	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/biz/model"
@@ -84,7 +85,7 @@ func (s *RelayService) StartRelay(ctx context.Context, params *StartRelayParams)
 		return nil, err
 	}
 
-	liveService := GetService()
+	liveService := service.GetService()
 	err = liveService.StartRelay(ctx, params.InitRoomId, params.InitUserId, relaySession.SID)
 	if err != nil {
 		return nil, err
@@ -100,7 +101,7 @@ func (s *RelayService) StartRelay(ctx context.Context, params *StartRelayParams)
 
 func (s *RelayService) checkCanStartRelay(ctx context.Context, roomId string, userId string) error {
 	log := logger.ReqLogger(ctx)
-	liveService := GetService()
+	liveService := service.GetService()
 	liveEntity, err := liveService.LiveInfo(ctx, roomId)
 	if err != nil {
 		log.Errorf("get live room %s error %v", roomId, err)
@@ -218,7 +219,7 @@ func (s *RelayService) StopRelay(ctx context.Context, userId string, sid string)
 	relaySession.Status = model.RelaySessionStatusStopped
 	s.updateRelaySessionStatus(ctx, relaySession)
 
-	liveService := GetService()
+	liveService := service.GetService()
 
 	liveService.StopRelay(ctx, room, userId, sid)
 	liveService.StopRelay(ctx, relayRoom, relayUser, sid)
@@ -261,7 +262,7 @@ func (s *RelayService) GetRelayRoom(ctx context.Context, userId string, sid stri
 		return nil, "", api.ErrNotFound
 	}
 
-	liveService := GetService()
+	liveService := service.GetService()
 	liveRoom, err := liveService.CurrentLiveRoom(ctx, userId)
 	if err != nil {
 		log.Errorf("get current live room error %v", err)

@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/common/im"
 	"github.com/qbox/livekit/common/mysql"
+
+	"github.com/qbox/livekit/module/base/live"
 )
 
 func TestCensorController_notifyCensorBlock(t *testing.T) {
