@@ -8,14 +8,14 @@
 package server
 
 import (
-	"github.com/qbox/livekit/biz/admin"
 	"net/http"
+
+	"github.com/qbox/livekit/biz/admin"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -119,7 +119,7 @@ func (*authController) GetAuthToken(ctx *gin.Context) {
 		return
 	}
 
-	userService := user.GetService()
+	userService := service.GetService()
 	_, err := userService.FindOrCreateUser(ctx, req.UserId)
 	if err != nil {
 		log.Errorf("get user userId:%s, error:%v", req.UserId, err)

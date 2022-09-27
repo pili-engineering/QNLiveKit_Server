@@ -14,8 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/base/user"
 	"github.com/qbox/livekit/utils/logger"
 )
 
