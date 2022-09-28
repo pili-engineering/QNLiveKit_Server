@@ -500,10 +500,11 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		return
 	}
 
-	if req.ReviewAnswer == model.AuditResultBlock {
-		go c.notifyCensorBlock(ctx, req.LiveId)
+	if req.Notify {
+		if req.ReviewAnswer == model.AuditResultBlock {
+			go c.notifyCensorBlock(ctx, req.LiveId)
+		}
 	}
-
 	ctx.JSON(http.StatusOK, api.Response{
 		Code:      http.StatusOK,
 		Message:   "success",
