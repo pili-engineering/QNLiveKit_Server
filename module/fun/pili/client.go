@@ -7,7 +7,29 @@
 
 package pili
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+type SaveStreamRequest struct {
+	Fname                     string `json:"fname"`
+	Start                     int64  `json:"start"`
+	End                       int64  `json:"end"`
+	Pipeline                  string `json:"pipeline"`
+	Format                    string `json:"uint"`
+	ExpireDays                int    `json:"expireDays"`
+	Notify                    string `json:"notify"`
+	PersistentDeleteAfterDays int    `json:"persistentDeleteAfterDays"`
+	FirstTsType               byte   `json:"firstTsType"`
+}
+
+type SaveStreamResponse struct {
+	Fname        string `json:"fname"`
+	Start        int64  `json:"start"`
+	End          int64  `json:"end"`
+	PersistentID string `json:"persistentID"`
+}
 
 type Service interface {
 	PiliHub() string
@@ -21,6 +43,8 @@ type Service interface {
 	StreamHlsPlayURL(roomId string) (url string)
 
 	PlaybackURL(fname string) string
+
+	SaveStream(ctx context.Context, req *SaveStreamRequest, encodedStreamTitle string) (*SaveStreamResponse, error)
 }
 
 var service Service
