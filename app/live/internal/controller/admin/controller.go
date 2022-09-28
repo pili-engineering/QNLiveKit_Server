@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"math"
 	"net/http"
 	"strconv"
@@ -399,13 +400,17 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	for i, liveEntity := range lives {
 		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
-			log.Errorf("FindLiveRoomUser failed, err: %v", err)
-			ctx.JSON(http.StatusInternalServerError, api.Response{
-				Code:      http.StatusInternalServerError,
-				Message:   "FindLiveRoomUser failed",
-				RequestId: log.ReqID(),
-			})
-			return
+			if !errors.Is(err, api.ErrNotFound) {
+				log.Errorf("FindLiveRoomUser failed, err: %v", err)
+				ctx.JSON(http.StatusInternalServerError, api.Response{
+					Code:      http.StatusInternalServerError,
+					Message:   "FindLiveRoomUser failed",
+					RequestId: log.ReqID(),
+				})
+				return
+			}
+		} else {
+			lives[i].AnchorStatus = int(anchor.Status)
 		}
 		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
 		if err != nil {
