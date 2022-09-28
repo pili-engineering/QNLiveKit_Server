@@ -242,6 +242,11 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 		if err != nil {
 			return nil, 0, err
 		}
+		aiC := 0
+		err = db.Model(&model.CensorImage{}).Where("live_id = ? ", live.LiveId).Count(&aiC).Error
+		if err != nil {
+			return nil, 0, err
+		}
 		cl := CensorLive{
 			LiveId:         live.LiveId,
 			Title:          live.Title,
@@ -253,6 +258,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 			StartAt:        live.StartAt,
 			StopAt:         live.StopAt,
 			ViolationCount: violationC,
+			AiCount:        aiC,
 			PushUrl:        live.PushUrl,
 			RtmpPlayUrl:    live.RtmpPlayUrl,
 			FlvPlayUrl:     live.FlvPlayUrl,
@@ -287,8 +293,9 @@ type CensorLive struct {
 	StopReason     string               `json:"stop_reason"`
 	StopAt         *timestamp.Timestamp `json:"stop_at"`
 	StartAt        timestamp.Timestamp  `json:"start_at"`
-	Count          int                  `json:"count"`
-	ViolationCount int                  `json:"violation_count"`
+	Count          int                  `json:"count"`           //待审核次数
+	ViolationCount int                  `json:"violation_count"` //违规次数
+	AiCount        int                  `json:"ai_count"`        ///ai预警次数
 	Time           timestamp.Timestamp  `json:"time"`
 	PushUrl        string               `json:"push_url"`
 	RtmpPlayUrl    string               `json:"rtmp_play_url"`
