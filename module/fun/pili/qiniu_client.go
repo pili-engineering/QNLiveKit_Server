@@ -26,6 +26,7 @@ type QiniuClient struct {
 	RoomTokenExpireS int64
 	StreamPattern    string
 	PublishDomain    string
+	PlaybackUrl      string
 	RtmpPlayUrl      string
 	FlvPlayUrl       string
 	HlsPlayUrl       string
@@ -34,8 +35,6 @@ type QiniuClient struct {
 	publishExpireS   int64  // 推流地址过期时间，秒
 	client           *http.Client
 }
-
-const RtcHost = "https://rtc.qiniuapi.com"
 
 func NewQiniuClient(conf Config) *QiniuClient {
 	mac := &qiniumac.Mac{
@@ -50,6 +49,7 @@ func NewQiniuClient(conf Config) *QiniuClient {
 		Sk:             account.SecretKey(),
 		StreamPattern:  conf.StreamPattern,
 		PublishDomain:  conf.PublishDomain,
+		PlaybackUrl:    conf.PlayBackUrl,
 		RtmpPlayUrl:    conf.RtmpPlayUrl,
 		FlvPlayUrl:     conf.FlvPlayUrl,
 		HlsPlayUrl:     conf.HlsPlayUrl,
@@ -103,7 +103,7 @@ func (c *QiniuClient) StreamHlsPlayURL(roomId string) (url string) {
 }
 
 func (c *QiniuClient) PlaybackURL(fname string) string {
-	return c.
+	return c.PlaybackUrl + "/" + fname
 }
 
 func (c *QiniuClient) streamName(roomId string) string {

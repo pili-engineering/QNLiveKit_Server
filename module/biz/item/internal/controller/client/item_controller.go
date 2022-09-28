@@ -8,7 +8,6 @@
 package client
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/biz/item/dto"
+	"github.com/qbox/livekit/module/biz/item/internal/controller/utils"
 	"github.com/qbox/livekit/module/biz/item/internal/impl"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -285,21 +285,13 @@ func (c *itemController) GetItems(ctx *gin.Context) (interface{}, error) {
 
 	dtos := make([]*dto.ItemDto, 0, len(entities))
 	if demonItem != nil {
-		var record *model.ItemDemonstrateRecord = nil
-		if demonItem.RecordId > 0 {
-			record, _ = itemService.GetRecordVideo(context.Background(), demonItem.RecordId)
-		}
-		dtos = append(dtos, dto.ItemEntityToDto(demonItem, record))
+		dtos = append(dtos, utils.ItemEntityToDto(demonItem))
 	}
 
 	if len(entities) > 0 {
 		for _, e := range entities {
 			if demonItem == nil || e.ItemId != demonItem.ItemId {
-				var record *model.ItemDemonstrateRecord = nil
-				if e.RecordId > 0 {
-					record, _ = itemService.GetRecordVideo(context.Background(), e.RecordId)
-				}
-				dtos = append(dtos, dto.ItemEntityToDto(e, record))
+				dtos = append(dtos, utils.ItemEntityToDto(e))
 			}
 		}
 	}
@@ -465,7 +457,7 @@ func (c *itemController) ListLiveRecordVideo(ctx *gin.Context) (interface{}, err
 	}
 	var data []*dto.RecordDto
 	for _, v := range demonstrateLog {
-		data = append(data, dto.RecordEntityToDto(v))
+		data = append(data, utils.RecordEntityToDto(v))
 	}
 	return data, nil
 }
@@ -490,7 +482,7 @@ func (c *itemController) ListrecordVideo(ctx *gin.Context) (interface{}, error) 
 		return nil, err
 	}
 
-	return dto.RecordEntityToDto(demonstrateLog), nil
+	return utils.RecordEntityToDto(demonstrateLog), nil
 }
 
 type DelDemonItemResult struct {
@@ -585,7 +577,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) (interface{}, e
 	}
 	// TODO: 这里的fname 是不是有问题
 	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
-	return dto.RecordEntityToDto(demonstrateLog), nil
+	return utils.RecordEntityToDto(demonstrateLog), nil
 }
 
 // GetItemDemonstrate 获取上平讲解记录
@@ -601,9 +593,5 @@ func (c *itemController) GetItemDemonstrate(ctx *gin.Context) (interface{}, erro
 		return nil, err
 	}
 
-	var record *model.ItemDemonstrateRecord = nil
-	if itemEntity.RecordId > 0 {
-		record, _ = itemService.GetRecordVideo(context.Background(), itemEntity.RecordId)
-	}
-	return dto.ItemEntityToDto(itemEntity, record), nil
+	return utils.ItemEntityToDto(itemEntity), nil
 }
