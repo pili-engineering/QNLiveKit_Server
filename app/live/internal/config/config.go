@@ -26,6 +26,7 @@ type Config struct {
 	JwtKey         string                   `mapstructure:"jwt_key"`
 	CensorCallback string                   `mapstructure:"censor_callback"`
 	CensorBucket   string                   `mapstructure:"censor_bucket"`
+	CensorAddr     string                   `mapstructure:"censor_addr"`
 	Callback       string                   `mapstructure:"callback"`
 	ReportHost     string                   `mapstructure:"report_host"`
 	GiftAddr       string                   `mapstructure:"gift_addr"`

@@ -197,9 +197,10 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		log.Errorf("CallbackCensorJob  response Error %v", req.Error.Message)
 		return
 	}
+	url := admin.GetJobService().ImageBucketToUrl(req.Image.Url)
 	m := &model.CensorImage{
 		JobID:      req.Image.Job,
-		Url:        req.Image.Url,
+		Url:        url,
 		CreatedAt:  req.Image.Timestamp,
 		Suggestion: req.Image.Result.Suggestion,
 		Pulp:       req.Image.Result.Scenes.Pulp.Suggestion,
