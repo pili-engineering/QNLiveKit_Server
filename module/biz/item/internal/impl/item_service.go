@@ -5,82 +5,33 @@
 // @Date: 2022/7/5 10:15 上午
 // Copyright 2021 QINIU. All rights reserved
 
-package live
+package impl
 
 import (
 	"context"
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/jinzhu/gorm"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/qbox/livekit/common/auth/qiniumac"
-	"github.com/qbox/livekit/module/store/mysql"
-	"github.com/qbox/livekit/utils/rpc"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/biz/item/service"
+	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
 const maxItemCount = 100
 
-type IItemService interface {
-	AddItems(ctx context.Context, liveId string, items []*model.ItemEntity) error
-	DelItems(ctx context.Context, liveId string, items []string) error
-	ListItems(ctx context.Context, liveId string, showOffline bool) ([]*model.ItemEntity, error)
-	UpdateItemInfo(ctx context.Context, liveId string, item *model.ItemEntity) error
-	UpdateItemExtends(ctx context.Context, liveId string, itemId string, extends model.Extends) error
-
-	UpdateItemStatus(ctx context.Context, liveId string, statuses []*model.ItemStatus) error
-	UpdateItemOrder(ctx context.Context, liveId string, orders []*model.ItemOrder) error
-	UpdateItemOrderSingle(ctx context.Context, liveId string, itemId string, from, to uint) error
-
-	SetDemonstrateItem(ctx context.Context, liveId string, itemId string) error
-	DelDemonstrateItem(ctx context.Context, liveId string) error
-	GetDemonstrateItem(ctx context.Context, liveId string) (*model.ItemEntity, error)
-	GetLiveItem(ctx context.Context, liveId string, itemId string) (*model.ItemEntity, error)
-	IsDemonstrateItem(ctx context.Context, liveId, itemId string) (bool, error)
-
-	StartRecordVideo(ctx context.Context, liveId string, itemId string) error
-	StopRecordVideo(ctx context.Context, liveId string, demonId int) (*model.ItemDemonstrateRecord, error)
-	getRecordVideo(ctx context.Context, demonId int) (*model.ItemDemonstrateRecord, error)
-	GetRecordVideo(ctx context.Context, demonId uint) (*model.ItemDemonstrateRecord, error)
-	UpdateRecordVideo(ctx context.Context, itemLog *model.ItemDemonstrateRecord) error
-	GetListRecordVideo(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateRecord, error)
-	GetListLiveRecordVideo(ctx context.Context, liveId string) ([]*model.ItemDemonstrateRecord, error)
-	GetPreviousItem(ctx context.Context, liveId string) (*int, error)
-	DelRecordVideo(ctx context.Context, liveId string, demonItem []uint) error
-	saveRecordVideo(ctx context.Context, liveId, itemId string) error
-	UpdateItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error
-	DeleteItemRecord(ctx context.Context, demonId uint, liveId string, itemId string) error
-}
-
 type ItemService struct {
-	Config
 }
 
-var itemService IItemService
-
-type Config struct {
-	PiliHub   string
-	AccessKey string
-	SecretKey string
-}
-
-func InitService(conf Config) {
-	itemService = &ItemService{
-		Config: conf,
-	}
-}
-
-func GetItemService() IItemService {
-	return itemService
+func GetInstance() service.IItemService {
+	return service.Instance
 }
 
 func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*model.ItemEntity) (err error) {
@@ -91,7 +42,7 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 		return
 	}
 
-	_, err = GetService().LiveInfo(ctx, liveId)
+	_, err = live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %s", liveId, err.Error())
 		return api.ErrNotFound
@@ -212,7 +163,7 @@ func (s *ItemService) checkIfCanDelItems(ctx context.Context, liveId string, ite
 	var delItem []string
 	var demoItem []string
 	for _, i := range items {
-		isOnline, err := itemService.IsDemonstrateItem(ctx, liveId, i)
+		isOnline, err := s.IsDemonstrateItem(ctx, liveId, i)
 		if err != nil {
 			log.Errorf("delete items error %s", err.Error())
 			return nil, err
@@ -575,11 +526,11 @@ func (s *ItemService) StartRecordVideo(ctx context.Context, liveId string, itemI
 		log.Errorf("record previous item error %s", err.Error())
 	}
 	if err == nil && p != nil {
-		_, err = itemService.StopRecordVideo(ctx, liveId, *p)
+		_, err = s.StopRecordVideo(ctx, liveId, *p)
 	}
 
 	// status
-	err = s.saveRecordVideo(ctx, liveId, itemId)
+	err = s.SaveRecordVideo(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("save item demonstrate log error %s", err.Error())
 		return api.ErrDatabase
@@ -587,7 +538,7 @@ func (s *ItemService) StartRecordVideo(ctx context.Context, liveId string, itemI
 	return nil
 }
 
-func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string) error {
+func (s *ItemService) SaveRecordVideo(ctx context.Context, liveId, itemId string) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 
@@ -596,14 +547,15 @@ func (s *ItemService) saveRecordVideo(ctx context.Context, liveId, itemId string
 }
 
 func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonId int) (demonstrateLog *model.ItemDemonstrateRecord, err error) {
-	info, err := GetService().LiveInfo(ctx, liveId)
+	log := logger.ReqLogger(ctx)
+	info, err := live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Infof("get Live_entities table error %s", err.Error())
 		return nil, err
 	}
 	//info.PushUrl = "rtmp://pili-publish.qnsdk.com/sdk-live/qn_live_kit-1556829451990339584"
 	split := strings.Split(info.PushUrl, "/")
-	demonstrateLog, err = s.getRecordVideo(ctx, demonId)
+	demonstrateLog, err = s.GetRecordVideo(ctx, uint(demonId))
 	if err != nil {
 		log.Infof("get DemonstrateLog table error %s", err.Error())
 		return nil, err
@@ -659,23 +611,23 @@ func (s *ItemService) DeleteItemRecord(ctx context.Context, demonId uint, liveId
 }
 
 func (s *ItemService) postDemonstrateStreams(ctx context.Context, reqValue *model.StreamsDemonstrateReq, encodedStreamTitle string) (*model.StreamsDemonstrateResponse, error) {
-	url := "https://pili.qiniuapi.com" + "/v2/hubs/" + s.PiliHub + "/streams/" + encodedStreamTitle + "/saveas"
-	mac := &qiniumac.Mac{
-		AccessKey: s.AccessKey,
-		SecretKey: []byte(s.SecretKey),
-	}
-	c := &http.Client{
-		Transport: qiniumac.NewTransport(mac, nil),
-	}
-	client := rpc.Client{
-		Client: c,
-	}
+	//url := "https://pili.qiniuapi.com" + "/v2/hubs/" + s.PiliHub + "/streams/" + encodedStreamTitle + "/saveas"
+	//mac := &qiniumac.Mac{
+	//	AccessKey: s.AccessKey,
+	//	SecretKey: []byte(s.SecretKey),
+	//}
+	//c := &http.Client{
+	//	Transport: qiniumac.NewTransport(mac, nil),
+	//}
+	//client := rpc.Client{
+	//	Client: c,
+	//}
 
 	resp := &model.StreamsDemonstrateResponse{}
-	err := client.CallWithJSON(logger.ReqLogger(ctx), resp, url, reqValue)
-	if err != nil {
-		return nil, err
-	}
+	//err := client.CallWithJSON(logger.ReqLogger(ctx), resp, url, reqValue)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return resp, nil
 }
 
@@ -694,10 +646,10 @@ func (s *ItemService) GetRecordVideo(ctx context.Context, demonId uint) (*model.
 	return &demonstrateLog, nil
 }
 
-func (s *ItemService) getRecordVideo(ctx context.Context, demonId int) (*model.ItemDemonstrateRecord, error) {
-	t := uint(demonId)
-	return s.GetRecordVideo(ctx, t)
-}
+//func (s *ItemService) getRecordVideo(ctx context.Context, demonId int) (*model.ItemDemonstrateRecord, error) {
+//	t := uint(demonId)
+//	return s.GetRecordVideo(ctx, t)
+//}
 
 func (s *ItemService) GetListRecordVideo(ctx context.Context, liveId string, itemId string) (*model.ItemDemonstrateRecord, error) {
 	log := logger.ReqLogger(ctx)
@@ -767,7 +719,7 @@ func (s *ItemService) SetDemonstrateItem(ctx context.Context, liveId string, ite
 		log.Errorf("record previous item error %s", err.Error())
 	}
 	if err == nil && p != nil {
-		_, err = itemService.StopRecordVideo(ctx, liveId, *p)
+		_, err = s.StopRecordVideo(ctx, liveId, *p)
 	}
 
 	err = s.saveDemonstrateItem(ctx, liveId, itemId)

@@ -9,6 +9,7 @@ import (
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/live/internal/controller/client"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -102,11 +103,11 @@ func (*micController) DownMic(context *gin.Context) {
 }
 
 type MicListItem struct {
-	User    UserInfo      `json:"user"`
-	Mic     bool          `json:"mic"`
-	Camera  bool          `json:"camera"`
-	Status  int           `json:"status"`
-	Extends model.Extends `json:"extends"`
+	User    client.UserInfo `json:"user"`
+	Mic     bool            `json:"mic"`
+	Camera  bool            `json:"camera"`
+	Status  int             `json:"status"`
+	Extends model.Extends   `json:"extends"`
 }
 
 type MicListResponse struct {
@@ -140,7 +141,7 @@ func (*micController) GetMicList(context *gin.Context) {
 			continue
 		}
 		tmp := MicListItem{
-			User: UserInfo{
+			User: client.UserInfo{
 				UserId:     user.UserId,
 				ImUserId:   user.ImUserid,
 				ImUsername: user.ImUsername,
