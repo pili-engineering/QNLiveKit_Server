@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/base/admin"
 	"github.com/qbox/livekit/utils/logger"
 )
 

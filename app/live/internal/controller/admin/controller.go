@@ -16,6 +16,7 @@ import (
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
+	admin2 "github.com/qbox/livekit/module/base/admin"
 	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -55,7 +56,7 @@ func (c *CensorController) LoginManager(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	manService := admin.GetManagerService()
+	manService := admin2.GetManagerService()
 	admin, err := manService.FindAdminByUserName(ctx, req.UserName)
 	if err != nil {
 		log.Errorf("userName:%s, login error:%v", req.UserName, err)
