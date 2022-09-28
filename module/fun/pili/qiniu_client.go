@@ -8,6 +8,7 @@
 package pili
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/core/module/account"
+	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/rpc"
 )
 
 type QiniuClient struct {
@@ -33,7 +36,7 @@ type QiniuClient struct {
 	securityType     string //expiry, expiry_sk, none
 	publishKey       string // 七牛RTC生成推流地址需要验算公共Key
 	publishExpireS   int64  // 推流地址过期时间，秒
-	client           *http.Client
+	client           *rpc.Client
 }
 
 func NewQiniuClient(conf Config) *QiniuClient {
@@ -42,6 +45,10 @@ func NewQiniuClient(conf Config) *QiniuClient {
 		SecretKey: []byte(account.SecretKey()),
 	}
 	tr := qiniumac.NewTransport(mac, nil)
+	rpcClient := &rpc.Client{
+		Client: &http.Client{Transport: tr, Timeout: 3 * time.Second},
+		Header: nil,
+	}
 
 	c := &QiniuClient{
 		Hub:            conf.Hub,
@@ -56,10 +63,7 @@ func NewQiniuClient(conf Config) *QiniuClient {
 		securityType:   conf.SecurityType,
 		publishKey:     conf.PublishKey,
 		publishExpireS: conf.PublishExpireS,
-		client: &http.Client{
-			Transport: tr,
-			Timeout:   3 * time.Second,
-		},
+		client:         rpcClient,
 	}
 	return c
 }
@@ -108,4 +112,15 @@ func (c *QiniuClient) PlaybackURL(fname string) string {
 
 func (c *QiniuClient) streamName(roomId string) string {
 	return fmt.Sprintf(c.StreamPattern, roomId)
+}
+
+func (c *QiniuClient) SaveStream(ctx context.Context, req *SaveStreamRequest, encodedStreamTitle string) (*SaveStreamResponse, error) {
+	url := fmt.Sprintf("https://pili.qiniuapi.com/v2/hubs/%s/streams/%s/saveas", c.Hub, encodedStreamTitle)
+
+	resp := &SaveStreamResponse{}
+	err := c.client.CallWithJSON(logger.ReqLogger(ctx), resp, url, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

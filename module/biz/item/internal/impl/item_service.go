@@ -20,6 +20,7 @@ import (
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/biz/item/service"
+	"github.com/qbox/livekit/module/fun/pili"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -565,13 +566,13 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 		return nil, api.ErrNotFound
 	}
 	demonstrateLog.End = timestamp.Now()
-	reqValue := &model.StreamsDemonstrateReq{
+	reqValue := &pili.SaveStreamRequest{
 		Fname: demonstrateLog.LiveId + demonstrateLog.ItemId,
 		Start: demonstrateLog.Start.Unix(),
 		End:   demonstrateLog.End.Unix(),
 	}
 	encodedStreamTitle := base64.StdEncoding.EncodeToString([]byte(split[len(split)-1]))
-	streamResp, err := s.postDemonstrateStreams(ctx, reqValue, encodedStreamTitle)
+	streamResp, err := pili.GetService().SaveStream(ctx, reqValue, encodedStreamTitle)
 	if err != nil {
 		log.Infof("POST DemonstrateLog  error %s", err.Error())
 		demonstrateLog.Status = model.RecordStatusFail
@@ -608,27 +609,6 @@ func (s *ItemService) DeleteItemRecord(ctx context.Context, demonId uint, liveId
 		return err
 	}
 	return nil
-}
-
-func (s *ItemService) postDemonstrateStreams(ctx context.Context, reqValue *model.StreamsDemonstrateReq, encodedStreamTitle string) (*model.StreamsDemonstrateResponse, error) {
-	//url := "https://pili.qiniuapi.com" + "/v2/hubs/" + s.PiliHub + "/streams/" + encodedStreamTitle + "/saveas"
-	//mac := &qiniumac.Mac{
-	//	AccessKey: s.AccessKey,
-	//	SecretKey: []byte(s.SecretKey),
-	//}
-	//c := &http.Client{
-	//	Transport: qiniumac.NewTransport(mac, nil),
-	//}
-	//client := rpc.Client{
-	//	Client: c,
-	//}
-
-	resp := &model.StreamsDemonstrateResponse{}
-	//err := client.CallWithJSON(logger.ReqLogger(ctx), resp, url, reqValue)
-	//if err != nil {
-	//	return nil, err
-	//}
-	return resp, nil
 }
 
 func (s *ItemService) GetRecordVideo(ctx context.Context, demonId uint) (*model.ItemDemonstrateRecord, error) {
