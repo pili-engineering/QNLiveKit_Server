@@ -102,6 +102,10 @@ func (c *QiniuClient) StreamHlsPlayURL(roomId string) (url string) {
 	return
 }
 
+func (c *QiniuClient) PlaybackURL(fname string) string {
+	return c.
+}
+
 func (c *QiniuClient) streamName(roomId string) string {
 	return fmt.Sprintf(c.StreamPattern, roomId)
 }

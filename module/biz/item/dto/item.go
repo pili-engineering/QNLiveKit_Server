@@ -8,13 +8,7 @@
 package dto
 
 import (
-	"context"
-
-	log "github.com/sirupsen/logrus"
-
-	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/module/biz/item"
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
@@ -56,37 +50,6 @@ func ItemDtoToEntity(d *ItemDto) *model.ItemEntity {
 	return e
 }
 
-func ItemEntityToDto(e *model.ItemEntity) *ItemDto {
-	if e == nil {
-		return nil
-	}
-
-	i := &ItemDto{
-		LiveId:       e.LiveId,
-		ItemId:       e.ItemId,
-		Order:        e.Order,
-		Title:        e.Title,
-		Tags:         e.Tags,
-		Thumbnail:    e.Thumbnail,
-		Link:         e.Link,
-		CurrentPrice: e.CurrentPrice,
-		OriginPrice:  e.OriginPrice,
-		Status:       e.Status,
-		Extends:      e.Extends,
-	}
-	if e.RecordId == 0 {
-		return i
-	}
-	record, err := item.GetItemService().GetRecordVideo(context.Background(), e.RecordId)
-	if err != nil {
-		log.Info(err)
-	}
-	if err == nil && record != nil {
-		i.Record = RecordEntityToDto(record)
-	}
-	return i
-}
-
 type RecordDto struct {
 	ID        uint                `json:"id"`
 	RecordUrl string              `json:"record_url"`
@@ -95,25 +58,4 @@ type RecordDto struct {
 	Status    uint                `json:"status"`
 	LiveId    string              `json:"live_id"`
 	ItemId    string              `json:"item_id"`
-}
-
-func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
-	if e == nil {
-		return nil
-	}
-
-	r := &RecordDto{
-		ID:        e.ID,
-		RecordUrl: e.Fname,
-		Start:     e.Start,
-		End:       e.End,
-		LiveId:    e.LiveId,
-		Status:    e.Status,
-		ItemId:    e.ItemId,
-	}
-
-	if e.Status == 0 {
-		r.RecordUrl = config.AppConfig.RtcConfig.RtcPlayBackUrl + "/" + e.Fname
-	}
-	return r
 }

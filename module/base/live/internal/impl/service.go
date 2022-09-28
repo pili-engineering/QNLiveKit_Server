@@ -355,7 +355,7 @@ func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId s
 	}
 
 	if liveEntity != nil && liveEntity.AnchorId == userId {
-		itemService := item.GetItemService()
+		itemService := item.GetService()
 		err = itemService.DelDemonstrateItem(context, liveId)
 		if err != nil {
 			log.Errorf("delete demonstrate for live %s error %s", liveId, err.Error())
