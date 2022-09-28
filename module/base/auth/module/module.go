@@ -28,5 +28,6 @@ func (m *Module) Config(c *config.Config) error {
 }
 
 func (m *Module) PreStart() error {
+	service.Instance.RegisterAuthMiddleware()
 	return nil
 }

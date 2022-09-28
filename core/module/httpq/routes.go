@@ -1,12 +1,15 @@
 package httpq
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/core/module/httpq/middleware"
 	"github.com/qbox/livekit/core/module/httpq/monitor"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/utils/logger"
 )
 
 func (s *Server) createEngine() {
@@ -41,6 +44,16 @@ func (s *Server) createEngine() {
 	})
 
 	s.callbackGroup = s.engine.Group("/callback")
+
+	s.engine.Any("status", func(ctx *gin.Context) {
+		log := logger.ReqLogger(ctx)
+		resp := &rest.Response{
+			RequestId: log.ReqID(),
+			Code:      0,
+			Message:   "success",
+		}
+		ctx.JSON(http.StatusOK, resp)
+	})
 }
 
 // Handle 为了保证相同路径前缀的表现一致，如果是预定
