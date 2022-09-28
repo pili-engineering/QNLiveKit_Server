@@ -9,8 +9,11 @@ package client
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/live/internal/controller/client"
+	client2 "github.com/qbox/livekit/module/biz/item/internal/controller/client"
 )
 
 func RegisterRoute(engine *gin.Engine) {
@@ -18,8 +21,8 @@ func RegisterRoute(engine *gin.Engine) {
 	RegisterAppRoutes(clientGroup)
 	RegisterUserRoutes(clientGroup)
 	RegisterRelayRoutes(clientGroup)
-	RegisterLiveRoutes(clientGroup)
+	client.RegisterLiveRoutes(clientGroup)
 	RegisterMicRoutes(clientGroup)
-	RegisterItemRoutes(clientGroup)
+	client2.RegisterItemRoutes(clientGroup)
 	RegisterStatsRoutes(clientGroup)
 }

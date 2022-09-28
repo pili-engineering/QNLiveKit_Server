@@ -4,7 +4,7 @@ type Config struct {
 	Hub string `mapstructure:"hub"`
 
 	RoomTokenExpireS int64  `mapstructure:"room_token_expire_s"`
-	RtcPlayBackUrl   string `mapstructure:"playback_url"`
+	PlayBackUrl      string `mapstructure:"playback_url"`
 	StreamPattern    string `mapstructure:"stream_pattern"`
 	PublishUrl       string `mapstructure:"publish_url"`
 	PublishDomain    string `mapstructure:"publish_domain"`

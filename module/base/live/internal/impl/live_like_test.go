@@ -1,4 +1,4 @@
-package live
+package impl
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/report"
-	cache2 "github.com/qbox/livekit/module/store/cache"
-	mysql2 "github.com/qbox/livekit/module/store/mysql"
+	"github.com/qbox/livekit/module/store/cache"
+	"github.com/qbox/livekit/module/store/mysql"
 )
 
 func TestService_cacheLikeRoomUsers(t *testing.T) {
@@ -165,8 +165,8 @@ func TestService_cacheLike(t *testing.T) {
 }
 
 func likeCacheSetup() {
-	cache2.Init(&cache2.Config{
-		Type:     cache2.TypeNode,
+	cache.Init(&cache.Config{
+		Type:     cache.TypeNode,
 		Addr:     "127.0.0.1:6379",
 		Addrs:    nil,
 		Password: "",
@@ -218,14 +218,14 @@ func TestService_getRoomLikes(t *testing.T) {
 }
 
 func TestService_updateLastFlushTime(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -234,7 +234,7 @@ func TestService_updateLastFlushTime(t *testing.T) {
 		Default:  "live",
 		ReadOnly: true,
 	})
-	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
+	mysql.GetLive().AutoMigrate(&model.LiveLikeFlush{})
 	s := &Service{}
 	tests := []struct {
 		name     string
@@ -277,14 +277,14 @@ func TestService_updateLastFlushTime(t *testing.T) {
 }
 
 func TestService_getLastFlushTime(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -293,7 +293,7 @@ func TestService_getLastFlushTime(t *testing.T) {
 		Default:  "live",
 		ReadOnly: true,
 	})
-	mysql2.GetLive().AutoMigrate(&model.LiveLikeFlush{})
+	mysql.GetLive().AutoMigrate(&model.LiveLikeFlush{})
 
 	s := &Service{}
 	got, err := s.getLastFlushTime(context.Background())
@@ -328,14 +328,14 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 }
 
 func TestService_flushCacheLikes(t *testing.T) {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -345,8 +345,8 @@ func TestService_flushCacheLikes(t *testing.T) {
 		ReadOnly: true,
 	})
 
-	cache2.Init(&cache2.Config{
-		Type:     cache2.TypeNode,
+	cache.Init(&cache.Config{
+		Type:     cache.TypeNode,
 		Addr:     "127.0.0.1:6379",
 		Addrs:    nil,
 		Password: "",
