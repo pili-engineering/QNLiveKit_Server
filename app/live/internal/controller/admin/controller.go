@@ -11,12 +11,12 @@ import (
 	"github.com/qbox/livekit/app/live/internal/controller/server"
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/admin"
-	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
@@ -155,7 +155,7 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		return
 	}
 
-	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
+	liveEntity, err := service.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
@@ -175,7 +175,7 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
 	}
 
-	err = live.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
+	err = service.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
 	if err != nil {
 		log.Errorf("stop live failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -227,7 +227,7 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
+	err = service.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
@@ -247,7 +247,7 @@ func (c *CensorController) CreateJob(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	liveEntity, err := live.GetService().LiveInfo(ctx, req.LiveId)
+	liveEntity, err := service.GetService().LiveInfo(ctx, req.LiveId)
 	if err != nil {
 		log.Errorf("LiveInfo error:%v", err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -378,7 +378,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	}
 
 	for i, liveEntity := range lives {
-		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
+		anchor, err := service.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
 			if !errors.Is(err, api.ErrNotFound) {
 				log.Errorf("FindLiveRoomUser failed, err: %v", err)
@@ -501,7 +501,7 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
+	err = service.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
 	if err != nil {
 		log.Errorf("update Live Related Review error %s", err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
@@ -522,7 +522,7 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 
 func (c *CensorController) notifyCensorBlock(ctx context.Context, liveId string) {
 	log := logger.ReqLogger(ctx)
-	anchor, err := live.GetService().GetLiveAuthor(ctx, liveId)
+	anchor, err := service.GetService().GetLiveAuthor(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %v", liveId, err)
 		return
