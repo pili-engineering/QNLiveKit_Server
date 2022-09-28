@@ -2,9 +2,11 @@ package admin
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
+	"errors"
 	"math"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/controller/server"
 	"github.com/qbox/livekit/app/live/internal/dto"
@@ -367,15 +369,21 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	}
 
 	for i, liveEntity := range lives {
-		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
-		if err != nil {
-			log.Errorf("FindLiveRoomUser failed, err: %v", err)
-			ctx.JSON(http.StatusInternalServerError, api.Response{
-				Code:      http.StatusInternalServerError,
-				Message:   "FindLiveRoomUser failed",
-				RequestId: log.ReqID(),
-			})
-			return
+		if liveEntity.Status == model.LiveStatusOn {
+			anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
+			if err != nil {
+				if !errors.Is(err, api.ErrNotFound) {
+					log.Errorf("FindLiveRoomUser failed, err: %v", err)
+					ctx.JSON(http.StatusInternalServerError, api.Response{
+						Code:      http.StatusInternalServerError,
+						Message:   "FindLiveRoomUser failed",
+						RequestId: log.ReqID(),
+					})
+					return
+				}
+			} else {
+				lives[i].AnchorStatus = int(anchor.Status)
+			}
 		}
 		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
 		if err != nil {
@@ -388,7 +396,6 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 			return
 		}
 		lives[i].Nick = anchor2.Nick
-		lives[i].AnchorStatus = int(anchor.Status)
 	}
 
 	endPage := false
