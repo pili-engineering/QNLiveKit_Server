@@ -11,14 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/auth/internal/middleware"
 	"github.com/qbox/livekit/module/base/live/internal/controller/client"
 	client2 "github.com/qbox/livekit/module/biz/item/internal/controller/client"
 	client3 "github.com/qbox/livekit/module/biz/relay/internal/controller/client"
 )
 
 func RegisterRoute(engine *gin.Engine) {
-	clientGroup := engine.Group("/client", liveauth.AuthHandleFunc(config.AppConfig.JwtKey))
+	clientGroup := engine.Group("/client", middleware.AuthHandleFunc(config.AppConfig.JwtKey))
 	RegisterAppRoutes(clientGroup)
 	RegisterUserRoutes(clientGroup)
 	client3.RegisterRelayRoutes(clientGroup)

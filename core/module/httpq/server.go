@@ -19,13 +19,17 @@ type Server struct {
 	serverGroup   *gin.RouterGroup
 	adminGroup    *gin.RouterGroup
 	callbackGroup *gin.RouterGroup
+
+	clientAuthHandle gin.HandlerFunc
+	serverAuthHandle gin.HandlerFunc
+	adminAuthHandle  gin.HandlerFunc
 }
 
 func newServer(c *Config) *Server {
 	s := &Server{
 		c: c,
 	}
-	s.createEngin()
+	s.createEngine()
 
 	return s
 }

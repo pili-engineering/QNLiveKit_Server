@@ -15,9 +15,9 @@ import (
 
 	"github.com/qiniu/go-sdk/v7/pili"
 
-	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/core/module/account"
 	"github.com/qbox/livekit/utils/logger"
+	"github.com/qbox/livekit/utils/qiniumac"
 	"github.com/qbox/livekit/utils/rpc"
 )
 

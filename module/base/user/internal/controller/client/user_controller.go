@@ -12,9 +12,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/base/user/dto"
 	"github.com/qbox/livekit/module/base/user/internal/impl"
 	"github.com/qbox/livekit/utils/logger"
@@ -38,7 +38,7 @@ type userController struct {
 // return *dto.UserProfileDto
 func (*userController) GetUserProfile(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 
 	userService := impl.GetService()
 	userEntity, err := userService.FindUser(ctx, uInfo.UserId)
@@ -56,7 +56,7 @@ func (*userController) GetUserProfile(ctx *gin.Context) (interface{}, error) {
 // 无返回值
 func (*userController) PutUserInfo(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 
 	updateInfo := dto.UserDto{}
 	if err := ctx.BindJSON(&updateInfo); err != nil {

@@ -9,13 +9,37 @@ import (
 	"github.com/qbox/livekit/core/module/httpq/monitor"
 )
 
-func (s *Server) createEngin() {
+func (s *Server) createEngine() {
 	s.engine = gin.New()
 	s.engine.Use(middleware.Cors(), middleware.Logger(), middleware.Prometheus(), monitor.Middleware())
 
 	s.clientGroup = s.engine.Group("/client")
+	s.clientGroup.Use(func(ctx *gin.Context) {
+		if s.clientAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.clientAuthHandle(ctx)
+		}
+	})
+
 	s.serverGroup = s.engine.Group("/server")
+	s.serverGroup.Use(func(ctx *gin.Context) {
+		if s.serverAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.serverAuthHandle(ctx)
+		}
+	})
+
 	s.adminGroup = s.engine.Group("/admin")
+	s.adminGroup.Use(func(ctx *gin.Context) {
+		if s.adminAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.adminAuthHandle(ctx)
+		}
+	})
+
 	s.callbackGroup = s.engine.Group("/callback")
 }
 

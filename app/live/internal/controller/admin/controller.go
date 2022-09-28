@@ -15,8 +15,8 @@ import (
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
 	admin2 "github.com/qbox/livekit/module/base/admin"
+	"github.com/qbox/livekit/module/base/auth/internal/middleware"
 	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -142,7 +142,7 @@ func (c *CensorController) GetCensorConfig(ctx *gin.Context) {
 }
 
 func (c *CensorController) PostStopLive(ctx *gin.Context) {
-	adminInfo := liveauth.GetAdminInfo(ctx)
+	adminInfo := middleware.GetAdminInfo(ctx)
 
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
@@ -486,7 +486,7 @@ func (c *CensorController) QueryJob(ctx *gin.Context) {
 }
 
 func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
-	userInfo := ctx.MustGet(liveauth.AdminCtxKey).(*liveauth.AdminInfo)
+	userInfo := ctx.MustGet(middleware.AdminCtxKey).(*middleware.AdminInfo)
 	log := logger.ReqLogger(ctx)
 	req := &CensorAuditRequest{}
 	if err := ctx.BindJSON(req); err != nil {

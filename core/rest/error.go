@@ -47,3 +47,5 @@ var ErrUnauthorized = &Error{StatusCode: http.StatusUnauthorized, Code: http.Sta
 var ErrForbidden = &Error{StatusCode: http.StatusForbidden, Code: http.StatusForbidden, Message: http.StatusText(http.StatusForbidden)}
 var ErrTimeout = &Error{StatusCode: http.StatusRequestTimeout, Code: http.StatusRequestTimeout, Message: http.StatusText(http.StatusRequestTimeout)}
 var ErrInternal = &Error{StatusCode: http.StatusInternalServerError, Code: http.StatusInternalServerError, Message: http.StatusText(http.StatusInternalServerError)}
+
+var ErrTokenExpired = &Error{StatusCode: http.StatusUnauthorized, Code: 499, Message: "Your token is expired"}

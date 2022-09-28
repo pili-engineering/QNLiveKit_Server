@@ -11,13 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/module/base/auth/internal/middleware"
 	"github.com/qbox/livekit/module/base/live/internal/controller/server"
 	server2 "github.com/qbox/livekit/module/biz/item/internal/controller/server"
 )
 
 func RegisterRoute(engine *gin.Engine) {
-	serverGroup := engine.Group("/server", qiniumac.NewAuthMiddleware(config.AppConfig.MacConfig).HandleFunc())
+	serverGroup := engine.Group("/server", middleware.NewAuthMiddleware(config.AppConfig.MacConfig).HandleFunc())
 
 	RegisterAuthRoutes(serverGroup)
 	RegisterUserRoutes(serverGroup)
