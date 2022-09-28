@@ -5,7 +5,7 @@
 // @Date: 2022/6/1 2:28 下午
 // Copyright 2021 QINIU. All rights reserved
 
-package live
+package impl
 
 import (
 	"context"

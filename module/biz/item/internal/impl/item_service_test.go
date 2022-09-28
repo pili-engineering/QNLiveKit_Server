@@ -5,7 +5,7 @@
 // @Date: 2022/7/6 5:40 下午
 // Copyright 2021 QINIU. All rights reserved
 
-package live
+package impl
 
 import (
 	"context"
@@ -15,20 +15,20 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qbox/livekit/biz/model"
-	mysql2 "github.com/qbox/livekit/module/store/mysql"
+	"github.com/qbox/livekit/module/store/mysql"
 )
 
 const testLiveId = "test_live_1"
 
 func itemSetup() {
-	mysql2.Init(&mysql2.ConfigStructure{
+	mysql.Init(&mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
 		Database: "live_test",
 		Default:  "live",
-	}, &mysql2.ConfigStructure{
+	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
@@ -38,12 +38,12 @@ func itemSetup() {
 		ReadOnly: true,
 	})
 
-	mysql2.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
+	mysql.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
 
 	liveEntity := model.LiveEntity{
 		LiveId: testLiveId,
 	}
-	mysql2.GetLive().Save(&liveEntity)
+	mysql.GetLive().Save(&liveEntity)
 
 	items := make([]*model.ItemEntity, 0, 50)
 	for i := uint(1); i <= 50; i++ {
@@ -65,13 +65,13 @@ func itemSetup() {
 		}
 		items = append(items, item)
 	}
-	itemService := GetItemService()
+	itemService := GetInstance()
 	itemService.AddItems(context.Background(), testLiveId, items)
 
 }
 
 func itemTearDown() {
-	db := mysql2.GetLive()
+	db := mysql.GetLive()
 	db.DropTableIfExists(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
 }
 
@@ -79,7 +79,7 @@ func TestItemService_countItems(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	db := mysql2.GetLive()
+	db := mysql.GetLive()
 
 	tests := []struct {
 		name    string
@@ -115,7 +115,7 @@ func TestItemService_checkItemsExist(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	db := mysql2.GetLive()
+	db := mysql.GetLive()
 
 	tests := []struct {
 		name    string
@@ -157,7 +157,7 @@ func TestItemService_DelItems(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	itemService := GetItemService()
+	itemService := GetInstance()
 	err := itemService.DelItems(context.Background(), testLiveId, []string{"item_1", "item_2"})
 	assert.Nil(t, err)
 
@@ -209,7 +209,7 @@ func TestItemService_ListItems(t *testing.T) {
 		},
 	}
 
-	s := GetItemService()
+	s := GetInstance()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := s.ListItems(context.Background(), tt.liveId, tt.showOffline)
@@ -223,7 +223,7 @@ func TestItemService_UpdateItemStatus(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	s := GetItemService()
+	s := GetInstance()
 	err := s.UpdateItemStatus(context.Background(), "", nil)
 	assert.Nil(t, err)
 

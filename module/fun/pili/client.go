@@ -19,6 +19,8 @@ type Service interface {
 	StreamFlvPlayURL(roomId string) (url string)
 
 	StreamHlsPlayURL(roomId string) (url string)
+
+	PlaybackURL(fname string) string
 }
 
 var service Service
