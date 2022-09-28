@@ -11,6 +11,10 @@ import (
 
 const moduleName = "item"
 
+func init() {
+	application.RegisterModule(moduleName, &Module{})
+}
+
 type Module struct {
 	application.EmptyModule
 }
