@@ -10,7 +10,7 @@ import (
 
 func RegisterRoute(engine *gin.Engine) {
 	group := engine.Group("/manager")
-	group.GET("/login", censorController.LoginManager)
+	group.POST("/login", censorController.LoginManager)
 
 	group.POST("/censor/callback", censorController.CallbackCensorJob)
 	group.POST("/gift/test", client.GiftController.Test)

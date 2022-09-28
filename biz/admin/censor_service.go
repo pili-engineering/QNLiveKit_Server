@@ -22,9 +22,9 @@ type CCService interface {
 	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
 	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
 	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
-	SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error)
-	SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
-	GetUnauditCount(ctx context.Context, liveId string) (len int, err error)
+	SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error)
+	SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
+	GetUnreviewCount(ctx context.Context, liveId string) (len int, err error)
 }
 
 type CensorService struct {
@@ -173,22 +173,21 @@ func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.Censor
 	return nil
 }
 
-func (c *CensorService) GetUnauditCount(ctx context.Context, liveId string) (len int, err error) {
+func (c *CensorService) GetUnreviewCount(ctx context.Context, liveId string) (len int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ? ", 0, liveId).Count(&len).Error
 	return
 }
 
-// SearchCensorImage 0： 没审核 1：审核 2：都需要list出来/*
-func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum, pageSize int, liveId string) (image []model.CensorImage, totalCount int, err error) {
+func (c *CensorService) SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	image = make([]model.CensorImage, 0)
 
 	var where *gorm.DB
 	var all *gorm.DB
-	if liveId == "" {
+	if liveId == nil {
 		where = db.Model(&model.CensorImage{}).Where(" is_review = ? ", isReview)
 		all = db.Model(&model.CensorImage{})
 	} else {
@@ -196,15 +195,15 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 		all = db.Model(&model.CensorImage{}).Where(" live_id = ? ", liveId)
 	}
 
-	if isReview == 0 {
-		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-		err = where.Count(&totalCount).Error
-	} else if isReview == 1 {
-		err = where.Count(&totalCount).Error
-		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
-	} else {
+	if isReview == nil {
 		err = all.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 		err = all.Count(&totalCount).Error
+	} else if *isReview == IsReviewNo {
+		err = where.Order("created_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
+		err = where.Count(&totalCount).Error
+	} else if *isReview == IsReviewYes {
+		err = where.Count(&totalCount).Error
+		err = where.Order("review_answer desc").Order("created_at desc ").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&image).Error
 	}
 
 	if err != nil {
@@ -214,18 +213,19 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview, pageNum
 	return
 }
 
-const AuditNo = 1
-const AuditAll = 0
+const IsReviewNo = 0
+const IsReviewYes = 1
 
-func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	lives := make([]model.LiveEntity, 0)
 	var db2 *gorm.DB
-	if audit == AuditNo {
-		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
-	} else {
-		db2 = db.Model(&model.LiveEntity{}).Where("unaudit_censor_count >= 0")
+	if isReview == nil {
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count >= 0")
+	} else if *isReview == IsReviewNo {
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
 	}
 	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
 	err = db2.Count(&totalCount).Error
@@ -235,15 +235,26 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, audit, pageNum, pa
 	}
 
 	for _, live := range lives {
+		violationC := 0
+		err = db.Model(&model.CensorImage{}).Where("live_id = ? and review_answer = ?", live.LiveId, model.AuditResultBlock).Count(&violationC).Error
+		if err != nil {
+			return nil, 0, err
+		}
 		cl := CensorLive{
-			LiveId:     live.LiveId,
-			Title:      live.Title,
-			AnchorId:   live.AnchorId,
-			Status:     live.Status,
-			Count:      live.UnauditCensorCount,
-			Time:       live.LastCensorTime,
-			StopReason: live.StopReason,
-			StopAt:     live.StopAt,
+			LiveId:         live.LiveId,
+			Title:          live.Title,
+			AnchorId:       live.AnchorId,
+			Status:         live.Status,
+			Count:          live.UnreviewCensorCount,
+			Time:           live.LastCensorTime,
+			StopReason:     live.StopReason,
+			StartAt:        live.StartAt,
+			StopAt:         live.StopAt,
+			ViolationCount: violationC,
+			PushUrl:        live.PushUrl,
+			RtmpPlayUrl:    live.RtmpPlayUrl,
+			FlvPlayUrl:     live.FlvPlayUrl,
+			HlsPlayUrl:     live.HlsPlayUrl,
 		}
 		censorLive = append(censorLive, cl)
 	}
@@ -265,16 +276,22 @@ func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uin
 }
 
 type CensorLive struct {
-	LiveId       string               `json:"live_id"`
-	Title        string               `json:"title"`
-	AnchorId     string               `json:"anchor_id"`
-	Nick         string               `json:"nick"`
-	Status       int                  `json:"live_status"`
-	AnchorStatus int                  `json:"anchor_status"`
-	StopReason   string               `json:"stop_reason"`
-	StopAt       *timestamp.Timestamp `json:"stop_at"`
-	Count        int                  `json:"count"`
-	Time         timestamp.Timestamp  `json:"time"`
+	LiveId         string               `json:"live_id"`
+	Title          string               `json:"title"`
+	AnchorId       string               `json:"anchor_id"`
+	Nick           string               `json:"nick"`
+	Status         int                  `json:"live_status"`
+	AnchorStatus   int                  `json:"anchor_status"`
+	StopReason     string               `json:"stop_reason"`
+	StopAt         *timestamp.Timestamp `json:"stop_at"`
+	StartAt        timestamp.Timestamp  `json:"start_at"`
+	Count          int                  `json:"count"`
+	ViolationCount int                  `json:"violation_count"`
+	Time           timestamp.Timestamp  `json:"time"`
+	PushUrl        string               `json:"push_url"`
+	RtmpPlayUrl    string               `json:"rtmp_play_url"`
+	FlvPlayUrl     string               `json:"flv_play_url"`
+	HlsPlayUrl     string               `json:"hls_play_url"`
 }
 
 type JobQueryRequest struct {
