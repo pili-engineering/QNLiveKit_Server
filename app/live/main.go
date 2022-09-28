@@ -11,13 +11,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/qbox/livekit/biz/gift"
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/qbox/livekit/biz/gift"
 
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/app/live/internal/controller"
@@ -103,6 +104,7 @@ func initAllService() {
 		SecretKey:      config.AppConfig.RtcConfig.SecretKey,
 		CensorCallback: config.AppConfig.CensorCallback,
 		CensorBucket:   config.AppConfig.CensorBucket,
+		CensorAddr:     config.AppConfig.CensorAddr,
 	})
 	gift.InitService(gift.Config{
 		GiftAddr: config.AppConfig.GiftAddr,

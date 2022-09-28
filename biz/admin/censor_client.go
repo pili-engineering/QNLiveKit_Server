@@ -2,12 +2,14 @@ package admin
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
-	"net/http"
 )
 
 type JobService interface {
@@ -15,6 +17,7 @@ type JobService interface {
 	JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error)
 	JobClose(ctx context.Context, req *JobCreateResponseData) error
 	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
+	ImageBucketToUrl(url string) string
 }
 
 var service JobService
@@ -32,6 +35,7 @@ type Config struct {
 	SecretKey      string
 	CensorCallback string
 	CensorBucket   string
+	CensorAddr     string
 }
 
 type CensorClient struct {
@@ -39,6 +43,7 @@ type CensorClient struct {
 	SecretKey      string
 	CensorCallback string
 	CensorBucket   string
+	CensorAddr     string
 	client         *rpc.Client
 }
 
@@ -55,10 +60,16 @@ func NewCensorClient(config Config) *CensorClient {
 		SecretKey:      config.AccessKey,
 		CensorBucket:   config.CensorBucket,
 		CensorCallback: config.CensorCallback,
+		CensorAddr:     config.CensorAddr,
 		client: &rpc.Client{
 			Client: c,
 		},
 	}
+}
+
+func (c *CensorClient) ImageBucketToUrl(url string) string {
+	split := strings.Split(url, c.CensorBucket)
+	return c.CensorAddr + split[1]
 }
 
 func (c *CensorClient) JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error) {
