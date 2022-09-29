@@ -9,7 +9,6 @@ import (
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
-	"github.com/qbox/livekit/utils/timestamp"
 )
 
 type CCService interface {
@@ -253,10 +252,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 			AnchorId:       live.AnchorId,
 			Status:         live.Status,
 			Count:          live.UnreviewCensorCount,
-			Time:           live.LastCensorTime,
 			StopReason:     live.StopReason,
-			StartAt:        live.StartAt,
-			StopAt:         live.StopAt,
 			ViolationCount: violationC,
 			AiCount:        aiC,
 			PushUrl:        live.PushUrl,
@@ -264,6 +260,16 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 			FlvPlayUrl:     live.FlvPlayUrl,
 			HlsPlayUrl:     live.HlsPlayUrl,
 		}
+		if live.StopAt != nil {
+			cl.StopAt = live.StopAt.UnixMilli() / 1000
+		}
+		if live.LastCensorTime != nil {
+			cl.Time = live.StopAt.UnixMilli() / 1000
+		}
+		if live.StartAt != nil {
+			cl.StartAt = live.StartAt.UnixMilli() / 1000
+		}
+
 		censorLive = append(censorLive, cl)
 	}
 	return
@@ -284,23 +290,23 @@ func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uin
 }
 
 type CensorLive struct {
-	LiveId         string               `json:"live_id"`
-	Title          string               `json:"title"`
-	AnchorId       string               `json:"anchor_id"`
-	Nick           string               `json:"nick"`
-	Status         int                  `json:"live_status"`
-	AnchorStatus   int                  `json:"anchor_status"`
-	StopReason     string               `json:"stop_reason"`
-	StopAt         *timestamp.Timestamp `json:"stop_at"`
-	StartAt        timestamp.Timestamp  `json:"start_at"`
-	Count          int                  `json:"count"`           //待审核次数
-	ViolationCount int                  `json:"violation_count"` //违规次数
-	AiCount        int                  `json:"ai_count"`        ///ai预警次数
-	Time           timestamp.Timestamp  `json:"time"`
-	PushUrl        string               `json:"push_url"`
-	RtmpPlayUrl    string               `json:"rtmp_play_url"`
-	FlvPlayUrl     string               `json:"flv_play_url"`
-	HlsPlayUrl     string               `json:"hls_play_url"`
+	LiveId         string `json:"live_id"`
+	Title          string `json:"title"`
+	AnchorId       string `json:"anchor_id"`
+	Nick           string `json:"nick"`
+	Status         int    `json:"live_status"`
+	AnchorStatus   int    `json:"anchor_status"`
+	StopReason     string `json:"stop_reason"`
+	StopAt         int64  `json:"stop_at,omitempty"`
+	StartAt        int64  `json:"start_at"`
+	Count          int    `json:"count"`           //待审核次数
+	ViolationCount int    `json:"violation_count"` //违规次数
+	AiCount        int    `json:"ai_count"`        ///ai预警次数
+	Time           int64  `json:"time,omitempty"`
+	PushUrl        string `json:"push_url"`
+	RtmpPlayUrl    string `json:"rtmp_play_url"`
+	FlvPlayUrl     string `json:"flv_play_url"`
+	HlsPlayUrl     string `json:"hls_play_url"`
 }
 
 type JobQueryRequest struct {
