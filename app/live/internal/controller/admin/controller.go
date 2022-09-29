@@ -105,6 +105,11 @@ func (c *CensorController) UpdateCensorConfig(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
+	if req.Enable && (req.Interval < 1 || req.Interval > 60) {
+		log.Errorf("request interval invalid error")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
 	censorService := admin.GetCensorService()
 	err := censorService.UpdateCensorConfig(ctx, dto.CConfigDtoToEntity(req))
 	if err != nil {
@@ -331,7 +336,11 @@ func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
 	response.Data.TotalCount = count
 	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(req.PageSize)))
 	response.Data.EndPage = endPage
-	response.Data.List = images
+	imageDtos := make([]*dto.CensorImageDto, len(images))
+	for i, image := range images {
+		imageDtos[i] = dto.CensorImageModelToDto(&image)
+	}
+	response.Data.List = imageDtos
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -634,10 +643,10 @@ type CensorCallBack struct {
 type CensorImageListResponse struct {
 	api.Response
 	Data struct {
-		TotalCount int                 `json:"total_count"`
-		PageTotal  int                 `json:"page_total"`
-		EndPage    bool                `json:"end_page"`
-		List       []model.CensorImage `json:"list"`
+		TotalCount int                   `json:"total_count"`
+		PageTotal  int                   `json:"page_total"`
+		EndPage    bool                  `json:"end_page"`
+		List       []*dto.CensorImageDto `json:"list"`
 	} `json:"data"`
 }
 

@@ -15,7 +15,7 @@ type LiveEntity struct {
 	Status          int                  `json:"live_status"`
 	PkId            string               `json:"pk_id"`
 	OnlineCount     int                  `json:"online_count"`
-	StartAt         timestamp.Timestamp  `json:"start_at"`
+	StartAt         *timestamp.Timestamp `json:"start_at"`
 	EndAt           timestamp.Timestamp  `json:"end_at"`
 	ChatId          int64                `json:"chat_id"`
 	PushUrl         string               `json:"push_url"`
@@ -31,8 +31,8 @@ type LiveEntity struct {
 	StopUserId string               `json:"stop_user_id"` //关闭直播的管理员用户ID
 	StopAt     *timestamp.Timestamp `json:"stop_at"`      //关闭时间
 
-	UnreviewCensorCount int                 `json:"unreview_censor_count"`
-	LastCensorTime      timestamp.Timestamp `json:"last_censor_time"`
+	UnreviewCensorCount int `json:"unreview_censor_count"`
+	LastCensorTime      int `json:"last_censor_time"`
 }
 
 type LiveRoomUserStatus int

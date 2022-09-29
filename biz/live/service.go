@@ -130,8 +130,8 @@ func (s *Service) CreateLive(context context.Context, req *CreateLiveRequest) (l
 		Status:      model.LiveStatusPrepare,
 		PkId:        "",
 		OnlineCount: 0,
-		StartAt:     req.StartAt, //timestamp.Now(),
-		EndAt:       req.EndAt,   //timestamp.Now(),
+		StartAt:     &req.StartAt, //timestamp.Now(),
+		EndAt:       req.EndAt,    //timestamp.Now(),
 		ChatId:      chatroom,
 		PushUrl:     url,
 		RtmpPlayUrl: rtcClient.StreamRtmpPlayURL(liveId),
@@ -206,13 +206,13 @@ func (s *Service) StartLive(context context.Context, liveId string, anchorId str
 	}
 
 	live.Status = model.LiveStatusOn
-	live.StartAt = timestamp.Now()
+	now := timestamp.Now()
+	live.StartAt = &now
 	live.LastHeartbeatAt = timestamp.Now()
 	live.UpdatedAt = timestamp.Now()
 	err = db.Save(live).Error
 	roomToken = rtcClient.GetRoomToken(anchorId, liveId)
 
-	now := timestamp.Now()
 	liveUser.Status = model.LiveRoomUserStatusOnline
 	liveUser.LiveId = liveId
 	liveUser.UpdatedAt = now

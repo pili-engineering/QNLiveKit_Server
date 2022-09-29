@@ -13,6 +13,7 @@ import (
 	"github.com/qbox/livekit/app/live/internal/dto"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
@@ -85,7 +86,9 @@ func (c *liveController) PostLiveCreate(ctx *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.Unix()
+	if liveEntity.StartAt != nil {
+		response.Data.StartTime = liveEntity.StartAt.Unix()
+	}
 	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
@@ -140,7 +143,6 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.Unix()
 	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
@@ -154,6 +156,9 @@ func (c *liveController) GetLive(ctx *gin.Context) {
 	response.Data.LiveStatus = liveEntity.Status
 	response.Data.StopReason = liveEntity.StopReason
 	response.Data.StopUserId = liveEntity.StopUserId
+	if liveEntity.StartAt != nil {
+		response.Data.StartTime = liveEntity.StartAt.Unix()
+	}
 	if liveEntity.StopAt != nil {
 		response.Data.StopTime = liveEntity.StopAt.Unix()
 	}
