@@ -263,8 +263,8 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 		if live.StopAt != nil {
 			cl.StopAt = live.StopAt.UnixMilli() / 1000
 		}
-		if live.LastCensorTime != nil {
-			cl.Time = live.StopAt.UnixMilli() / 1000
+		if live.LastCensorTime != 0 {
+			cl.Time = int64(live.LastCensorTime * 1000)
 		}
 		if live.StartAt != nil {
 			cl.StartAt = live.StartAt.UnixMilli() / 1000
