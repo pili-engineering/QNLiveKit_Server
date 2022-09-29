@@ -116,7 +116,9 @@ func (*liveController) CreateLive(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.Unix()
+	if liveEntity.StartAt != nil {
+		response.Data.StartTime = liveEntity.StartAt.Unix()
+	}
 	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
@@ -211,7 +213,6 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = onlineCount
-	response.Data.StartTime = liveInfo.StartAt.Unix()
 	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
@@ -225,6 +226,9 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.LiveStatus = liveInfo.Status
 	response.Data.StopReason = liveInfo.StopReason
 	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
 	if liveInfo.StopAt != nil {
 		response.Data.StopTime = liveInfo.StopAt.Unix()
 	}
@@ -319,7 +323,9 @@ func (*liveController) StartLive(context *gin.Context) {
 	response.Data.RoomToken = roomToken
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.Unix()
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
 	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
@@ -433,7 +439,6 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.Unix()
 		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
@@ -445,9 +450,11 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].TotalCount = 0
 		list[i].TotalMics = 0
 		list[i].LiveStatus = liveInfo.Status
-
 		list[i].StopReason = liveInfo.StopReason
 		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StartAt != nil {
+			list[i].StartTime = liveInfo.StartAt.Unix()
+		}
 		if liveInfo.StopAt != nil {
 			list[i].StopTime = liveInfo.StopAt.Unix()
 		}
@@ -517,7 +524,6 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.Unix()
 	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
@@ -531,6 +537,9 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.LiveStatus = liveInfo.Status
 	response.Data.StopReason = liveInfo.StopReason
 	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
 	if liveInfo.StopAt != nil {
 		response.Data.StopTime = liveInfo.StopAt.Unix()
 	}
@@ -621,7 +630,6 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.Unix()
 		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
@@ -635,6 +643,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].LiveStatus = liveInfo.Status
 		list[i].StopReason = liveInfo.StopReason
 		list[i].StopUserId = liveInfo.StopUserId
+
 		if liveInfo.StopAt != nil {
 			list[i].StopTime = liveInfo.StopAt.Unix()
 		}
@@ -735,7 +744,6 @@ func (c *liveController) LiveListAnchor(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.Unix()
 		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
@@ -749,6 +757,9 @@ func (c *liveController) LiveListAnchor(context *gin.Context) {
 		list[i].LiveStatus = liveInfo.Status
 		list[i].StopReason = liveInfo.StopReason
 		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StartAt != nil {
+			list[i].StartTime = liveInfo.StartAt.Unix()
+		}
 		if liveInfo.StopAt != nil {
 			list[i].StopTime = liveInfo.StopAt.Unix()
 		}
