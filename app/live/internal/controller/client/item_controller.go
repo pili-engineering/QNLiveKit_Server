@@ -608,7 +608,6 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-	demonstrateLog.Fname = "pili-playback.qnsdk.com/" + demonstrateLog.Fname
 	response := &StopItemDemonstrateLogResponse{
 		Response: api.SuccessResponse(log.ReqID()),
 		Data:     dto.RecordEntityToDto(demonstrateLog),

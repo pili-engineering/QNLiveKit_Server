@@ -9,11 +9,13 @@ package dto
 
 import (
 	"context"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/utils/timestamp"
-	log "github.com/sirupsen/logrus"
 )
 
 type ItemDto struct {
@@ -110,7 +112,7 @@ func RecordEntityToDto(e *model.ItemDemonstrateRecord) *RecordDto {
 		ItemId:    e.ItemId,
 	}
 
-	if e.Status == 0 {
+	if e.Status == model.RecordStatusSuccess {
 		r.RecordUrl = config.AppConfig.RtcConfig.RtcPlayBackUrl + "/" + e.Fname
 	}
 	return r
