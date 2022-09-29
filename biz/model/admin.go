@@ -63,10 +63,10 @@ type CensorImage struct {
 
 	LiveID string `json:"live_id"`
 
-	IsReview     int                 `json:"is_review"`
-	ReviewAnswer int                 `json:"review_answer"`
-	ReviewUserId string              `json:"review_user_id"`
-	ReviewTime   timestamp.Timestamp `json:"review_time"`
+	IsReview     int                  `json:"is_review"`
+	ReviewAnswer int                  `json:"review_answer"`
+	ReviewUserId string               `json:"review_user_id"`
+	ReviewTime   *timestamp.Timestamp `json:"review_time"`
 }
 
 func (e CensorImage) TableName() string {

@@ -54,7 +54,7 @@ type CensorImageDto struct {
 }
 
 func CensorImageModelToDto(entity *model.CensorImage) *CensorImageDto {
-	return &CensorImageDto{
+	c := &CensorImageDto{
 		ID:           entity.ID,
 		Url:          entity.Url,
 		JobID:        entity.JobID,
@@ -68,6 +68,9 @@ func CensorImageModelToDto(entity *model.CensorImage) *CensorImageDto {
 		IsReview:     entity.IsReview,
 		ReviewAnswer: entity.ReviewAnswer,
 		ReviewUserId: entity.ReviewUserId,
-		ReviewTime:   entity.ReviewTime.UnixMilli() / 1000,
 	}
+	if entity.ReviewTime != nil {
+		c.ReviewTime = entity.ReviewTime.UnixMilli() / 1000
+	}
+	return c
 }
