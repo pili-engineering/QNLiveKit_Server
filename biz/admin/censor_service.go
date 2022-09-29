@@ -297,12 +297,12 @@ type CensorLive struct {
 	Status         int    `json:"live_status"`
 	AnchorStatus   int    `json:"anchor_status"`
 	StopReason     string `json:"stop_reason"`
-	StopAt         int64  `json:"stop_at,omitempty"`
+	StopAt         int64  `json:"stop_at"`
 	StartAt        int64  `json:"start_at"`
 	Count          int    `json:"count"`           //待审核次数
 	ViolationCount int    `json:"violation_count"` //违规次数
 	AiCount        int    `json:"ai_count"`        ///ai预警次数
-	Time           int64  `json:"time,omitempty"`
+	Time           int64  `json:"time"`
 	PushUrl        string `json:"push_url"`
 	RtmpPlayUrl    string `json:"rtmp_play_url"`
 	FlvPlayUrl     string `json:"flv_play_url"`
