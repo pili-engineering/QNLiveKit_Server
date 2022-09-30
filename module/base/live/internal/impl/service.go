@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/admin"
+	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/base/callback"
 	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/module/base/user"
@@ -15,10 +18,6 @@ import (
 	"github.com/qbox/livekit/module/fun/pili"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
-
-	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
@@ -380,7 +379,7 @@ func (s *Service) FindLiveRoomUser(context context.Context, liveId string, userI
 	return
 }
 
-func (s *Service) FindUserLive(context context.Context, liveId string, userInfo *liveauth.UserInfo) (liveRoomUser *model.LiveRoomUserEntity, err error) {
+func (s *Service) FindUserLive(context context.Context, liveId string, userInfo *auth.UserInfo) (liveRoomUser *model.LiveRoomUserEntity, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	liveRoomUser = &model.LiveRoomUserEntity{}
