@@ -10,6 +10,7 @@ import (
 	_ "github.com/qbox/livekit/module/base/auth/module"
 	_ "github.com/qbox/livekit/module/base/callback"
 	_ "github.com/qbox/livekit/module/base/live/module"
+	_ "github.com/qbox/livekit/module/base/stats/module"
 	_ "github.com/qbox/livekit/module/base/user/module"
 	_ "github.com/qbox/livekit/module/biz/item/module"
 	_ "github.com/qbox/livekit/module/biz/relay/module"
