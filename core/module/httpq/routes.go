@@ -41,7 +41,7 @@ func (s *Server) createEngine() {
 		} else {
 			s.adminAuthHandle(ctx)
 		}
-	})
+	}, middleware.OperatorLogMiddleware())
 
 	s.callbackGroup = s.engine.Group("/callback")
 
