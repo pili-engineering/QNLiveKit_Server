@@ -9,6 +9,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/common/auth/qiniumac"
 )
@@ -20,6 +21,7 @@ func RegisterRoute(engine *gin.Engine) {
 	RegisterUserRoutes(serverGroup)
 	RegisterLiveRoutes(serverGroup)
 	RegisterItemRoutes(serverGroup)
+	RegisterGiftRoutes(serverGroup)
 
 	engine.Any("status", StatusCheckController.CheckStatus)
 }

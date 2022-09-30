@@ -1,4 +1,4 @@
-package client
+package server
 
 import (
 	"math"
@@ -10,9 +10,7 @@ import (
 	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/gift"
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -23,13 +21,83 @@ var GiftController = &giftController{}
 
 func RegisterGiftRoutes(group *gin.RouterGroup) {
 	giftGroup := group.Group("/gift")
+
 	giftGroup.GET("/config/:type", GiftController.GetGiftConfig)
+	giftGroup.POST("/config", GiftController.AddGiftConfig)
+	giftGroup.DELETE("/config/:gift_id", GiftController.DeleteGiftConfig)
 
 	giftGroup.GET("/list/live/:live_id", GiftController.ListGiftByLiveId)
-	giftGroup.GET("/list/anchor", GiftController.ListGiftByAnchorId)
-	giftGroup.GET("/list/user", GiftController.ListGiftByUserId)
-	giftGroup.POST("/send", GiftController.SendGift)
+	giftGroup.GET("/list/anchor/:anchor_id", GiftController.ListGiftByAnchorId)
+	giftGroup.GET("/list/user/:user_id", GiftController.ListGiftByUserId)
+}
 
+func (*giftController) AddGiftConfig(context *gin.Context) {
+	log := logger.ReqLogger(context)
+	req := &dto.GiftConfigDto{}
+	if err := context.BindJSON(req); err != nil {
+		log.Errorf("bind request error %v", err)
+		context.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+	if req.GiftId == 0 || req.Name == "" {
+		context.AbortWithStatusJSON(http.StatusBadRequest, &api.Response{
+			Code:      http.StatusBadRequest,
+			RequestId: log.ReqID(),
+			Message:   "Name 不能为空 且 GiftId 需要 >0 ",
+		})
+		return
+	}
+
+	err := gift.GetService().SaveGiftEntity(context, dto.GiftDtoToEntity(req))
+	if err != nil {
+		log.Errorf("add gift config  failed, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "add gift config failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	context.JSON(http.StatusOK, api.Response{
+		Code:      200,
+		Message:   "success",
+		RequestId: log.ReqID(),
+	})
+}
+
+func (*giftController) DeleteGiftConfig(context *gin.Context) {
+	log := logger.ReqLogger(context)
+	typeId := context.Param("gift_id")
+	typeIdInt, err := strconv.Atoi(typeId)
+	if err != nil {
+		log.Errorf("gift_id is not int, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "gift_id is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	err = gift.GetService().DeleteGiftEntity(context, typeIdInt)
+	if err != nil {
+		log.Errorf("delete gift config  failed, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "delete gift config failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	context.JSON(http.StatusOK, api.Response{
+		Code:      200,
+		Message:   "success",
+		RequestId: log.ReqID(),
+	})
+}
+
+type ListGiftConfigResponse struct {
+	api.Response
+	Data []*dto.GiftConfigDto `json:"data"`
 }
 
 func (*giftController) GetGiftConfig(context *gin.Context) {
@@ -65,11 +133,6 @@ func (*giftController) GetGiftConfig(context *gin.Context) {
 	response.Response.RequestId = log.ReqID()
 	response.Data = giftDtos
 	context.JSON(http.StatusOK, response)
-}
-
-type ListGiftConfigResponse struct {
-	api.Response
-	Data []*dto.GiftConfigDto `json:"data"`
 }
 
 func (c *giftController) ListGiftByLiveId(ctx *gin.Context) {
@@ -126,7 +189,7 @@ func (c *giftController) ListGiftByLiveId(ctx *gin.Context) {
 
 func (c *giftController) ListGiftByAnchorId(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	userInfo := liveauth.GetUserInfo(ctx)
+	anchorId := ctx.Param("anchor_id")
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -149,7 +212,7 @@ func (c *giftController) ListGiftByAnchorId(ctx *gin.Context) {
 		})
 		return
 	}
-	gifts, count, err := gift.GetService().SearchGiftByAnchorId(ctx, userInfo.UserId, pageNumInt, pageSizeInt)
+	gifts, count, err := gift.GetService().SearchGiftByAnchorId(ctx, anchorId, pageNumInt, pageSizeInt)
 	if err != nil {
 		log.Errorf("Search Gift by AnchorId  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -177,7 +240,7 @@ func (c *giftController) ListGiftByAnchorId(ctx *gin.Context) {
 
 func (c *giftController) ListGiftByUserId(ctx *gin.Context) {
 	log := logger.ReqLogger(ctx)
-	userInfo := liveauth.GetUserInfo(ctx)
+	userId := ctx.Param("user_id")
 	pageNum := ctx.DefaultQuery("page_num", "1")
 	pageSize := ctx.DefaultQuery("page_size", "10")
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -201,7 +264,7 @@ func (c *giftController) ListGiftByUserId(ctx *gin.Context) {
 		return
 	}
 
-	gifts, count, err := gift.GetService().SearchGiftByUserId(ctx, userInfo.UserId, pageNumInt, pageSizeInt)
+	gifts, count, err := gift.GetService().SearchGiftByUserId(ctx, userId, pageNumInt, pageSizeInt)
 	if err != nil {
 		log.Errorf("Search Gift ByUserId  failed, err: %v", err)
 		ctx.JSON(http.StatusInternalServerError, api.Response{
@@ -235,73 +298,4 @@ type LiveGiftListResponse struct {
 		EndPage    bool              `json:"end_page"`
 		List       []*model.LiveGift `json:"list"`
 	} `json:"data"`
-}
-
-func (c *giftController) SendGift(ctx *gin.Context) {
-	log := logger.ReqLogger(ctx)
-	request := &gift.SendGiftRequest{}
-	if err := ctx.BindJSON(request); err != nil {
-		log.Errorf("bind request error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
-	}
-	uInfo := liveauth.GetUserInfo(ctx)
-	if uInfo == nil {
-		log.Errorf("user info not exist")
-		ctx.AbortWithStatusJSON(http.StatusNotFound, api.ErrorWithRequestId(log.ReqID(), api.ErrNotFound))
-		return
-	}
-	sendGift, err := gift.GetService().SendGift(ctx, request, uInfo.UserId)
-	if err != nil {
-		log.Errorf("Send Gift failed, err: %v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError,
-			&SendResponse{
-				Response: api.ErrorWithRequestId(log.ReqID(), err),
-				Data:     sendGift,
-			})
-		return
-	}
-
-	rService := report.GetService()
-	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
-		LiveId: request.LiveId,
-		UserId: uInfo.UserId,
-		BizId:  sendGift.AnchorId,
-		Type:   model.StatsTypeGift,
-		Count:  request.Amount,
-	}
-	rService.UpdateSingleLive(ctx, statsSingleLiveEntity)
-	ctx.JSON(http.StatusOK, &SendResponse{
-		Response: &api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Data: sendGift,
-	})
-}
-
-type SendResponse struct {
-	*api.Response
-	Data *gift.SendGiftResponse `json:"data"`
-}
-
-// Test 用于测试的礼物支付
-func (c *giftController) Test(ctx *gin.Context) {
-	log := logger.ReqLogger(ctx)
-	request := &gift.PayGiftRequest{}
-	if err := ctx.BindJSON(request); err != nil {
-		log.Errorf("bind request error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, &gift.PayGiftResponse{
-		Response: api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Status: model.SendGiftStatusSuccess,
-	})
 }
