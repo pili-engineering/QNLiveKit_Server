@@ -1,23 +1,26 @@
 package impl
 
 import (
-	"github.com/qbox/livekit/biz/token"
 	"github.com/qbox/livekit/module/base/auth"
-	"github.com/qbox/livekit/module/base/auth/service"
+	"github.com/qbox/livekit/module/base/auth/internal/token"
 )
 
-var _ service.Service = &ServiceImpl{}
+var instance *ServiceImpl
+
+func GetInstance() *ServiceImpl {
+	return instance
+}
 
 type ServiceImpl struct {
 	auth.Config
 	tokenService token.ITokenService
 }
 
-func NewService(conf auth.Config) *ServiceImpl {
+func ConfigService(conf auth.Config) {
 	if conf.JwtKey == "" {
 		conf.JwtKey = "jwtkey"
 	}
-	return &ServiceImpl{
+	instance = &ServiceImpl{
 		Config:       conf,
 		tokenService: token.NewService(conf.JwtKey),
 	}
@@ -27,4 +30,8 @@ func (s *ServiceImpl) RegisterAuthMiddleware() {
 	s.RegisterClientAuth()
 	s.RegisterServerAuth()
 	s.RegisterAdminAuth()
+}
+
+func (s *ServiceImpl) GenAuthToken(authToken *token.AuthToken) (string, error) {
+	return s.tokenService.GenAuthToken(authToken)
 }

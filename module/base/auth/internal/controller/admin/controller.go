@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/admin"
 	"github.com/qbox/livekit/module/base/auth/internal/controller/server"
+	"github.com/qbox/livekit/module/base/auth/internal/impl"
+	token2 "github.com/qbox/livekit/module/base/auth/internal/token"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -26,6 +26,8 @@ type LoginRequest struct {
 	Password string `json:"password" form:"password"`
 }
 
+// LoginManager 管理员用户名，密码登录
+// return
 func LoginManager(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &LoginRequest{}
@@ -39,31 +41,23 @@ func LoginManager(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("userName:%s, login error:%v", req.UserName, err)
 		return nil, err
 	} else if admin.Password != req.Password {
-		log.Errorf("userName:%s, login error:%v", req.UserName, api.ErrorLoginWrong)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrorLoginWrong))
-		return
+		return nil, rest.ErrForbidden.WithMessage("Invalid username or password")
 	}
 
-	authToken := token.AuthToken{
+	authToken := token2.AuthToken{
 		UserId: admin.UserId,
 		Role:   "admin",
 	}
 
-	tokenService := token.GetService()
-	if token, err := tokenService.GenAuthToken(&authToken); err != nil {
-		log.Errorf("")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		return
+	if token, err := impl.GetInstance().GenAuthToken(&authToken); err != nil {
+		log.Errorf("gen token error %v", err)
+		return nil, rest.ErrInternal
 	} else {
-		resp := &server.GetAuthTokenResponse{
-			Response: api.Response{
-				RequestId: log.ReqID(),
-				Code:      0,
-				Message:   "success",
-			},
+		result := &server.GetAuthTokenResult{
+			AccessToken: token,
+			ExpiresAt:   authToken.ExpiresAt,
 		}
-		resp.Data.AccessToken = token
-		resp.Data.ExpiresAt = authToken.ExpiresAt
-		ctx.JSON(http.StatusOK, resp)
+
+		return result, nil
 	}
 }

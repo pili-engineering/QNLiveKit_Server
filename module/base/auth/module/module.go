@@ -4,11 +4,16 @@ import (
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/core/config"
 	"github.com/qbox/livekit/module/base/auth"
+	"github.com/qbox/livekit/module/base/auth/internal/controller/admin"
+	"github.com/qbox/livekit/module/base/auth/internal/controller/server"
 	"github.com/qbox/livekit/module/base/auth/internal/impl"
-	"github.com/qbox/livekit/module/base/auth/service"
 )
 
 const moduleName = "auth"
+
+func init() {
+	application.RegisterModule(moduleName, &Module{})
+}
 
 type Module struct {
 	application.EmptyModule
@@ -23,11 +28,13 @@ func (m *Module) Config(c *config.Config) error {
 		}
 	}
 
-	service.Instance = impl.NewService(conf)
+	impl.ConfigService(conf)
 	return nil
 }
 
 func (m *Module) PreStart() error {
-	service.Instance.RegisterAuthMiddleware()
+	impl.GetInstance().RegisterAuthMiddleware()
+	admin.RegisterRoutes()
+	server.RegisterRoutes()
 	return nil
 }

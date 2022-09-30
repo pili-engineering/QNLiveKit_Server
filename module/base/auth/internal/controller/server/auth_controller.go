@@ -13,17 +13,22 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/biz/token"
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/module/httpq"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/admin"
+	"github.com/qbox/livekit/module/base/auth/internal/impl"
+	token2 "github.com/qbox/livekit/module/base/auth/internal/token"
 	"github.com/qbox/livekit/module/base/user"
 	"github.com/qbox/livekit/utils/logger"
 )
 
-func RegisterAuthRoutes(group *gin.RouterGroup) {
-	authGroup := group.Group("/auth")
-	authGroup.GET("/token", AuthController.GetAuthToken)
-	authGroup.GET("/admin/token", AuthController.GetAdminAuthToken)
+func RegisterRoutes() {
+	//authGroup := group.Group("/auth")
+	//authGroup.GET("/token", AuthController.GetAuthToken)
+	//authGroup.GET("/admin/token", AuthController.GetAdminAuthToken)
+
+	httpq.ServerHandle(http.MethodGet, "/auth/token", AuthController.GetAuthToken)
+	httpq.ServerHandle(http.MethodGet, "/auth/admin/token", AuthController.GetAuthToken)
 }
 
 var AuthController = &authController{}
@@ -42,39 +47,34 @@ func (r *GetAuthTokenRequest) IsValid() bool {
 	return len(r.AppId) > 0 && len(r.UserId) > 0
 }
 
-type GetAuthTokenResponse struct {
-	api.Response
-	Data struct {
-		AccessToken string `json:"access_token"`
-		ExpiresAt   int64  `json:"expires_at"`
-	} `json:"data"`
+type GetAuthTokenResult struct {
+	AccessToken string `json:"access_token"`
+	ExpiresAt   int64  `json:"expires_at"`
 }
 
-func (*authController) GetAdminAuthToken(ctx *gin.Context) {
+// GetAdminAuthToken 获取管理员的token
+func (*authController) GetAdminAuthToken(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 
 	req := &GetAuthTokenRequest{}
 	if err := ctx.BindQuery(&req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
 	if !req.IsValid() {
 		log.Errorf("invalid request %v", req)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest
 	}
 
 	adminService := admin.GetManagerService()
 	_, err := adminService.FindOrCreateAdminUser(ctx, req.UserId)
 	if err != nil {
 		log.Errorf("get user userId:%s, error:%v", req.UserId, err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrInternal))
-		return
+		return nil, rest.ErrInternal
 	}
 
-	authToken := token.AuthToken{
+	authToken := token2.AuthToken{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: req.ExpiresAt,
 		},
@@ -84,50 +84,39 @@ func (*authController) GetAdminAuthToken(ctx *gin.Context) {
 		Role:     "admin",
 	}
 
-	tokenService := token.GetService()
-	if token, err := tokenService.GenAuthToken(&authToken); err != nil {
-		log.Errorf("")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		return
+	if token, err := impl.GetInstance().GenAuthToken(&authToken); err != nil {
+		log.Errorf("gen token error %v", err)
+		return nil, rest.ErrInternal
 	} else {
-		resp := &GetAuthTokenResponse{
-			Response: api.Response{
-				RequestId: log.ReqID(),
-				Code:      0,
-				Message:   "success",
-			},
-		}
-		resp.Data.AccessToken = token
-		resp.Data.ExpiresAt = authToken.ExpiresAt
-		ctx.JSON(http.StatusOK, resp)
+		return &GetAuthTokenResult{
+			AccessToken: token,
+			ExpiresAt:   authToken.ExpiresAt}, nil
 	}
 }
 
-func (*authController) GetAuthToken(ctx *gin.Context) {
+// GetAuthToken 获取普通用户的token
+func (*authController) GetAuthToken(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 
 	req := &GetAuthTokenRequest{}
 	if err := ctx.BindQuery(&req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
 	if !req.IsValid() {
 		log.Errorf("invalid request %v", req)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest
 	}
 
 	userService := user.GetService()
 	_, err := userService.FindOrCreateUser(ctx, req.UserId)
 	if err != nil {
 		log.Errorf("get user userId:%s, error:%v", req.UserId, err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrInternal))
-		return
+		return nil, err
 	}
 
-	authToken := token.AuthToken{
+	authToken := token2.AuthToken{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: req.ExpiresAt,
 		},
@@ -136,21 +125,12 @@ func (*authController) GetAuthToken(ctx *gin.Context) {
 		DeviceId: req.DeviceId,
 	}
 
-	tokenService := token.GetService()
-	if token, err := tokenService.GenAuthToken(&authToken); err != nil {
-		log.Errorf("")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		return
+	if token, err := impl.GetInstance().GenAuthToken(&authToken); err != nil {
+		log.Errorf("gen token error %v", err)
+		return nil, rest.ErrInternal
 	} else {
-		resp := &GetAuthTokenResponse{
-			Response: api.Response{
-				RequestId: log.ReqID(),
-				Code:      0,
-				Message:   "success",
-			},
-		}
-		resp.Data.AccessToken = token
-		resp.Data.ExpiresAt = authToken.ExpiresAt
-		ctx.JSON(http.StatusOK, resp)
+		return &GetAuthTokenResult{
+			AccessToken: token,
+			ExpiresAt:   authToken.ExpiresAt}, nil
 	}
 }
