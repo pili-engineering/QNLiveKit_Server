@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (

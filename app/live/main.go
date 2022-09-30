@@ -41,11 +41,6 @@ func initAllService() {
 	})
 	report.InitService()
 
-	//live.InitService(live.Config{
-	//	AccessKey: config.AppConfig.RtcConfig.AccessKey,
-	//	SecretKey: config.AppConfig.RtcConfig.SecretKey,
-	//	PiliHub:   config.AppConfig.RtcConfig.Hub,
-	//})
 	//admin.InitJobService(admin.Config{
 	//	AccessKey:      config.AppConfig.RtcConfig.AccessKey,
 	//	SecretKey:      config.AppConfig.RtcConfig.SecretKey,

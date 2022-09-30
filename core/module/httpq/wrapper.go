@@ -1,5 +1,9 @@
 package httpq
 
+import (
+	"github.com/gin-gonic/gin"
+)
+
 func Handle(httpMethod, relativePath string, handler HandlerFunc) {
 	instance.Handle(httpMethod, relativePath, handler)
 }
@@ -18,4 +22,16 @@ func AdminHandle(httpMethod, relativePath string, handler HandlerFunc) {
 
 func CallbackHandle(httpMethod, relativePath string, handler HandlerFunc) {
 	instance.CallbackHandle(httpMethod, relativePath, handler)
+}
+
+func SetClientAuth(handler gin.HandlerFunc) {
+	instance.clientAuthHandle = handler
+}
+
+func SetServerAuth(handler gin.HandlerFunc) {
+	instance.serverAuthHandle = handler
+}
+
+func SetAdminAuth(handler gin.HandlerFunc) {
+	instance.adminAuthHandle = handler
 }
