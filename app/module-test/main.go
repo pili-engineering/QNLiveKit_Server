@@ -13,6 +13,7 @@ import (
 	_ "github.com/qbox/livekit/module/base/stats/module"
 	_ "github.com/qbox/livekit/module/base/user/module"
 	_ "github.com/qbox/livekit/module/biz/item/module"
+	_ "github.com/qbox/livekit/module/biz/mic/module"
 	_ "github.com/qbox/livekit/module/biz/relay/module"
 	_ "github.com/qbox/livekit/module/extend/prome"
 	_ "github.com/qbox/livekit/module/fun/im"

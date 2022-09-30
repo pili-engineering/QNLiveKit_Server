@@ -1,55 +1,26 @@
-package mic
+package impl
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/module/biz/mic/service"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 )
 
-type IService interface {
-	KickUser(context context.Context, userId, liveId string) (err error)
-
-	UpMic(context context.Context, req *Request, userId string) (rtcToken string, err error)
-
-	DownMic(context context.Context, req *Request, userId string) (err error)
-
-	DownMicManual(context context.Context, liveId, userId string) (err error)
-
-	ForbidMic(context context.Context, liveId, userId string) (err error)
-
-	UnForbidMic(context context.Context, liveId, userId string) (err error)
-
-	UserStatus(context context.Context, liveId, userId string) (status int, err error)
-
-	LiveMicList(context context.Context, liveId string) (mics []model.LiveMicEntity, err error)
-
-	UpdateMicExtends(context context.Context, liveId, userId string, extends model.Extends) (err error)
-
-	SwitchUserMic(context context.Context, liveId, userId, tp string, flag bool) (err error)
+type ServiceImpl struct {
 }
 
-type Service struct {
+var instance = &ServiceImpl{}
+
+func GetInstance() *ServiceImpl {
+	return instance
 }
 
-var service IService = &Service{}
-
-func GetService() IService {
-	return service
-}
-
-type Request struct {
-	LiveId  string        `json:"live_id"`
-	UserId  string        `json:"user_id"`
-	Mic     bool          `json:"mic"`
-	Camera  bool          `json:"camera"`
-	Extends model.Extends `json:"extends"`
-}
-
-func (s *Service) KickUser(context context.Context, userId, liveId string) (err error) {
+func (s *ServiceImpl) KickUser(context context.Context, userId, liveId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic1 := &model.LiveMicEntity{}
@@ -77,7 +48,7 @@ func (s *Service) KickUser(context context.Context, userId, liveId string) (err 
 	return
 }
 
-func (s *Service) UpMic(context context.Context, req *Request, userId string) (rtcToken string, err error) {
+func (s *ServiceImpl) UpMic(context context.Context, req *service.Request, userId string) (rtcToken string, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -115,7 +86,7 @@ func (s *Service) UpMic(context context.Context, req *Request, userId string) (r
 	return
 }
 
-func (s *Service) DownMic(context context.Context, req *Request, userId string) (err error) {
+func (s *ServiceImpl) DownMic(context context.Context, req *service.Request, userId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -135,7 +106,7 @@ func (s *Service) DownMic(context context.Context, req *Request, userId string) 
 	return
 }
 
-func (s *Service) DownMicManual(context context.Context, liveId, userId string) (err error) {
+func (s *ServiceImpl) DownMicManual(context context.Context, liveId, userId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -155,7 +126,7 @@ func (s *Service) DownMicManual(context context.Context, liveId, userId string) 
 	return
 }
 
-func (s *Service) ForbidMic(context context.Context, liveId, userId string) (err error) {
+func (s *ServiceImpl) ForbidMic(context context.Context, liveId, userId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -174,7 +145,7 @@ func (s *Service) ForbidMic(context context.Context, liveId, userId string) (err
 	return
 }
 
-func (s *Service) UnForbidMic(context context.Context, liveId, userId string) (err error) {
+func (s *ServiceImpl) UnForbidMic(context context.Context, liveId, userId string) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -193,7 +164,7 @@ func (s *Service) UnForbidMic(context context.Context, liveId, userId string) (e
 	return
 }
 
-func (s *Service) UserStatus(context context.Context, liveId, userId string) (status int, err error) {
+func (s *ServiceImpl) UserStatus(context context.Context, liveId, userId string) (status int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -213,7 +184,7 @@ func (s *Service) UserStatus(context context.Context, liveId, userId string) (st
 	return
 }
 
-func (s *Service) LiveMicList(context context.Context, liveId string) (mics []model.LiveMicEntity, err error) {
+func (s *ServiceImpl) LiveMicList(context context.Context, liveId string) (mics []model.LiveMicEntity, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	mics = make([]model.LiveMicEntity, 0)
@@ -221,7 +192,7 @@ func (s *Service) LiveMicList(context context.Context, liveId string) (mics []mo
 	return
 }
 
-func (s *Service) UpdateMicExtends(context context.Context, liveId, userId string, extends model.Extends) (err error) {
+func (s *ServiceImpl) UpdateMicExtends(context context.Context, liveId, userId string, extends model.Extends) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
@@ -239,7 +210,7 @@ func (s *Service) UpdateMicExtends(context context.Context, liveId, userId strin
 	return
 }
 
-func (s *Service) SwitchUserMic(context context.Context, liveId, userId, tp string, flag bool) (err error) {
+func (s *ServiceImpl) SwitchUserMic(context context.Context, liveId, userId, tp string, flag bool) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	userMic := &model.LiveMicEntity{}
