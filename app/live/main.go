@@ -12,10 +12,11 @@ import (
 	"flag"
 	_ "net/http/pprof"
 
-	"github.com/qbox/livekit/app/live/internal/config"
-	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/biz/token"
+
+	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/core/application"
+	"github.com/qbox/livekit/module/base/stats/internal/impl"
 	log "github.com/qbox/livekit/utils/logger"
 )
 
@@ -29,7 +30,7 @@ func main() {
 
 	errCh := make(chan error)
 
-	report.GetService().ReportOnlineMessage(context.Background())
+	impl.GetService().ReportOnlineMessage(context.Background())
 
 	err := <-errCh
 	log.StdLog.Fatalf("exit %v", err)
@@ -39,7 +40,7 @@ func initAllService() {
 	token.InitService(token.Config{
 		JwtKey: config.AppConfig.JwtKey,
 	})
-	report.InitService()
+	impl.InitService()
 
 	//admin.InitJobService(admin.Config{
 	//	AccessKey:      config.AppConfig.RtcConfig.AccessKey,
