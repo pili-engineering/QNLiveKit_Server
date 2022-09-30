@@ -8,7 +8,7 @@ import (
 	"github.com/qbox/livekit/biz/mic"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/auth/internal/middleware"
 	"github.com/qbox/livekit/module/base/live/internal/controller/client"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/utils/logger"
@@ -38,7 +38,7 @@ type upMicResponse struct {
 }
 
 func (*micController) UpMic(context *gin.Context) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := context.MustGet(middleware.UserCtxKey).(*middleware.UserInfo)
 	log := logger.ReqLogger(context)
 	request := &mic.Request{}
 	if err := context.BindJSON(request); err != nil {
@@ -74,7 +74,7 @@ func (*micController) UpMic(context *gin.Context) {
 }
 
 func (*micController) DownMic(context *gin.Context) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := context.MustGet(middleware.UserCtxKey).(*middleware.UserInfo)
 	log := logger.ReqLogger(context)
 	request := &mic.Request{}
 	if err := context.BindJSON(request); err != nil {

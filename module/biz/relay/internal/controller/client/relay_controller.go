@@ -10,15 +10,14 @@ package client
 import (
 	"net/http"
 
-	"github.com/qbox/livekit/core/module/httpq"
-	"github.com/qbox/livekit/core/rest"
-	"github.com/qbox/livekit/module/biz/relay"
-	"github.com/qbox/livekit/module/fun/rtc"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/core/module/httpq"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/auth"
+	"github.com/qbox/livekit/module/biz/relay"
+	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -67,7 +66,7 @@ type StartRelayResult struct {
 // return *StartRelayResult
 func (*relayController) PostRelayStart(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 	req := StartRelayRequest{}
 	ctx.BindJSON(&req)
 	if !req.IsValid() {
@@ -116,7 +115,7 @@ func (*relayController) GetRelayToken(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("empty relay session id")
 		return nil, rest.ErrBadRequest.WithMessage("empty relay session id")
 	}
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 
 	relayService := relay.GetRelayService()
 	relaySession, relayRoom, err := relayService.GetRelayRoom(ctx, uInfo.UserId, id)
@@ -167,7 +166,7 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("empty relay session id")
 		return nil, rest.ErrBadRequest.WithMessage("empty relay session id")
 	}
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 
 	relayService := relay.GetRelayService()
 	if err := relayService.StopRelay(ctx, uInfo.UserId, id); err != nil {
@@ -194,7 +193,7 @@ func (*relayController) PostRelayStarted(ctx *gin.Context) (interface{}, error) 
 		return nil, rest.ErrBadRequest.WithMessage("empty relay session id")
 	}
 
-	uInfo := liveauth.GetUserInfo(ctx)
+	uInfo := auth.GetUserInfo(ctx)
 	relayService := relay.GetRelayService()
 	if relaySession, err := relayService.ReportRelayStarted(ctx, uInfo.UserId, id); err != nil {
 		log.Errorf("report relay started error %v", err)
