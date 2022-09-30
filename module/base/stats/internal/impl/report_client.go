@@ -1,4 +1,4 @@
-package report
+package impl
 
 import (
 	"context"
@@ -12,15 +12,15 @@ import (
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
-type RClient struct {
+type ServiceImpl struct {
 }
 
-func NewReportClient() *RClient {
-	r := &RClient{}
+func NewServiceImpl() *ServiceImpl {
+	r := &ServiceImpl{}
 	return r
 }
 
-func (s *RClient) ReportOnlineMessage(ctx context.Context) {
+func (s *ServiceImpl) ReportOnlineMessage(ctx context.Context) {
 	var log *logger.Logger
 	if ctx == nil {
 		log = logger.New("ReportOnlineMessage Start")
@@ -51,7 +51,7 @@ type CommonStats struct {
 	Info []CommonSingleStats `json:"info"`
 }
 
-func (s *RClient) GetStatsSingleLive(ctx context.Context, liveId string) (*CommonStats, error) {
+func (s *ServiceImpl) GetStatsSingleLive(ctx context.Context, liveId string) (*CommonStats, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	info := make([]CommonSingleStats, len(model.StatsTypeDescription))
@@ -79,7 +79,7 @@ func (s *RClient) GetStatsSingleLive(ctx context.Context, liveId string) (*Commo
 	return data, nil
 }
 
-func (s *RClient) PostStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
+func (s *ServiceImpl) PostStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
 	var err error
 	for _, entity := range entities {
 		err = s.UpdateSingleLive(ctx, entity)
@@ -90,7 +90,7 @@ func (s *RClient) PostStatsSingleLive(ctx context.Context, entities []*model.Sta
 	return nil
 }
 
-func (s *RClient) UpdateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
+func (s *ServiceImpl) UpdateSingleLive(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
 	log := logger.ReqLogger(ctx)
 
 	db := mysql.GetLive(log.ReqID())
@@ -129,7 +129,7 @@ func singleLiveUpdates(old, update *model.StatsSingleLiveEntity) map[string]inte
 	return updates
 }
 
-func (s *RClient) createSingleLiveInfo(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
+func (s *ServiceImpl) createSingleLiveInfo(ctx context.Context, entity *model.StatsSingleLiveEntity) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	result := db.Create(entity)
@@ -140,7 +140,7 @@ func (s *RClient) createSingleLiveInfo(ctx context.Context, entity *model.StatsS
 	return nil
 }
 
-func (s *RClient) SaveStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
+func (s *ServiceImpl) SaveStatsSingleLive(ctx context.Context, entities []*model.StatsSingleLiveEntity) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	tx := db.Begin()
