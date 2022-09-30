@@ -2,9 +2,10 @@ package admin
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/app/live/internal/middleware"
-	"github.com/qbox/livekit/common/auth/liveauth"
+	middleware2 "github.com/qbox/livekit/module/base/auth/internal/middleware"
 )
 
 func RegisterRoute(engine *gin.Engine) {
@@ -12,7 +13,7 @@ func RegisterRoute(engine *gin.Engine) {
 	group.GET("/login", censorController.LoginManager)
 
 	group.POST("/censor/callback", censorController.CallbackCensorJob)
-	adminGroup := engine.Group("/admin", liveauth.AuthAdminHandleFunc(config.AppConfig.JwtKey), middleware.OperatorLogMiddleware())
+	adminGroup := engine.Group("/admin", middleware2.AuthAdminHandleFunc(config.AppConfig.JwtKey), middleware.OperatorLogMiddleware())
 	RegisterCensorRoutes(adminGroup)
 	RegisterGiftRoute(adminGroup)
 }
