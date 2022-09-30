@@ -26,6 +26,7 @@ import (
 	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/module/base/stats"
 	"github.com/qbox/livekit/module/base/user"
+	userDto "github.com/qbox/livekit/module/base/user/dto"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -491,17 +492,8 @@ func (*liveController) UpdateExtends(context *gin.Context) (interface{}, error) 
 	return nil, nil
 }
 
-type UserInfo struct {
-	UserId     string        `json:"user_id"`
-	ImUserId   int64         `json:"im_userid"`
-	ImUsername string        `json:"im_username"`
-	Nick       string        `json:"nick"`
-	Avatar     string        `json:"avatar"`
-	Extends    model.Extends `json:"extends"`
-}
-
 // LiveUserList 获取直播间用户信息
-// return rest.PageResult<*UserInfo>
+// return rest.PageResult<*userDto.UserDto>
 func (*liveController) LiveUserList(context *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(context)
 	liveId := context.Query("live_id")
@@ -529,7 +521,7 @@ func (*liveController) LiveUserList(context *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	userInfoList := make([]*UserInfo, 0, len(liveUserList))
+	userInfoList := make([]*userDto.UserDto, 0, len(liveUserList))
 	for i := range liveUserList {
 		userInfo, err := user.GetService().FindUser(context, liveUserList[i].UserId)
 		if err != nil {
@@ -537,9 +529,9 @@ func (*liveController) LiveUserList(context *gin.Context) (interface{}, error) {
 			continue
 		}
 
-		userInfoList = append(userInfoList, &UserInfo{
+		userInfoList = append(userInfoList, &userDto.UserDto{
 			UserId:     liveUserList[i].UserId,
-			ImUserId:   userInfo.ImUserid,
+			ImUserid:   userInfo.ImUserid,
 			ImUsername: userInfo.ImUsername,
 			Nick:       userInfo.Nick,
 			Avatar:     userInfo.Avatar,

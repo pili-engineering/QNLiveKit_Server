@@ -11,12 +11,13 @@ import "github.com/qbox/livekit/biz/model"
 
 type UserDto struct {
 	UserId string `json:"user_id"` //应用内用户ID
+	Nick   string `json:"nick"`    //昵称
+	Avatar string `json:"avatar"`  //头像
 
-	Nick    string        `json:"nick"`    //昵称
-	Avatar  string        `json:"avatar"`  //头像
+	ImUserid   int64  `json:"im_userid"`
+	ImUsername string `json:"im_username,omitempty"`
+
 	Extends model.Extends `json:"extends"` //扩展属性
-
-	ImUserid int64 `json:"im_userid"`
 }
 
 type UserProfileDto struct {
