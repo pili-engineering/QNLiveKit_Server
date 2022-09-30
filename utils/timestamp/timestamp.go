@@ -96,7 +96,7 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 }
 
 func (t *Timestamp) UnixMilli() int64 {
-	return t.Time.UnixNano() / 1000
+	return t.Time.UnixNano() / int64(time.Millisecond)
 }
 
 // --------------------------------------------------------------------
