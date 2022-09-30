@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/utils/qiniumac"
 )
 
 func main() {

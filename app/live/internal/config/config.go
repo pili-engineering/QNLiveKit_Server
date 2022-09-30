@@ -8,7 +8,7 @@
 package config
 
 import (
-	"github.com/qbox/livekit/common/auth/qiniumac"
+	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/rtc"
 	"github.com/qbox/livekit/module/store/cache"
@@ -31,10 +31,10 @@ type Config struct {
 	GiftAddr       string                   `mapstructure:"gift_addr"`
 	Mysqls         []*mysql.ConfigStructure `mapstructure:"mysqls"`
 
-	MacConfig   qiniumac.Config `mapstructure:"mac_config"`
-	RtcConfig   rtc.Config      `mapstructure:"rtc_config"`
-	ImConfig    im.Config       `mapstructure:"im_config"`
-	CacheConfig cache.Config    `mapstructure:"cache_config"`
+	MacConfig   auth.Config  `mapstructure:"mac_config"`
+	RtcConfig   rtc.Config   `mapstructure:"rtc_config"`
+	ImConfig    im.Config    `mapstructure:"im_config"`
+	CacheConfig cache.Config `mapstructure:"cache_config"`
 }
 
 // Server impl port and host

@@ -10,7 +10,7 @@ package token
 import (
 	"time"
 
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -23,32 +23,22 @@ type AuthToken struct {
 	Role     string
 }
 
-var tokenService ITokenService
-
-type Config struct {
-	JwtKey string
-}
-
-func InitService(conf Config) {
-	tokenService = &TokenService{
-		jwtKey: conf.JwtKey,
-	}
-}
-
-func GetService() ITokenService {
-	return tokenService
-}
-
 type ITokenService interface {
 	GenAuthToken(authToken *AuthToken) (string, error)
 	ParseAuthToken(token string) (*AuthToken, error)
 }
 
-type TokenService struct {
+type Service struct {
 	jwtKey string
 }
 
-func (s *TokenService) GenAuthToken(authToken *AuthToken) (string, error) {
+func NewService(jwtKey string) ITokenService {
+	return &Service{
+		jwtKey: jwtKey,
+	}
+}
+
+func (s *Service) GenAuthToken(authToken *AuthToken) (string, error) {
 	if authToken.ExpiresAt == 0 {
 		authToken.ExpiresAt = time.Now().Unix() + 7*86400
 	}
@@ -61,15 +51,15 @@ func (s *TokenService) GenAuthToken(authToken *AuthToken) (string, error) {
 	return ss, err
 }
 
-func (s *TokenService) ParseAuthToken(token string) (*AuthToken, error) {
+func (s *Service) ParseAuthToken(token string) (*AuthToken, error) {
 	jwtToken, err := jwt.ParseWithClaims(token, &AuthToken{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.jwtKey), nil
 	})
 	if err != nil {
 		if isExpiredTokenError(err) {
-			return nil, api.ErrTokenExpired
+			return nil, rest.ErrTokenExpired
 		} else {
-			return nil, api.ErrBadToken
+			return nil, rest.ErrUnauthorized
 		}
 	}
 
@@ -77,7 +67,7 @@ func (s *TokenService) ParseAuthToken(token string) (*AuthToken, error) {
 		return claims, nil
 	}
 
-	return nil, api.ErrBadToken
+	return nil, rest.ErrUnauthorized
 }
 
 func isExpiredTokenError(err error) bool {

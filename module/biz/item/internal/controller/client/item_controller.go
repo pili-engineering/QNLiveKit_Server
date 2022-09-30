@@ -15,9 +15,9 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/biz/item/dto"
 	"github.com/qbox/livekit/module/biz/item/internal/controller/utils"
@@ -90,7 +90,7 @@ func (c *itemController) PostItemAdd(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, request.LiveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -131,7 +131,7 @@ func (c *itemController) PostItemDelete(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, request.LiveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -167,7 +167,7 @@ func (c *itemController) PostItemStatus(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, request.LiveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -203,7 +203,7 @@ func (c *itemController) PostItemOrder(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, request.LiveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -241,7 +241,7 @@ func (c *itemController) PostItemOrderSingle(ctx *gin.Context) (interface{}, err
 		return nil, rest.ErrBadRequest
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, request.LiveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -263,7 +263,7 @@ func (c *itemController) GetItems(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live info error %s", err.Error())
@@ -312,7 +312,7 @@ func (c *itemController) PutItem(ctx *gin.Context) (interface{}, error) {
 	}
 	itemDto.ItemId = itemId
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -341,7 +341,7 @@ func (c *itemController) PutItemExtends(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -363,7 +363,7 @@ func (c *itemController) PostItemDemonstrate(ctx *gin.Context) (interface{}, err
 	liveId := ctx.Param("liveId")
 	itemId := ctx.Param("itemId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -394,7 +394,7 @@ func (c *itemController) PostStartRecordDemonstrate(ctx *gin.Context) (interface
 	liveId := ctx.Param("liveId")
 	itemId := ctx.Param("itemId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -443,7 +443,7 @@ func (c *itemController) ListLiveRecordVideo(ctx *gin.Context) (interface{}, err
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -469,7 +469,7 @@ func (c *itemController) ListrecordVideo(ctx *gin.Context) (interface{}, error) 
 	liveId := ctx.Param("liveId")
 	itemId := ctx.Param("itemId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err
@@ -548,7 +548,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) (interface{}, e
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 
-	userInfo := liveauth.GetUserInfo(ctx)
+	userInfo := auth.GetUserInfo(ctx)
 	if err := live.GetService().CheckLiveAnchor(ctx, liveId, userInfo.UserId); err != nil {
 		log.Errorf("check live anchor error %+v", err)
 		return nil, err

@@ -1,22 +1,59 @@
 package httpq
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/core/module/httpq/middleware"
 	"github.com/qbox/livekit/core/module/httpq/monitor"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/utils/logger"
 )
 
-func (s *Server) createEngin() {
+func (s *Server) createEngine() {
 	s.engine = gin.New()
 	s.engine.Use(middleware.Cors(), middleware.Logger(), middleware.Prometheus(), monitor.Middleware())
 
 	s.clientGroup = s.engine.Group("/client")
+	s.clientGroup.Use(func(ctx *gin.Context) {
+		if s.clientAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.clientAuthHandle(ctx)
+		}
+	})
+
 	s.serverGroup = s.engine.Group("/server")
+	s.serverGroup.Use(func(ctx *gin.Context) {
+		if s.serverAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.serverAuthHandle(ctx)
+		}
+	})
+
 	s.adminGroup = s.engine.Group("/admin")
+	s.adminGroup.Use(func(ctx *gin.Context) {
+		if s.adminAuthHandle == nil {
+			ctx.Next()
+		} else {
+			s.adminAuthHandle(ctx)
+		}
+	})
+
 	s.callbackGroup = s.engine.Group("/callback")
+
+	s.engine.Any("status", func(ctx *gin.Context) {
+		log := logger.ReqLogger(ctx)
+		resp := &rest.Response{
+			RequestId: log.ReqID(),
+			Code:      0,
+			Message:   "success",
+		}
+		ctx.JSON(http.StatusOK, resp)
+	})
 }
 
 // Handle 为了保证相同路径前缀的表现一致，如果是预定
