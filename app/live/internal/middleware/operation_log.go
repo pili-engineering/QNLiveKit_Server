@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/auth/liveauth"
+	"github.com/qbox/livekit/module/base/auth/internal/middleware"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -37,7 +37,7 @@ func OperatorLogMiddleware() gin.HandlerFunc {
 		}
 		ctx.Next()
 
-		adminInfo := liveauth.GetAdminInfo(ctx)
+		adminInfo := middleware.GetAdminInfo(ctx)
 		if adminInfo == nil {
 			log.Errorf("request [%s, %s] with no admin info", ol.Method, ctx.Request.URL.Path)
 			return

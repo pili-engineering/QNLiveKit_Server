@@ -19,9 +19,9 @@ import (
 	"github.com/qbox/livekit/biz/notify"
 	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/base/live/dto"
 	"github.com/qbox/livekit/module/base/live/internal/impl"
 	"github.com/qbox/livekit/module/base/live/service"
@@ -54,7 +54,7 @@ var LiveController = &liveController{}
 // CreateLive 创建一个直播
 // return dto.LiveInfoDto
 func (*liveController) CreateLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	request := &service.CreateLiveRequest{}
 	if err := context.Bind(request); err != nil {
@@ -81,7 +81,7 @@ func (*liveController) CreateLive(context *gin.Context) (interface{}, error) {
 // DeleteLive 删除一个直播间
 // return nil
 func (*liveController) DeleteLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	err := impl.GetInstance().DeleteLive(context, liveId, userInfo.UserId)
@@ -144,7 +144,7 @@ func (*liveController) getLiveAnchorStatus(ctx context.Context, liveId string, a
 // StopLive 停止一个直播间
 // return nil
 func (*liveController) StopLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	err := impl.GetInstance().StopLive(context, liveId, userInfo.UserId)
@@ -158,7 +158,7 @@ func (*liveController) StopLive(context *gin.Context) (interface{}, error) {
 // StartLive 开始直播
 // return dto.LiveInfoDto
 func (*liveController) StartLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	roomToken, err := impl.GetInstance().StartLive(context, liveId, userInfo.UserId)
@@ -186,7 +186,7 @@ func (*liveController) StartLive(context *gin.Context) (interface{}, error) {
 // SearchLive 查询直播间
 // return rest.PageResult<*dto.LiveInfoDto>
 func (c *liveController) SearchLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	keyword := context.Query("keyword")
 	pageNum := context.DefaultQuery("page_num", "1")
@@ -256,7 +256,7 @@ func (c *liveController) SearchLive(context *gin.Context) (interface{}, error) {
 // JoinLive 用户加入直播间
 // return dto.LiveInfoDto
 func (c *liveController) JoinLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	err := impl.GetInstance().JoinLiveRoom(context, liveId, userInfo.UserId)
@@ -357,7 +357,7 @@ func (c *liveController) LiveListAnchor(context *gin.Context) (interface{}, erro
 	log := logger.ReqLogger(context)
 	pageNum := context.DefaultQuery("page_num", "1")
 	pageSize := context.DefaultQuery("page_size", "10")
-	uInfo := liveauth.GetUserInfo(context)
+	uInfo := auth.GetUserInfo(context)
 
 	anchorId := uInfo.UserId
 	pageNumInt, err := strconv.Atoi(pageNum)
@@ -420,7 +420,7 @@ func (c *liveController) LiveListAnchor(context *gin.Context) (interface{}, erro
 // LeaveLive 用户离开直播间
 // return nil
 func (*liveController) LeaveLive(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	if liveId == "" {
@@ -444,7 +444,7 @@ type HeartBeatResult struct {
 // Heartbeat 心跳
 // return *HeartBeatResult
 func (*liveController) Heartbeat(context *gin.Context) (interface{}, error) {
-	userInfo := context.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(context)
 	log := logger.ReqLogger(context)
 	liveId := context.Param("live_id")
 	if liveId == "" {
@@ -573,7 +573,7 @@ type PutLikeResult struct {
 // return *PutLikeResult
 func (*liveController) PutLike(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
-	userInfo := ctx.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	userInfo := auth.GetUserInfo(ctx)
 	req := PutLikeRequest{}
 	ctx.ShouldBindJSON(&req)
 	if req.Count == 0 {

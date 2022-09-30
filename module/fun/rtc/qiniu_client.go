@@ -18,8 +18,8 @@ import (
 	"github.com/qiniu/go-sdk/v7/auth"
 	"github.com/qiniu/go-sdk/v7/rtc"
 
-	"github.com/qbox/livekit/common/auth/qiniumac"
 	"github.com/qbox/livekit/core/module/account"
+	"github.com/qbox/livekit/utils/qiniumac"
 )
 
 type QiniuClient struct {
