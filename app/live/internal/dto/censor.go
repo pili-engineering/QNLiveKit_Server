@@ -70,7 +70,7 @@ func CensorImageModelToDto(entity *model.CensorImage) *CensorImageDto {
 		ReviewUserId: entity.ReviewUserId,
 	}
 	if entity.ReviewTime != nil {
-		c.ReviewTime = entity.ReviewTime.UnixMilli() / 1000
+		c.ReviewTime = entity.ReviewTime.UnixMilli()
 	}
 	return c
 }

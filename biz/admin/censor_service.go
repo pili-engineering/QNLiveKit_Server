@@ -261,13 +261,13 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 			HlsPlayUrl:     live.HlsPlayUrl,
 		}
 		if live.StopAt != nil {
-			cl.StopAt = live.StopAt.UnixMilli() / 1000
+			cl.StopAt = live.StopAt.UnixMilli()
 		}
 		if live.LastCensorTime != 0 {
 			cl.Time = int64(live.LastCensorTime * 1000)
 		}
 		if live.StartAt != nil {
-			cl.StartAt = live.StartAt.UnixMilli() / 1000
+			cl.StartAt = live.StartAt.UnixMilli()
 		}
 
 		censorLive = append(censorLive, cl)
