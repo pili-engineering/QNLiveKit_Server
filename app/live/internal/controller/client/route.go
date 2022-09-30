@@ -19,11 +19,13 @@ import (
 func RegisterRoute(engine *gin.Engine) {
 	clientGroup := engine.Group("/client", middleware.AuthHandleFunc(config.AppConfig.JwtKey))
 	controller.RegisterAppRoutes(clientGroup)
-	RegisterMicRoutes(clientGroup)
+	//RegisterMicRoutes(clientGroup)
 	//<<<<<<< HEAD
 	//	RegisterStatsRoutes(clientGroup)
 	//	RegisterGiftRoutes(clientGroup)
 	//=======
 	//	client.RegisterStatsRoutes(clientGroup)
 	//>>>>>>> e6a2a4a (SOL-345 统计上报模块重构 (#56))
+	//client2.RegisterMicRoutes(clientGroup)
+	//client.RegisterStatsRoutes(clientGroup)
 }
