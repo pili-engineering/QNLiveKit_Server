@@ -3,6 +3,7 @@ package im
 import (
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/core/config"
+	"github.com/qbox/livekit/core/module/appinfo"
 	"github.com/qbox/livekit/core/module/trace"
 )
 
@@ -36,5 +37,6 @@ func (m *Module) Config(c *config.Config) error {
 
 func (m *Module) PreStart() error {
 	trace.SetImAppID(service.AppId())
+	appinfo.SetImAppId(service.AppId())
 	return nil
 }
