@@ -17,7 +17,6 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/biz/report"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
@@ -25,6 +24,7 @@ import (
 	"github.com/qbox/livekit/module/base/live/dto"
 	"github.com/qbox/livekit/module/base/live/internal/impl"
 	"github.com/qbox/livekit/module/base/live/service"
+	"github.com/qbox/livekit/module/base/stats"
 	"github.com/qbox/livekit/module/base/user"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -274,7 +274,7 @@ func (c *liveController) JoinLive(context *gin.Context) (interface{}, error) {
 		log.Errorf("find user failed, err: %v", err)
 		return nil, err
 	}
-	rService := report.GetService()
+	rService := stats.GetService()
 	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
 		LiveId: liveId,
 		UserId: userInfo.UserId,

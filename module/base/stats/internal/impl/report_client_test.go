@@ -1,4 +1,4 @@
-package report
+package impl
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func TestRClient_SaveStatsSingleLive(t *testing.T) {
 		UpdatedAt: timestamp.Now(),
 	}
 
-	s := &RClient{}
+	s := &ServiceImpl{}
 	err := s.SaveStatsSingleLive(context.Background(), []*model.StatsSingleLiveEntity{&entity1, &entity2})
 	assert.Nil(t, err)
 
