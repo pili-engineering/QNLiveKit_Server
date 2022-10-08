@@ -1,16 +1,17 @@
-package gift
+package impl
 
 import (
 	"context"
-	"github.com/qbox/livekit/biz/live"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/mysql"
+	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/base/user"
+	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
-	"github.com/qbox/livekit/utils/uuid"
 )
 
 type SendGiftRequest struct {
@@ -19,7 +20,7 @@ type SendGiftRequest struct {
 	Amount int    `json:"amount"`
 }
 
-func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId string) (*SendGiftResponse, error) {
+func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, userId string) (*SendGiftResponse, error) {
 	log := logger.ReqLogger(context)
 	bizId := uuid.Gen()
 	liveEntity, err := live.GetService().LiveInfo(context, req.LiveId)
@@ -150,7 +151,7 @@ func SaveLiveGift(context context.Context, liveGift *model.LiveGift) error {
 	return nil
 }
 
-func (s *Service) UpdateGiftStatus(context context.Context, bizId string, status int) error {
+func (s *ServiceImpl) UpdateGiftStatus(context context.Context, bizId string, status int) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err := db.Model(&model.LiveGift{}).Where("biz_id = ?", bizId).Update("status", status).Error
@@ -160,7 +161,7 @@ func (s *Service) UpdateGiftStatus(context context.Context, bizId string, status
 	return nil
 }
 
-func (s *Service) SearchGiftByAnchorId(context context.Context, anchorId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
+func (s *ServiceImpl) SearchGiftByAnchorId(context context.Context, anchorId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveGifts = make([]*model.LiveGift, 0)
@@ -173,7 +174,7 @@ func (s *Service) SearchGiftByAnchorId(context context.Context, anchorId string,
 	return
 }
 
-func (s *Service) SearchGiftByLiveId(context context.Context, liveId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
+func (s *ServiceImpl) SearchGiftByLiveId(context context.Context, liveId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveGifts = make([]*model.LiveGift, 0)
@@ -186,7 +187,7 @@ func (s *Service) SearchGiftByLiveId(context context.Context, liveId string, pag
 	return
 }
 
-func (s *Service) SearchGiftByUserId(context context.Context, userId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
+func (s *ServiceImpl) SearchGiftByUserId(context context.Context, userId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	liveGifts = make([]*model.LiveGift, 0)
