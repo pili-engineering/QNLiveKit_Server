@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/auth"
@@ -567,8 +566,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) (interface{}, e
 		return nil, err
 	}
 	if demonId == nil {
-		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
-		return
+		return nil, nil
 	}
 
 	demonstrateLog, err := itemService.StopRecordVideo(ctx, liveId, *demonId)

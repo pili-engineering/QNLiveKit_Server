@@ -17,7 +17,6 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/auth"
@@ -31,21 +30,21 @@ import (
 )
 
 func RegisterRoutes() {
-                //liveGroup.POST("/room/instance", LiveController.CreateLive)
-		//liveGroup.DELETE("/room/instance/:live_id", LiveController.DeleteLive)
-		//liveGroup.GET("/room/info/:live_id", LiveController.LiveRoomInfo)
-		//liveGroup.DELETE("/room/:live_id", LiveController.StopLive)
-		//liveGroup.PUT("/room/:live_id", LiveController.StartLive)
-		//liveGroup.GET("/room", LiveController.SearchLive)
-		//liveGroup.POST("/room/user/:live_id", LiveController.JoinLive)
-		//liveGroup.GET("/room/list", LiveController.LiveList)
-		//liveGroup.GET("/room/list/anchor", LiveController.LiveListAnchor)
-		//liveGroup.DELETE("/room/user/:live_id", LiveController.LeaveLive)
-		//liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
-		//liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
-		//liveGroup.GET("/room/user_list", LiveController.LiveUserList)
-		//liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
-		
+	//liveGroup.POST("/room/instance", LiveController.CreateLive)
+	//liveGroup.DELETE("/room/instance/:live_id", LiveController.DeleteLive)
+	//liveGroup.GET("/room/info/:live_id", LiveController.LiveRoomInfo)
+	//liveGroup.DELETE("/room/:live_id", LiveController.StopLive)
+	//liveGroup.PUT("/room/:live_id", LiveController.StartLive)
+	//liveGroup.GET("/room", LiveController.SearchLive)
+	//liveGroup.POST("/room/user/:live_id", LiveController.JoinLive)
+	//liveGroup.GET("/room/list", LiveController.LiveList)
+	//liveGroup.GET("/room/list/anchor", LiveController.LiveListAnchor)
+	//liveGroup.DELETE("/room/user/:live_id", LiveController.LeaveLive)
+	//liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
+	//liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
+	//liveGroup.GET("/room/user_list", LiveController.LiveUserList)
+	//liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
+
 	httpq.ClientHandle(http.MethodPost, "/live/room/instance", LiveController.CreateLive)
 	httpq.ClientHandle(http.MethodDelete, "/live/room/instance/:live_id", LiveController.DeleteLive)
 	httpq.ClientHandle(http.MethodGet, "/live/room/info/:live_id", LiveController.LiveRoomInfo)
@@ -146,7 +145,7 @@ func (*liveController) getLiveAnchorStatus(ctx context.Context, liveId string, a
 	log := logger.ReqLogger(ctx)
 	liveUser, err := impl.GetInstance().FindLiveRoomUser(ctx, liveId, anchorId)
 	if err != nil {
-		if !api.IsNotFoundError(err) {
+		if !rest.IsNotFoundError(err) {
 			log.Errorf("find anchor user error: %v", err)
 			return model.LiveRoomUserStatusLeave, err
 		} else {

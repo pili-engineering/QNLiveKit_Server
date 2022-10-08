@@ -3,7 +3,7 @@ package maxim
 import (
 	"context"
 
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
 )
@@ -89,13 +89,13 @@ func (c *Client) sendMessage(ctx context.Context, fromUserId int64, req *SendMes
 	err := rpcClient.CallWithJSON(log, &resp, url, req)
 	if err != nil {
 		log.Errorf("send message error %s", err.Error())
-		return api.ErrInternal
+		return rest.ErrInternal
 	}
 
 	if resp.IsSuccess() {
 		return nil
 	} else {
 		log.Errorf("send message failed %s", resp.Error())
-		return api.ErrInternal
+		return rest.ErrInternal
 	}
 }
