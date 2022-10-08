@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/auth"
@@ -208,26 +207,26 @@ func (c *giftController) SendGift(ctx *gin.Context) (interface{}, error) {
 }
 
 type SendResponse struct {
-	*api.Response
+	*rest.Response
 	Data *impl.SendGiftResponse `json:"data"`
 }
 
-// Test 用于测试的礼物支付
-func (c *giftController) Test(ctx *gin.Context) {
-	log := logger.ReqLogger(ctx)
-	request := &impl.PayGiftRequest{}
-	if err := ctx.BindJSON(request); err != nil {
-		log.Errorf("bind request error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, &impl.PayGiftResponse{
-		Response: api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Status: model.SendGiftStatusSuccess,
-	})
-}
+//// Test 用于测试的礼物支付
+//func (c *giftController) Test(ctx *gin.Context) {
+//	log := logger.ReqLogger(ctx)
+//	request := &impl.PayGiftRequest{}
+//	if err := ctx.BindJSON(request); err != nil {
+//		log.Errorf("bind request error %s", err.Error())
+//		ctx.AbortWithStatusJSON(http.StatusOK, rest.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+//		return
+//	}
+//
+//	ctx.JSON(http.StatusOK, &impl.PayGiftResponse{
+//		Response: api.Response{
+//			RequestId: log.ReqID(),
+//			Code:      0,
+//			Message:   "success",
+//		},
+//		Status: model.SendGiftStatusSuccess,
+//	})
+//}
