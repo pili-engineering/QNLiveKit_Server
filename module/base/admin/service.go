@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 )
@@ -32,9 +32,10 @@ func (s *ManService) FindAdminByUserName(ctx context.Context, userName string) (
 	result := db.Model(model.ManagerEntity{}).First(me, "user_name = ?", userName)
 	if result.Error != nil {
 		if result.RecordNotFound() {
-			return nil, api.ErrorLoginWrong
+			return nil, ErrUserPassword
 		} else {
-			return nil, api.ErrDatabase
+			log.Errorf("find admin by user name error %v", result.Error)
+			return nil, rest.ErrInternal
 		}
 	}
 	return me, nil
@@ -47,9 +48,10 @@ func (s *ManService) FindAdminByUserId(ctx context.Context, userId string) (*mod
 	result := db.Model(model.ManagerEntity{}).First(me, "user_id = ?", userId)
 	if result.Error != nil {
 		if result.RecordNotFound() {
-			return nil, api.ErrNotFound
+			return nil, rest.ErrNotFound
 		} else {
-			return nil, api.ErrDatabase
+			log.Errorf("find user by id error %v", result.Error)
+			return nil, rest.ErrInternal
 		}
 	}
 	return me, nil
@@ -58,13 +60,17 @@ func (s *ManService) FindAdminByUserId(ctx context.Context, userId string) (*mod
 func (s *ManService) FindOrCreateAdminUser(ctx context.Context, userId string) (*model.ManagerEntity, error) {
 	log := logger.ReqLogger(ctx)
 	entity, err := s.FindAdminByUserId(ctx, userId)
-	if err != nil && errors.Is(err, api.ErrNotFound) {
+	if err != nil && errors.Is(err, rest.ErrNotFound) {
 		db := mysql.GetLive(log.ReqID())
 		m := &model.ManagerEntity{
 			UserId: userId,
 		}
 		err = db.Model(model.ManagerEntity{}).Save(m).Error
-		return m, err
+		if err != nil {
+			log.Errorf("create admin error %v", err)
+			return nil, rest.ErrInternal
+		}
+		return m, nil
 	} else if err != nil {
 		return nil, err
 	} else {

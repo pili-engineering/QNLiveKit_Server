@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/user/dto"
@@ -115,11 +114,6 @@ func (c *userController) PostRegisterBatch(ctx *gin.Context) (interface{}, error
 	return failMap, nil
 }
 
-type GetUserInfoResponse struct {
-	api.Response
-	Data *dto.UserDto `json:"data"`
-}
-
 // GetUserInfo 查询用户信息
 // GET /server/user/:id
 func (*userController) GetUserInfo(ctx *gin.Context) (interface{}, error) {
@@ -139,11 +133,6 @@ func (*userController) GetUserInfo(ctx *gin.Context) (interface{}, error) {
 
 type GetUsersInfoRequest struct {
 	UserIds []string `json:"user_ids" form:"user_ids"`
-}
-
-type GetUsersInfoResponse struct {
-	api.Response
-	Data []*dto.UserDto `json:"data"`
 }
 
 // GetUsersInfo 批量获取其他用户信息

@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/trace"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -103,7 +103,7 @@ func (s *ServiceImpl) UpdateSingleLive(ctx context.Context, entity *model.StatsS
 			return s.createSingleLiveInfo(ctx, entity)
 		} else {
 			log.Errorf("find old stats single live error %+v", result.Error)
-			return api.ErrDatabase
+			return rest.ErrInternal
 		}
 	}
 
@@ -115,7 +115,7 @@ func (s *ServiceImpl) UpdateSingleLive(ctx context.Context, entity *model.StatsS
 	result = db.Update(updates)
 	if result.Error != nil {
 		log.Errorf("update stats single live error %v", result.Error)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		return nil
 	}
@@ -135,7 +135,7 @@ func (s *ServiceImpl) createSingleLiveInfo(ctx context.Context, entity *model.St
 	result := db.Create(entity)
 	if result.Error != nil {
 		log.Errorf("create single live info %+v, error %+v", entity, result.Error)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }

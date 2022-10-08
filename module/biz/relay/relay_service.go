@@ -11,11 +11,11 @@ import (
 	"context"
 
 	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/store/mysql"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
@@ -105,16 +105,16 @@ func (s *RelayService) checkCanStartRelay(ctx context.Context, roomId string, us
 	liveEntity, err := liveService.LiveInfo(ctx, roomId)
 	if err != nil {
 		log.Errorf("get live room %s error %v", roomId, err)
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 	if liveEntity.Status != model.LiveStatusOn || liveEntity.AnchorId != userId {
 		log.Errorf("live room anchorId (%s, %s) not equal to userId (%s)", liveEntity.LiveId, liveEntity.AnchorId, userId)
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 
 	if liveEntity.PkId != "" {
 		log.Errorf("live room (%s) is relaying", roomId)
-		return api.Error(log.ReqID(), api.ErrorCodeBadStatus, "live room already in relaying")
+		return rest.ErrBadRequest.WithMessage("live room already in relaying")
 	}
 
 	return nil
@@ -140,7 +140,7 @@ func (s *RelayService) createRelaySession(ctx context.Context, params *StartRela
 	db := mysql.GetLive(log.ReqID())
 	if err := db.Create(&relaySession).Error; err != nil {
 		log.Errorf("create relay session error %v", err)
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	}
 
 	return &relaySession, nil
@@ -185,10 +185,10 @@ func (s *RelayService) GetRelaySession(ctx context.Context, sid string) (*model.
 	result := db.First(&relaySession, "sid = ?", sid)
 	if result.Error != nil {
 		if result.RecordNotFound() {
-			return nil, api.ErrNotFound
+			return nil, rest.ErrNotFound
 		} else {
 			log.Errorf("find relay session error %v", result.Error)
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 
@@ -259,7 +259,7 @@ func (s *RelayService) GetRelayRoom(ctx context.Context, userId string, sid stri
 
 	if relaySession.IsStopped() {
 		log.Errorf("relaySession %s stopped", sid)
-		return nil, "", api.ErrNotFound
+		return nil, "", rest.ErrNotFound
 	}
 
 	liveService := live.GetService()
@@ -276,7 +276,7 @@ func (s *RelayService) GetRelayRoom(ctx context.Context, userId string, sid stri
 		relayRoom = relaySession.InitRoomId
 	} else {
 		log.Errorf("user room (%s) not in relay session (%s)", liveRoom.LiveId, relaySession.SID)
-		return nil, "", api.ErrNotFound
+		return nil, "", rest.ErrNotFound
 	}
 
 	return relaySession, relayRoom, nil
