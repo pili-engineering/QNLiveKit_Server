@@ -39,7 +39,10 @@ func StartWithConfig(path string) error {
 
 	moduleManager.c = c
 	go func() {
-		moduleManager.Start()
+		err1 := moduleManager.Start()
+		if err1 != nil {
+			errCh <- err1
+		}
 	}()
 
 	err = <-errCh

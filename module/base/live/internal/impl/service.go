@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/uuid"
@@ -13,6 +12,7 @@ import (
 	"github.com/qbox/livekit/module/base/callback"
 	"github.com/qbox/livekit/module/base/live/service"
 	"github.com/qbox/livekit/module/base/user"
+	"github.com/qbox/livekit/module/biz/censor"
 	"github.com/qbox/livekit/module/biz/item"
 	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/module/fun/pili"
@@ -73,7 +73,7 @@ func (s *Service) CreateLive(context context.Context, req *service.CreateLiveReq
 	}
 	err = db.Create(live).Error
 	if err == nil {
-		err = admin.GetCensorService().CreateCensorJob(context, live)
+		err = censor.GetService().CreateCensorJob(context, live)
 		if err != nil {
 			log.Errorf("create censor job  failed, err: %v", err)
 		}
@@ -188,7 +188,7 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
 	}
 
-	err = admin.GetCensorService().StopCensorJob(context, liveId)
+	err = censor.GetService().StopCensorJob(context, liveId)
 	if err != nil {
 		log.Errorf("stop censor job failed, err: %v", err)
 		return err
@@ -281,7 +281,7 @@ func (s *Service) UpdateExtends(context context.Context, liveId string, extends 
 func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string, latest *int) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	unreviewCount, err := admin.GetCensorService().GetUnreviewCount(context, liveId)
+	unreviewCount, err := censor.GetService().GetUnreviewCount(context, liveId)
 	if err != nil {
 		return err
 	}

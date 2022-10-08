@@ -3,38 +3,54 @@ package admin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/qbox/livekit/module/base/auth/internal/middleware"
-
-	"github.com/qbox/livekit/common/api"
-
-	"github.com/qbox/livekit/app/live/internal/dto"
-	"github.com/qbox/livekit/biz/admin"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/module/base/live/service"
+	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/module/httpq"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/base/auth"
+	"github.com/qbox/livekit/module/base/live"
+	"github.com/qbox/livekit/module/base/user"
+	"github.com/qbox/livekit/module/biz/censor/dto"
+	"github.com/qbox/livekit/module/biz/censor/internal/impl"
+	"github.com/qbox/livekit/module/biz/censor/service"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
 
-func RegisterCensorRoutes(group *gin.RouterGroup) {
-	censorGroup := group.Group("/censor")
-	censorGroup.POST("/config", censorController.UpdateCensorConfig)
-	censorGroup.GET("/config", censorController.GetCensorConfig)
-	censorGroup.POST("/stoplive/:liveId", censorController.PostStopLive)
+func RegisterRoutes() {
+	//censorGroup := group.Group("/censor")
+	//censorGroup.POST("/config", censorController.UpdateCensorConfig)
+	//censorGroup.GET("/config", censorController.GetCensorConfig)
+	//censorGroup.POST("/stoplive/:liveId", censorController.PostStopLive)
+	//
+	//censorGroup.POST("/job/start", censorController.CreateJob)
+	//censorGroup.POST("/job/close", censorController.CloseJob)
+	//censorGroup.GET("/job/list", censorController.ListAllJobs)
+	//censorGroup.GET("/job/query", censorController.QueryJob)
+	//
+	//censorGroup.GET("/live", censorController.SearchCensorLive)
+	//censorGroup.GET("/record", censorController.SearchRecordImage)
+	//censorGroup.POST("/audit", censorController.AuditRecordImage)
 
-	censorGroup.POST("/job/start", censorController.CreateJob)
-	censorGroup.POST("/job/close", censorController.CloseJob)
-	censorGroup.GET("/job/list", censorController.ListAllJobs)
-	censorGroup.GET("/job/query", censorController.QueryJob)
+	httpq.AdminHandle(http.MethodPost, "/censor/config", censorController.UpdateCensorConfig)
+	httpq.AdminHandle(http.MethodGet, "/censor/config", censorController.GetCensorConfig)
+	httpq.AdminHandle(http.MethodPost, "/censor/stoplive/:liveId", censorController.PostStopLive)
 
-	censorGroup.GET("/live", censorController.SearchCensorLive)
-	censorGroup.GET("/record", censorController.SearchRecordImage)
-	censorGroup.POST("/audit", censorController.AuditRecordImage)
+	httpq.AdminHandle(http.MethodPost, "/censor/job/start", censorController.CreateJob)
+	httpq.AdminHandle(http.MethodPost, "/censor/job/close", censorController.CloseJob)
+	httpq.AdminHandle(http.MethodGet, "/censor/job/list", censorController.ListAllJobs)
+	httpq.AdminHandle(http.MethodGet, "/censor/job/query", censorController.QueryJob)
+
+	httpq.AdminHandle(http.MethodGet, "/censor/live", censorController.SearchCensorLive)
+	httpq.AdminHandle(http.MethodGet, "/censor/record", censorController.SearchRecordImage)
+	httpq.AdminHandle(http.MethodPost, "/censor/audit", censorController.AuditRecordImage)
 }
 
 var censorController = &CensorController{}
@@ -42,78 +58,61 @@ var censorController = &CensorController{}
 type CensorController struct {
 }
 
-type CensorConfigResponse struct {
-	api.Response
-	Data *dto.CensorConfigDto `json:"data"`
-}
-
-func (c *CensorController) UpdateCensorConfig(ctx *gin.Context) {
+// UpdateCensorConfig 更新配置
+// return *dto.CensorConfigDto
+func (c *CensorController) UpdateCensorConfig(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &dto.CensorConfigDto{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 	if req.Enable && (req.Interval < 1 || req.Interval > 60) {
 		log.Errorf("request interval invalid error")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest
 	}
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	err := censorService.UpdateCensorConfig(ctx, dto.CConfigDtoToEntity(req))
 	if err != nil {
 		log.Errorf(" UpdateCensorConfig error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, &CensorConfigResponse{
-		Response: api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Data: req,
-	})
+
+	return req, nil
 }
 
-func (c *CensorController) GetCensorConfig(ctx *gin.Context) {
+// GetCensorConfig 查询三鉴配置
+// return *dto.CensorConfigDto
+func (c *CensorController) GetCensorConfig(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	censorConfig, err := censorService.GetCensorConfig(ctx)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	ctx.JSON(http.StatusOK, &CensorConfigResponse{
-		Response: api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Data: dto.CConfigEntityToDto(censorConfig),
-	})
+	return dto.CConfigEntityToDto(censorConfig), nil
 }
 
-func (c *CensorController) PostStopLive(ctx *gin.Context) {
-	adminInfo := middleware.GetAdminInfo(ctx)
+// PostStopLive 管理员强制停止直播
+// return nil
+func (c *CensorController) PostStopLive(ctx *gin.Context) (interface{}, error) {
+	adminInfo := auth.GetAdminInfo(ctx)
 
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 	if liveId == "" {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage("empty liveId")
 	}
 
-	liveEntity, err := service.GetService().LiveInfo(ctx, liveId)
+	liveEntity, err := live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
 
-	anchorInfo, err := service.GetService().FindUser(ctx, liveEntity.AnchorId)
+	anchorInfo, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
 	if err != nil {
 		log.Errorf("get anchor info for %s error %s", liveEntity.AnchorId, err.Error())
 	}
@@ -126,33 +125,29 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) {
 		log.Errorf("send notify to live %s error %s", liveEntity.LiveId, err.Error())
 	}
 
-	err = service.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
+	err = live.GetService().AdminStopLive(ctx, liveId, model.LiveStopReasonCensor, adminInfo.UserId)
 	if err != nil {
 		log.Errorf("stop live failed, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
 
-	ctx.JSON(http.StatusOK, api.Response{
-		Code:      200,
-		Message:   "success",
-		RequestId: log.ReqID(),
-	})
+	return nil, nil
 }
 
-func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
+// CallbackCensorJob 处理回调
+// return
+func (c *CensorController) CallbackCensorJob(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorCallBack{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 	if req.Image.Code != 200 {
 		log.Errorf("CallbackCensorJob  response Error %v", req.Error.Message)
-		return
+		return nil, fmt.Errorf("image.code %d", req.Image.Code)
 	}
-	url := admin.GetJobService().ImageBucketToUrl(req.Image.Url)
+	url := impl.GetInstance().ImageBucketToUrl(req.Image.Url)
 	m := &model.CensorImage{
 		JobID:      req.Image.Job,
 		Url:        url,
@@ -164,81 +159,65 @@ func (c *CensorController) CallbackCensorJob(ctx *gin.Context) {
 		Terror:     req.Image.Result.Scenes.Terror.Suggestion,
 	}
 
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	liveCensor, err := censorService.GetLiveCensorJobByJobId(ctx, req.Image.Job)
 	if err != nil {
 		log.Errorf("GetLiveCensorJobByJobId error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
 	m.LiveID = liveCensor.LiveID
 	err = censorService.SaveCensorImage(ctx, m)
 	if err != nil {
 		log.Errorf("SaveCensorImage error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	err = service.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, m.LiveID, &req.Image.Timestamp)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		log.Errorf("UpdateLiveRelatedReview error %v", err)
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, api.Response{
-		Code:      http.StatusOK,
-		Message:   "success",
-		RequestId: log.ReqID(),
-	})
+
+	return nil, nil
 }
 
-func (c *CensorController) CreateJob(ctx *gin.Context) {
+// CreateJob 创建三鉴任务
+// return nil
+func (c *CensorController) CreateJob(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorCreateRequest{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	liveEntity, err := service.GetService().LiveInfo(ctx, req.LiveId)
+	liveEntity, err := live.GetService().LiveInfo(ctx, req.LiveId)
 	if err != nil {
 		log.Errorf("LiveInfo error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	err = censorService.CreateCensorJob(ctx, liveEntity)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, &api.Response{
-		RequestId: log.ReqID(),
-		Code:      0,
-		Message:   "success",
-	})
-
+	return nil, nil
 }
 
-func (c *CensorController) CloseJob(ctx *gin.Context) {
+// CloseJob 关闭三鉴任务
+func (c *CensorController) CloseJob(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorCloseRequest{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	err := censorService.StopCensorJob(ctx, req.LiveId)
 	if err != nil {
 		log.Errorf("Stop censor job  error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, &api.Response{
-		RequestId: log.ReqID(),
-		Code:      0,
-		Message:   "success",
-	})
+	return nil, nil
 }
 
 type SearchRecordRequest struct {
@@ -248,50 +227,46 @@ type SearchRecordRequest struct {
 	IsReview *int    `json:"is_review" form:"is_review"`
 }
 
-func (c *CensorController) SearchRecordImage(ctx *gin.Context) {
+// SearchRecordImage 查询三鉴图片结果
+// return
+func (c *CensorController) SearchRecordImage(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &SearchRecordRequest{}
 	if err := ctx.BindQuery(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
 	if req.IsReview != nil {
-		if *req.IsReview != admin.IsReviewNo && *req.IsReview != admin.IsReviewYes {
+		if *req.IsReview != impl.IsReviewNo && *req.IsReview != impl.IsReviewYes {
 			log.Errorf(" invalid argument")
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-			return
+			return nil, rest.ErrBadRequest
 		}
 	}
-	images, count, err := admin.GetCensorService().SearchCensorImage(ctx, req.IsReview, req.PageNum, req.PageSize, req.LiveId)
+	images, count, err := impl.GetInstance().SearchCensorImage(ctx, req.IsReview, req.PageNum, req.PageSize, req.LiveId)
 	if err != nil {
 		log.Errorf("search censor image  failed, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "search  censor image failed",
-			RequestId: log.ReqID(),
-		})
-		return
+		return nil, err
 	}
 
 	endPage := false
 	if len(images) < req.PageSize {
 		endPage = true
 	}
-	response := &CensorImageListResponse{}
-	response.Response.Code = 200
-	response.Response.Message = "success"
-	response.Response.RequestId = log.ReqID()
-	response.Data.TotalCount = count
-	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(req.PageSize)))
-	response.Data.EndPage = endPage
+
 	imageDtos := make([]*dto.CensorImageDto, len(images))
 	for i, image := range images {
 		imageDtos[i] = dto.CensorImageModelToDto(&image)
 	}
-	response.Data.List = imageDtos
-	ctx.JSON(http.StatusOK, response)
+
+	pageResult := &rest.PageResult{
+		TotalCount: count,
+		PageTotal:  int(math.Ceil(float64(count) / float64(req.PageSize))),
+		EndPage:    endPage,
+		List:       imageDtos,
+	}
+
+	return pageResult, nil
 }
 
 type SearchCensorLiveRequest struct {
@@ -300,58 +275,43 @@ type SearchCensorLiveRequest struct {
 	IsReview *int `json:"is_review" form:"is_review"`
 }
 
-func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
+// SearchCensorLive 查询待审核直播间
+// return *rest.PageResult
+func (c *CensorController) SearchCensorLive(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &SearchCensorLiveRequest{}
 	if err := ctx.BindQuery(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
 	if req.IsReview != nil {
-		if *req.IsReview != admin.IsReviewNo {
-			log.Errorf(" invalid argument")
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-			return
+		if *req.IsReview != impl.IsReviewNo {
+			log.Errorf(" invalid argument, is_review %d", *req.IsReview)
+			return nil, rest.ErrBadRequest
 		}
 	}
 
-	lives, count, err := admin.GetCensorService().SearchCensorLive(ctx, req.IsReview, req.PageNum, req.PageSize)
+	lives, count, err := impl.GetInstance().SearchCensorLive(ctx, req.IsReview, req.PageNum, req.PageSize)
 	if err != nil {
 		log.Errorf("search censor live  failed, err: %v", err)
-		ctx.JSON(http.StatusInternalServerError, api.Response{
-			Code:      http.StatusInternalServerError,
-			Message:   "search  censor live failed",
-			RequestId: log.ReqID(),
-		})
-		return
+		return nil, err
 	}
 
 	for i, liveEntity := range lives {
-		anchor, err := service.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
+		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
 			if !errors.Is(err, api.ErrNotFound) {
 				log.Errorf("FindLiveRoomUser failed, err: %v", err)
-				ctx.JSON(http.StatusInternalServerError, api.Response{
-					Code:      http.StatusInternalServerError,
-					Message:   "FindLiveRoomUser failed",
-					RequestId: log.ReqID(),
-				})
-				return
+				return nil, rest.ErrInternal
 			}
 		} else {
 			lives[i].AnchorStatus = int(anchor.Status)
 		}
-		anchor2, err := service.GetService().FindUser(ctx, liveEntity.AnchorId)
+		anchor2, err := user.GetService().FindUser(ctx, liveEntity.AnchorId)
 		if err != nil {
 			log.Errorf("FindUser  failed, err: %v", err)
-			ctx.JSON(http.StatusInternalServerError, api.Response{
-				Code:      http.StatusInternalServerError,
-				Message:   "FindUser failed",
-				RequestId: log.ReqID(),
-			})
-			return
+			return nil, err
 		}
 		lives[i].Nick = anchor2.Nick
 		lives[i].AnchorStatus = int(anchor.Status)
@@ -361,86 +321,85 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) {
 	if len(lives) < req.PageSize {
 		endPage = true
 	}
-	response := &CensorLiveListResponse{}
-	response.Response.Code = 200
-	response.Response.Message = "success"
-	response.Response.RequestId = log.ReqID()
-	response.Data.TotalCount = count
-	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(req.PageSize)))
-	response.Data.EndPage = endPage
-	response.Data.List = lives
-	ctx.JSON(http.StatusOK, response)
+
+	pageResult := &rest.PageResult{
+		TotalCount: count,
+		PageTotal:  int(math.Ceil(float64(count) / float64(req.PageSize))),
+		EndPage:    endPage,
+		List:       lives,
+	}
+	return pageResult, nil
 }
 
-func (c *CensorController) ListAllJobs(ctx *gin.Context) {
+// ListAllJobs 查看所有的三鉴任务
+// return
+func (c *CensorController) ListAllJobs(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorListRequest{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	request := &admin.JobListRequest{
+	request := &impl.JobListRequest{
 		Start:  req.Start.Unix(),
 		End:    req.End.Unix(),
 		Status: req.Status,
 		Limit:  req.Limit,
 		Marker: req.Marker,
 	}
-	resp := &admin.JobListResponse{}
-	err := admin.GetJobService().JobList(ctx, request, resp)
+	resp := &impl.JobListResponse{}
+	err := impl.GetInstance().Client.JobList(ctx, request, resp)
 	if err != nil {
 		log.Errorf("GetCensorConfig error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, resp)
+
+	return resp.Data, nil
 }
 
-func (c *CensorController) QueryJob(ctx *gin.Context) {
+// QueryJob 查询三鉴任务
+// return
+func (c *CensorController) QueryJob(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	req := &CensorQueryRequest{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	requset := &admin.JobQueryRequest{
+	requset := &impl.JobQueryRequest{
 		Start:       req.Start.Unix(),
 		End:         req.End.Unix(),
 		Job:         req.Job,
 		Suggestions: req.Suggestions,
 	}
-	resp := &admin.JobQueryResponse{}
-	err := admin.GetJobService().JobQuery(ctx, requset, resp)
+	resp := &impl.JobQueryResponse{}
+	err := impl.GetInstance().Client.JobQuery(ctx, requset, resp)
 	if err != nil {
 		log.Errorf("Job Query error:%v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	ctx.JSON(http.StatusOK, resp)
+	return resp.Data, nil
 }
 
-func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
-	userInfo := ctx.MustGet(middleware.AdminCtxKey).(*middleware.AdminInfo)
+// AuditRecordImage 管理员审核三鉴结果
+// return nil
+func (c *CensorController) AuditRecordImage(ctx *gin.Context) (interface{}, error) {
+	userInfo := auth.GetAdminInfo(ctx)
 	log := logger.ReqLogger(ctx)
 	req := &CensorAuditRequest{}
 	if err := ctx.BindJSON(req); err != nil {
 		log.Errorf("bind request error %v", err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 	if req.ReviewAnswer != model.AuditResultPass && req.ReviewAnswer != model.AuditResultBlock {
 		log.Errorf("invalid request %+v", req)
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest
 	}
 	if len(req.Images) == 0 {
 		log.Errorf("invalid request %+v", req)
-		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-		return
+		return nil, rest.ErrBadRequest
 	}
-	censorService := admin.GetCensorService()
+	censorService := impl.GetInstance()
 	updates := map[string]interface{}{}
 	updates["is_review"] = 1
 	updates["review_answer"] = req.ReviewAnswer
@@ -449,14 +408,12 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 	err := censorService.BatchUpdateCensorImage(ctx, req.Images, updates)
 	if err != nil {
 		log.Errorf("update audit censor image info  error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
-	err = service.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
+	err = live.GetService().UpdateLiveRelatedReview(ctx, req.LiveId, nil)
 	if err != nil {
 		log.Errorf("update Live Related Review error %s", err.Error())
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
-		return
+		return nil, err
 	}
 
 	if req.Notify {
@@ -464,16 +421,12 @@ func (c *CensorController) AuditRecordImage(ctx *gin.Context) {
 			go c.notifyCensorBlock(ctx, req.LiveId)
 		}
 	}
-	ctx.JSON(http.StatusOK, api.Response{
-		Code:      http.StatusOK,
-		Message:   "success",
-		RequestId: log.ReqID(),
-	})
+	return nil, nil
 }
 
 func (c *CensorController) notifyCensorBlock(ctx context.Context, liveId string) {
 	log := logger.ReqLogger(ctx)
-	anchor, err := service.GetService().GetLiveAuthor(ctx, liveId)
+	anchor, err := live.GetService().GetLiveAuthor(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %v", liveId, err)
 		return
@@ -603,9 +556,9 @@ type CensorImageListResponse struct {
 type CensorLiveListResponse struct {
 	api.Response
 	Data struct {
-		TotalCount int                `json:"total_count"`
-		PageTotal  int                `json:"page_total"`
-		EndPage    bool               `json:"end_page"`
-		List       []admin.CensorLive `json:"list"`
+		TotalCount int                  `json:"total_count"`
+		PageTotal  int                  `json:"page_total"`
+		EndPage    bool                 `json:"end_page"`
+		List       []service.CensorLive `json:"list"`
 	} `json:"data"`
 }
