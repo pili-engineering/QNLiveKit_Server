@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/biz/gift/config"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
@@ -39,7 +39,7 @@ func (s *ServiceImpl) SaveGiftEntity(context context.Context, entity *model.Gift
 		entity.GiftId, entity.Type, entity.Name, entity.Amount, entity.Img, entity.AnimationType, entity.AnimationImg, entity.Order, entity.Extends, time.Now(), time.Now()).Error
 	if err != nil {
 		log.Errorf("add gift config error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -50,7 +50,7 @@ func (s *ServiceImpl) DeleteGiftEntity(context context.Context, giftId int) erro
 	err := db.Delete(&model.GiftEntity{}, "gift_id = ?", giftId).Error
 	if err != nil {
 		log.Errorf("delete gift config error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -62,7 +62,7 @@ func (s *ServiceImpl) GetListGiftEntity(context context.Context, typeId int) ([]
 	err := db.Model(&model.GiftEntity{}).Where("type = ?", typeId).Order("`order` asc").Order("created_at desc").Find(&entities).Error
 	if err != nil {
 		log.Errorf("list gift config error %s", err.Error())
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	}
 	return entities, nil
 }

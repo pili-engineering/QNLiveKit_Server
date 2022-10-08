@@ -11,7 +11,6 @@ import (
 	"context"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/user/service"
 	"github.com/qbox/livekit/module/fun/im"
@@ -41,7 +40,7 @@ func (s *UserService) FindOrCreateUser(ctx context.Context, userId string) (*mod
 		return ue, err
 	}
 
-	if !api.IsNotFoundError(err) {
+	if !rest.IsNotFoundError(err) {
 		log.Errorf("find user error %v", err)
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func (s *UserService) ListUser(ctx context.Context, userIds []string) ([]*model.
 		Find(&ret)
 	if result.Error != nil {
 		log.Errorf("list user error %v", result.Error)
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	} else {
 		return ret, nil
 	}
@@ -108,7 +107,7 @@ func (s *UserService) ListImUser(ctx context.Context, imUserIds []int64) ([]*mod
 		Find(&ret)
 	if result.Error != nil {
 		log.Errorf("list user error %v", result.Error)
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	} else {
 		return ret, nil
 	}
@@ -118,13 +117,13 @@ func (s *UserService) CreateUser(ctx context.Context, user *model.LiveUserEntity
 	log := logger.ReqLogger(ctx)
 
 	old, err := s.findUser(ctx, user.UserId)
-	if err != nil && !api.IsNotFoundError(err) {
+	if err != nil && !rest.IsNotFoundError(err) {
 		log.Errorf("find user error %v", err)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 
 	if old != nil {
-		return api.ErrAlreadyExist
+		return rest.ErrAlreadyExist
 	}
 
 	_, err = s.createUser(ctx, user)
@@ -145,9 +144,9 @@ func (s *UserService) UpdateUserInfo(ctx context.Context, user *model.LiveUserEn
 	if result.Error != nil {
 		log.Errorf("find old user error %+v", result.Error)
 		if result.RecordNotFound() {
-			return api.ErrNotFound
+			return rest.ErrNotFound
 		} else {
-			return api.ErrDatabase
+			return rest.ErrInternal
 		}
 	}
 
@@ -159,7 +158,7 @@ func (s *UserService) UpdateUserInfo(ctx context.Context, user *model.LiveUserEn
 	result = db.Update(updates)
 	if result.Error != nil {
 		log.Errorf("update user error %v", result.Error)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		return nil
 	}
@@ -204,7 +203,7 @@ func (s *UserService) createUser(ctx context.Context, user *model.LiveUserEntity
 	result := db.Create(user)
 	if result.Error != nil {
 		log.Errorf("create user %+v, error %+v", result.Error)
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	}
 
 	user1, err := s.createImUser(ctx, user)

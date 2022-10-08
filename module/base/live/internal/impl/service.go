@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/auth"
 	"github.com/qbox/livekit/module/base/callback"
 	"github.com/qbox/livekit/module/base/live/service"
@@ -293,7 +293,7 @@ func (s *Service) UpdateLiveRelatedReview(context context.Context, liveId string
 	result := db.Model(&model.LiveEntity{}).Where("live_id = ? ", liveId).Update(updates)
 	if result.Error != nil {
 		log.Errorf("update live about censor information error %v", result.Error)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		return nil
 	}
@@ -335,14 +335,14 @@ func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId s
 	result := db.Where("live_id = ? and user_id = ? ", liveId, userId).First(liveRoomUser)
 	if result.Error != nil {
 		log.Errorf("find live rooom user error %s", result.Error.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		liveRoomUser.LiveId = ""
 		liveRoomUser.Status = model.LiveRoomUserStatusLeave
 		liveRoomUser.UpdatedAt = timestamp.Now()
 		if err := db.Save(liveRoomUser).Error; err != nil {
 			log.Errorf("update live room user error %s", err.Error())
-			return api.ErrDatabase
+			return rest.ErrInternal
 		}
 	}
 
@@ -350,7 +350,7 @@ func (s *Service) LeaveLiveRoom(context context.Context, liveId string, userId s
 	liveEntity, err := s.getLive(context, liveId)
 	if err != nil {
 		log.Errorf("get live error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 
 	if liveEntity != nil && liveEntity.AnchorId == userId {
@@ -370,10 +370,10 @@ func (s *Service) FindLiveRoomUser(context context.Context, liveId string, userI
 	result := db.Where("live_id = ? and user_id = ?", liveId, userId).First(liveRoomUser)
 	if result.Error != nil {
 		if result.RecordNotFound() {
-			err = api.ErrNotFound
+			err = rest.ErrNotFound
 		} else {
 			log.Errorf("find live room user error %v", err)
-			err = api.ErrDatabase
+			err = rest.ErrInternal
 		}
 	}
 	return
@@ -545,7 +545,7 @@ func (s *Service) CurrentLiveRoom(context context.Context, userId string) (liveE
 	if liveInfo.Status == model.LiveStatusOn && liveInfo.AnchorId == userId {
 		return liveInfo, nil
 	} else {
-		return nil, api.ErrNotFound
+		return nil, rest.ErrNotFound
 	}
 }
 
@@ -588,7 +588,7 @@ func (s *Service) CheckLiveAnchor(ctx context.Context, liveId string, userId str
 
 	if liveEntity.AnchorId != userId {
 		log.Errorf("anchor not match liveAnchor(%s), userId(%s)", liveEntity.AnchorId, userId)
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 
 	return nil
@@ -599,12 +599,12 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 	liveInfo, err := s.LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get liveInfo info failed, err: %v", err)
-		return 0, 0, api.ErrDatabase
+		return 0, 0, rest.ErrInternal
 	}
 
 	if liveInfo.AnchorId == userId {
 		log.Errorf("anchor can not like self")
-		return 0, 0, api.ErrInvalidArgument
+		return 0, 0, rest.ErrBadRequest.WithMessage("anchor can not like self")
 	}
 
 	liveUser, err := s.getOrCreateLiveRoomUser(ctx, userId)
