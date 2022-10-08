@@ -31,7 +31,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	if err := conf.Validate(); err != nil {
-		return nil
+		return err
 	}
 
 	impl.ConfigService(conf)
