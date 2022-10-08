@@ -1,75 +1,56 @@
-package admin
+package impl
 
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/module/account"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/qiniumac"
 	"github.com/qbox/livekit/utils/rpc"
 )
 
-type JobService interface {
-	JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error
-	JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error)
-	JobClose(ctx context.Context, req *JobCreateResponseData) error
-	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
-	ImageBucketToUrl(url string) string
-}
+//type JobService interface {
+//	JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error
+//	JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error)
+//	JobClose(ctx context.Context, req *JobCreateResponseData) error
+//	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
+//	ImageBucketToUrl(url string) string
+//}
 
-var service JobService
+//var service JobService
+//
+//func InitJobService(config Config) {
+//	service = NewCensorClient(config)
+//}
 
-func InitJobService(config Config) {
-	service = NewCensorClient(config)
-}
-
-func GetJobService() JobService {
-	return service
-}
-
-type Config struct {
-	AccessKey      string
-	SecretKey      string
-	CensorCallback string
-	CensorBucket   string
-	CensorAddr     string
-}
+//func GetJobService() JobService {
+//	return service
+//}
 
 type CensorClient struct {
-	AccessKey      string
-	SecretKey      string
 	CensorCallback string
 	CensorBucket   string
-	CensorAddr     string
 	client         *rpc.Client
 }
 
-func NewCensorClient(config Config) *CensorClient {
+func NewCensorClient(callback, bucket string) *CensorClient {
 	mac := &qiniumac.Mac{
-		AccessKey: config.AccessKey,
-		SecretKey: []byte(config.SecretKey),
+		AccessKey: account.AccessKey(),
+		SecretKey: []byte(account.SecretKey()),
 	}
 	c := &http.Client{
 		Transport: qiniumac.NewTransport(mac, nil),
 	}
 	return &CensorClient{
-		AccessKey:      config.AccessKey,
-		SecretKey:      config.AccessKey,
-		CensorBucket:   config.CensorBucket,
-		CensorCallback: config.CensorCallback,
-		CensorAddr:     config.CensorAddr,
+		CensorBucket:   bucket,
+		CensorCallback: callback,
 		client: &rpc.Client{
 			Client: c,
 		},
 	}
-}
-
-func (c *CensorClient) ImageBucketToUrl(url string) string {
-	split := strings.Split(url, c.CensorBucket)
-	return c.CensorAddr + split[1]
 }
 
 func (c *CensorClient) JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error) {

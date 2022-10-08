@@ -1,4 +1,4 @@
-package gift
+package impl
 
 import (
 	"context"
@@ -6,42 +6,26 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/biz/gift/config"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 )
 
-type GService interface {
-	SaveGiftEntity(context context.Context, entity *model.GiftEntity) error
-	DeleteGiftEntity(context context.Context, giftId int) error
-	GetListGiftEntity(context context.Context, typeId int) ([]*model.GiftEntity, error)
-	SendGift(context context.Context, req *SendGiftRequest, userId string) (*SendGiftResponse, error)
-	SearchGiftByLiveId(context context.Context, liveId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error)
-	SearchGiftByAnchorId(context context.Context, anchorId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error)
-	SearchGiftByUserId(context context.Context, userId string, pageNum, pageSize int) (liveGifts []*model.LiveGift, totalCount int, err error)
-	UpdateGiftStatus(context context.Context, bizId string, status int) error
+var instance *ServiceImpl
+
+type ServiceImpl struct {
+	config.Config
 }
 
-type Service struct {
-	Config
+func ConfigService(conf config.Config) {
+	instance = &ServiceImpl{Config: conf}
 }
 
-var service GService = &Service{}
-
-func GetService() GService {
-	return service
+func GetInstance() *ServiceImpl {
+	return instance
 }
 
-type Config struct {
-	GiftAddr string
-}
-
-func InitService(conf Config) {
-	service = &Service{
-		Config: conf,
-	}
-}
-
-func (s *Service) SaveGiftEntity(context context.Context, entity *model.GiftEntity) error {
+func (s *ServiceImpl) SaveGiftEntity(context context.Context, entity *model.GiftEntity) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	sql := "insert into gift_config(gift_id,type,name," +
@@ -60,7 +44,7 @@ func (s *Service) SaveGiftEntity(context context.Context, entity *model.GiftEnti
 	return nil
 }
 
-func (s *Service) DeleteGiftEntity(context context.Context, giftId int) error {
+func (s *ServiceImpl) DeleteGiftEntity(context context.Context, giftId int) error {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	err := db.Delete(&model.GiftEntity{}, "gift_id = ?", giftId).Error
@@ -71,7 +55,7 @@ func (s *Service) DeleteGiftEntity(context context.Context, giftId int) error {
 	return nil
 }
 
-func (s *Service) GetListGiftEntity(context context.Context, typeId int) ([]*model.GiftEntity, error) {
+func (s *ServiceImpl) GetListGiftEntity(context context.Context, typeId int) ([]*model.GiftEntity, error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
 	entities := make([]*model.GiftEntity, 0)
