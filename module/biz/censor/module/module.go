@@ -3,7 +3,7 @@ package module
 import (
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/core/config"
-	config2 "github.com/qbox/livekit/module/biz/censor/config"
+	censorConfig "github.com/qbox/livekit/module/biz/censor/config"
 	"github.com/qbox/livekit/module/biz/censor/internal/controller/admin"
 	"github.com/qbox/livekit/module/biz/censor/internal/impl"
 )
@@ -23,7 +23,7 @@ func (m *Module) Config(c *config.Config) error {
 		return nil
 	}
 
-	conf := config2.Config{}
+	conf := censorConfig.Config{}
 	if err := c.Unmarshal(&conf); err != nil {
 		return nil
 	}
