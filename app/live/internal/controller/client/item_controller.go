@@ -601,6 +601,7 @@ func (c *itemController) DeleteItemDemonstrate(ctx *gin.Context) {
 	}
 	if demonId == nil {
 		ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
+		return
 	}
 	demonstrateLog, err := itemService.StopRecordVideo(ctx, liveId, *demonId)
 	if err != nil {
