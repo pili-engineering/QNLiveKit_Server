@@ -11,6 +11,14 @@ type Error struct {
 	Message    string `json:"message"`    //错误信息
 }
 
+func IsNotFoundError(err error) bool {
+	if e1, ok := err.(*Error); ok {
+		return e1.StatusCode == ErrNotFound.StatusCode && e1.Code == ErrNotFound.Code
+	} else {
+		return false
+	}
+}
+
 func (e *Error) Error() string {
 	return ""
 }
@@ -49,3 +57,4 @@ var ErrTimeout = &Error{StatusCode: http.StatusRequestTimeout, Code: http.Status
 var ErrInternal = &Error{StatusCode: http.StatusInternalServerError, Code: http.StatusInternalServerError, Message: http.StatusText(http.StatusInternalServerError)}
 
 var ErrTokenExpired = &Error{StatusCode: http.StatusUnauthorized, Code: 499, Message: "Your token is expired"}
+var ErrAlreadyExist = &Error{StatusCode: http.StatusBadRequest, Code: 10001, Message: "Already existed"}

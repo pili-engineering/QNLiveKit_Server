@@ -5,8 +5,8 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/uuid"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/base/user"
 	"github.com/qbox/livekit/module/store/mysql"
@@ -26,7 +26,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 	liveEntity, err := live.GetService().LiveInfo(context, req.LiveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
-		return nil, api.ErrorGiftPay
+		return nil, rest.ErrInternal
 	}
 	liveGift := &model.LiveGift{
 		LiveId:   req.LiveId,
@@ -39,7 +39,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 	err = SaveLiveGift(context, liveGift)
 	if err != nil {
 		log.Errorf("save live gift error %s", err.Error())
-		return nil, api.ErrorGiftPay
+		return nil, rest.ErrInternal
 	}
 
 	payReq := &PayGiftRequest{
@@ -77,7 +77,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		//该错误没有返回
 	}
 	if payResp.Status == model.SendGiftStatusFailure {
-		return sResp, api.ErrorGiftPayFromBiz
+		return sResp, ErrGiftPay
 	}
 	notifyItem := BroadcastGiftNotifyItem{
 		LiveId: liveEntity.LiveId,
@@ -107,7 +107,7 @@ type PayGiftRequest struct {
 }
 
 type PayGiftResponse struct {
-	api.Response
+	rest.Response
 	Status int
 }
 
@@ -146,7 +146,7 @@ func SaveLiveGift(context context.Context, liveGift *model.LiveGift) error {
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	err := db.Model(&model.LiveGift{}).Save(liveGift).Error
 	if err != nil {
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }

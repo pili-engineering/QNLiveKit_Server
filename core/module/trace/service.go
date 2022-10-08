@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/qiniumac"
 	"github.com/qbox/livekit/utils/rpc"
@@ -56,7 +56,7 @@ func (s *Service) ReportEvent(ctx context.Context, kind string, event interface{
 		Item:     event,
 	}
 	url := fmt.Sprintf("%s/report/live/%s", reportHost, kind)
-	resp := &api.Response{}
+	resp := &rest.Response{}
 	err := s.client.CallWithJSON(log, resp, url, r)
 	if err != nil {
 		log.Info("Error ", err)
@@ -81,7 +81,7 @@ func (s *Service) ReportBatchEvent(ctx context.Context, kind string, events []in
 		Items:    events,
 	}
 	url := fmt.Sprintf("%s/report/live/%s/batch", reportHost, kind)
-	resp := &api.Response{}
+	resp := &rest.Response{}
 	err := s.client.CallWithJSON(log, resp, url, r)
 	if err != nil {
 		log.Info("Error ", err)

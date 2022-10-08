@@ -17,7 +17,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/biz/item/service"
 	"github.com/qbox/livekit/module/fun/pili"
@@ -39,14 +39,14 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 	log := logger.ReqLogger(ctx)
 
 	if len(liveId) == 0 || len(items) == 0 {
-		err = api.ErrInvalidArgument
+		err = rest.ErrBadRequest
 		return
 	}
 
 	_, err = live.GetService().LiveInfo(ctx, liveId)
 	if err != nil {
 		log.Errorf("get live %s error %s", liveId, err.Error())
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 
 	db := mysql.GetLive(log.ReqID())
@@ -69,7 +69,7 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 		return
 	}
 	if currentCount+len(items) > maxItemCount {
-		err = api.ErrCodeLiveItemExceed
+		err = ErrLiveItemExceed
 		log.Errorf("live room %s item exceed with new items %d", liveId, len(items))
 		return
 	}
@@ -84,7 +84,7 @@ func (s *ItemService) AddItems(ctx context.Context, liveId string, items []*mode
 	for _, item := range items {
 		if !item.IsValid() {
 			log.Errorf("invalid item %+v", item)
-			err = api.ErrInvalidArgument
+			err = rest.ErrBadRequest
 			return
 		}
 		currentOrder++
@@ -110,7 +110,7 @@ func (s *ItemService) countItems(db *gorm.DB, liveId string) (int, error) {
 	count := 0
 	err := db.Model(model.ItemEntity{}).Where("live_id = ?", liveId).Count(&count).Error
 	if err != nil {
-		return 0, api.ErrDatabase
+		return 0, rest.ErrInternal
 	}
 	return count, nil
 }
@@ -119,7 +119,7 @@ func (s *ItemService) maxItemOrder(db *gorm.DB, liveId string) (uint, error) {
 	var x sql.NullInt64
 	err := db.Table(model.ItemEntity{}.TableName()).Select("MAX(`order`)").Where("live_id = ?", liveId).Row().Scan(&x)
 	if err != nil {
-		return 0, api.ErrDatabase
+		return 0, rest.ErrInternal
 	}
 	return uint(x.Int64), nil
 }
@@ -128,11 +128,11 @@ func (s *ItemService) checkItemsExist(db *gorm.DB, liveId string, itemIds []stri
 	items := make([]*model.ItemEntity, 0)
 	err := db.Where("live_id = ? and item_id in (?)", liveId, itemIds).Find(&items).Error
 	if err != nil {
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 
 	if len(items) > 0 {
-		return api.ErrAlreadyExist
+		return rest.ErrAlreadyExist
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func (s *ItemService) checkItemsExist(db *gorm.DB, liveId string, itemIds []stri
 func (s *ItemService) deleteOldItems(db *gorm.DB, liveId string, itemIds []string) error {
 	err := db.Exec("delete from items where live_id = ? and deleted_at is not null and item_id in ?", liveId, itemIds).Error
 	if err != nil {
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		return nil
 	}
@@ -152,7 +152,7 @@ func (s *ItemService) batchAddItems(db *gorm.DB, items []*model.ItemEntity) erro
 	for _, item := range items {
 		err := db.Save(item).Error
 		if err != nil {
-			return api.ErrDatabase
+			return rest.ErrInternal
 		}
 	}
 
@@ -194,7 +194,7 @@ func (s *ItemService) DelItems(ctx context.Context, liveId string, items []strin
 	err = db.Delete(model.ItemEntity{}, "live_id = ? and item_id in (?)", liveId, items).Error
 	if err != nil {
 		log.Errorf("delete live item error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -212,7 +212,7 @@ func (s *ItemService) ListItems(ctx context.Context, liveId string, showOffline 
 	err := db.Order("`order` desc").Find(&items, query, liveId).Error
 	if err != nil {
 		log.Errorf("find live items error %s", err.Error())
-		return nil, api.ErrDatabase
+		return nil, rest.ErrInternal
 	}
 
 	return items, nil
@@ -225,7 +225,7 @@ func (s *ItemService) UpdateItemStatus(ctx context.Context, liveId string, items
 
 	for _, item := range items {
 		if item.Status > 2 {
-			return api.Error("", api.ErrorCodeInvalidArgument, fmt.Sprintf("invalid item status %d", item.Status))
+			return rest.ErrBadRequest.WithMessage(fmt.Sprintf("invalid item status %d", item.Status))
 		}
 	}
 
@@ -239,7 +239,7 @@ func (s *ItemService) UpdateItemStatus(ctx context.Context, liveId string, items
 			err = tx.Commit().Error
 			if err != nil {
 				log.Errorf("commit item status error %s", err.Error())
-				err = api.ErrDatabase
+				err = rest.ErrInternal
 			}
 		}
 	}()
@@ -266,15 +266,15 @@ func (s *ItemService) UpdateItemOrder(ctx context.Context, liveId string, orders
 	itemMap := make(map[string]bool)
 	for _, order := range orders {
 		if _, ok := itemMap[order.ItemId]; ok {
-			return api.Error(log.ReqID(), api.ErrorCodeInvalidArgument, fmt.Sprintf("duplicated item id %s", order.ItemId))
+			return rest.ErrBadRequest.WithMessage(fmt.Sprintf("duplicated item id %s", order.ItemId))
 		}
 
 		if order.Order <= 0 {
-			return api.Error(log.ReqID(), api.ErrorCodeInvalidArgument, fmt.Sprintf("invalid item order %d", order.Order))
+			return rest.ErrBadRequest.WithMessage(fmt.Sprintf("invalid item order %d", order.Order))
 		}
 
 		if _, ok := orderMap[order.Order]; ok {
-			return api.Error(log.ReqID(), api.ErrorCodeInvalidArgument, fmt.Sprintf("duplicated item order %d", order.Order))
+			return rest.ErrBadRequest.WithMessage(fmt.Sprintf("duplicated item order %d", order.Order))
 		}
 		orderMap[order.Order] = true
 		itemMap[order.ItemId] = true
@@ -334,7 +334,7 @@ func (s *ItemService) checkOrderConflict(items []*model.ItemEntity, orders []*mo
 	for _, o := range orders {
 		for _, item := range checkItems {
 			if o.Order == item.Order {
-				return api.Error("", api.ErrorCodeInvalidArgument, fmt.Sprintf("order %d conflict with %s", item.Order, item.ItemId))
+				return rest.ErrBadRequest.WithMessage(fmt.Sprintf("order %d conflict with %s", item.Order, item.ItemId))
 			}
 		}
 	}
@@ -345,7 +345,7 @@ func (s *ItemService) checkOrderConflict(items []*model.ItemEntity, orders []*mo
 func (s *ItemService) UpdateItemOrderSingle(ctx context.Context, liveId string, itemId string, from, to uint) (err error) {
 	log := logger.ReqLogger(ctx)
 	if from == to {
-		err = api.Error("", api.ErrorCodeInvalidArgument, "from equal to")
+		err = rest.ErrBadRequest.WithMessage("from equal to")
 		return
 	}
 
@@ -394,7 +394,7 @@ func calcAffectedItems(items []*model.ItemEntity, itemId string, from, to uint) 
 	affectedItems := make([]*model.ItemEntity, 0)
 	for _, item := range items {
 		if item.ItemId == itemId && item.Order != from {
-			return nil, api.Error("", api.ErrorCodeInvalidArgument, "from not match")
+			return nil, rest.ErrBadRequest.WithMessage("from not match")
 		}
 
 		if item.Order >= min && item.Order <= max {
@@ -441,7 +441,7 @@ func (s *ItemService) UpdateItemInfo(ctx context.Context, liveId string, item *m
 
 	if old == nil {
 		log.Errorf("live item (%s, %s) not exist", liveId, item.ItemId)
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 
 	updates := s.itemToUpdates(old, item)
@@ -453,7 +453,7 @@ func (s *ItemService) UpdateItemInfo(ctx context.Context, liveId string, item *m
 	db := mysql.GetLive(log.ReqID())
 	if err = db.Model(old).Update(updates).Error; err != nil {
 		log.Errorf("update item error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -502,7 +502,7 @@ func (s *ItemService) UpdateItemExtends(ctx context.Context, liveId string, item
 
 	if old == nil {
 		log.Errorf("live item (%s, %s) not exist", liveId, itemId)
-		return api.ErrNotFound
+		return rest.ErrNotFound
 	}
 
 	updates := make(map[string]interface{})
@@ -512,7 +512,7 @@ func (s *ItemService) UpdateItemExtends(ctx context.Context, liveId string, item
 	db := mysql.GetLive(log.ReqID())
 	if err = db.Model(old).Update(updates).Error; err != nil {
 		log.Errorf("update item error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 
 	return nil
@@ -534,7 +534,7 @@ func (s *ItemService) StartRecordVideo(ctx context.Context, liveId string, itemI
 	err = s.SaveRecordVideo(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("save item demonstrate log error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -563,7 +563,7 @@ func (s *ItemService) StopRecordVideo(ctx context.Context, liveId string, demonI
 	}
 	if demonstrateLog == nil {
 		log.Info("donnot find  record video in the date  error ")
-		return nil, api.ErrNotFound
+		return nil, rest.ErrNotFound
 	}
 	demonstrateLog.End = timestamp.Now()
 	reqValue := &pili.SaveStreamRequest{
@@ -620,7 +620,7 @@ func (s *ItemService) GetRecordVideo(ctx context.Context, demonId uint) (*model.
 		if result.RecordNotFound() {
 			return nil, nil
 		} else {
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 	return &demonstrateLog, nil
@@ -685,7 +685,7 @@ func (s *ItemService) DelRecordVideo(ctx context.Context, liveId string, demonIt
 	err := db.Delete(model.ItemDemonstrateRecord{}, "live_id = ? and id in (?) ", liveId, demonItem).Error
 	if err != nil {
 		log.Errorf("delete demonstrate Log error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -705,7 +705,7 @@ func (s *ItemService) SetDemonstrateItem(ctx context.Context, liveId string, ite
 	err = s.saveDemonstrateItem(ctx, liveId, itemId)
 	if err != nil {
 		log.Errorf("save item demonstrate error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 
 	return nil
@@ -716,7 +716,7 @@ func (s *ItemService) DelDemonstrateItem(ctx context.Context, liveId string) err
 	err := s.saveDemonstrateItem(ctx, liveId, "")
 	if err != nil {
 		log.Errorf("save item demonstrate error %s", err.Error())
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -740,7 +740,7 @@ func (s *ItemService) IsDemonstrateItem(ctx context.Context, liveId, itemId stri
 		if result.RecordNotFound() {
 			return false, nil
 		} else {
-			return false, api.ErrDatabase
+			return false, rest.ErrInternal
 		}
 	}
 	return true, nil
@@ -756,7 +756,7 @@ func (s *ItemService) GetDemonstrateItem(ctx context.Context, liveId string) (*m
 		if result.RecordNotFound() {
 			return nil, nil
 		} else {
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 
@@ -776,7 +776,7 @@ func (s *ItemService) GetPreviousItem(ctx context.Context, liveId string) (*int,
 		if result.RecordNotFound() {
 			return nil, nil
 		} else {
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 
@@ -794,7 +794,7 @@ func (s *ItemService) GetLiveItem(ctx context.Context, liveId string, itemId str
 		if result.RecordNotFound() {
 			return nil, nil
 		} else {
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 

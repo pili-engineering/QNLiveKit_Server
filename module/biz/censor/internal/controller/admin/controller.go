@@ -11,7 +11,6 @@ import (
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/notify"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/httpq"
 	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/base/auth"
@@ -19,7 +18,6 @@ import (
 	"github.com/qbox/livekit/module/base/user"
 	"github.com/qbox/livekit/module/biz/censor/dto"
 	"github.com/qbox/livekit/module/biz/censor/internal/impl"
-	"github.com/qbox/livekit/module/biz/censor/service"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
 )
@@ -102,7 +100,6 @@ func (c *CensorController) PostStopLive(ctx *gin.Context) (interface{}, error) {
 	log := logger.ReqLogger(ctx)
 	liveId := ctx.Param("liveId")
 	if liveId == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return nil, rest.ErrBadRequest.WithMessage("empty liveId")
 	}
 
@@ -301,7 +298,7 @@ func (c *CensorController) SearchCensorLive(ctx *gin.Context) (interface{}, erro
 	for i, liveEntity := range lives {
 		anchor, err := live.GetService().FindLiveRoomUser(ctx, liveEntity.LiveId, liveEntity.AnchorId)
 		if err != nil {
-			if !errors.Is(err, api.ErrNotFound) {
+			if !errors.Is(err, rest.ErrNotFound) {
 				log.Errorf("FindLiveRoomUser failed, err: %v", err)
 				return nil, rest.ErrInternal
 			}
@@ -541,24 +538,4 @@ type CensorCallBack struct {
 			Suggestion string `json:"suggestion"`
 		} `json:"result"`
 	} `json:"audio"`
-}
-
-type CensorImageListResponse struct {
-	api.Response
-	Data struct {
-		TotalCount int                   `json:"total_count"`
-		PageTotal  int                   `json:"page_total"`
-		EndPage    bool                  `json:"end_page"`
-		List       []*dto.CensorImageDto `json:"list"`
-	} `json:"data"`
-}
-
-type CensorLiveListResponse struct {
-	api.Response
-	Data struct {
-		TotalCount int                  `json:"total_count"`
-		PageTotal  int                  `json:"page_total"`
-		EndPage    bool                 `json:"end_page"`
-		List       []service.CensorLive `json:"list"`
-	} `json:"data"`
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/module/biz/censor/config"
 	"github.com/qbox/livekit/module/biz/censor/service"
 	"github.com/qbox/livekit/module/store/mysql"
@@ -46,7 +46,7 @@ func (c *CensorServiceImpl) UpdateCensorConfig(ctx context.Context, mod *model.C
 	mod.ID = 1
 	err := db.Model(model.CensorConfig{}).Save(mod).Error
 	if err != nil {
-		return api.ErrDatabase
+		return rest.ErrInternal
 	}
 	return nil
 }
@@ -64,10 +64,10 @@ func (c *CensorServiceImpl) GetCensorConfig(ctx context.Context) (*model.CensorC
 			mod.Interval = 20
 			err := db.Model(model.CensorConfig{}).Save(mod).Error
 			if err != nil {
-				return nil, api.ErrDatabase
+				return nil, rest.ErrInternal
 			}
 		} else {
-			return nil, api.ErrDatabase
+			return nil, rest.ErrInternal
 		}
 	}
 	return mod, nil
@@ -286,7 +286,7 @@ func (c *CensorServiceImpl) BatchUpdateCensorImage(ctx context.Context, images [
 	result := db.Where(" id in (?) ", images).Update(updates)
 	if result.Error != nil {
 		log.Errorf("update user error %v", result.Error)
-		return api.ErrDatabase
+		return rest.ErrInternal
 	} else {
 		return nil
 	}

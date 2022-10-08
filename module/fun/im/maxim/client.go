@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
 )
@@ -58,7 +58,7 @@ func (c *Client) RegisterUser(ctx context.Context, username, password string) (i
 	err := c.defaultRpcClient().CallWithJSON(log, &resp, url, user)
 	if err != nil {
 		log.Errorf("register user error %s", err.Error())
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	if resp.IsSuccess() {
@@ -66,20 +66,20 @@ func (c *Client) RegisterUser(ctx context.Context, username, password string) (i
 	}
 	log.Errorf("register user error %s", resp.Error())
 	if resp.Code != 10004 {
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	//用户已存在的错误
 	userId, err := c.GetUserId(ctx, username)
 	if err != nil {
 		log.Errorf("get user id for %s error %s", username, err)
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	_, err = c.UpdateUserPassword(ctx, userId, password)
 	if err != nil {
 		log.Errorf("update password for %d error %s", userId, err)
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	return userId, nil
@@ -97,14 +97,14 @@ func (c *Client) CreateChatroom(ctx context.Context, owner int64, name string) (
 	err := c.rpcClientWithUserId(owner).CallWithJSON(log, &resp, url, req)
 	if err != nil {
 		log.Errorf("create group error %s", err.Error())
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	if resp.IsSuccess() {
 		return resp.Data.GroupId, nil
 	} else {
 		log.Errorf("create group error %s", resp.Error())
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 }
 
@@ -116,14 +116,14 @@ func (c *Client) GetUserId(ctx context.Context, username string) (int64, error) 
 	err := c.defaultRpcClient().GetCall(log, &resp, url)
 	if err != nil {
 		log.Errorf("get user id error %s", err.Error())
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 
 	if resp.IsSuccess() {
 		return resp.Data.UserId, nil
 	} else {
 		log.Errorf("get user id for %s error %s", username, resp.Error())
-		return 0, api.ErrInternal
+		return 0, rest.ErrInternal
 	}
 }
 
@@ -138,13 +138,13 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userId int64, password 
 	err := c.rpcClientWithUserId(userId).CallWithJSON(log, &resp, url, req)
 	if err != nil {
 		log.Errorf("update password error %s", err.Error())
-		return false, api.ErrInternal
+		return false, rest.ErrInternal
 	}
 
 	if resp.IsSuccess() {
 		return resp.Data, nil
 	} else {
 		log.Errorf("update password for %d error %s", userId, resp.Error())
-		return false, api.ErrInternal
+		return false, rest.ErrInternal
 	}
 }

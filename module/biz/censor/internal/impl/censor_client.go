@@ -5,30 +5,12 @@ import (
 	"net/http"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/core/module/account"
+	"github.com/qbox/livekit/core/rest"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/qiniumac"
 	"github.com/qbox/livekit/utils/rpc"
 )
-
-//type JobService interface {
-//	JobQuery(ctx context.Context, req *JobQueryRequest, resp *JobQueryResponse) error
-//	JobCreate(ctx context.Context, liveEntity *model.LiveEntity, config *model.CensorConfig) (*JobCreateResponse, error)
-//	JobClose(ctx context.Context, req *JobCreateResponseData) error
-//	JobList(ctx context.Context, req *JobListRequest, resp *JobListResponse) error
-//	ImageBucketToUrl(url string) string
-//}
-
-//var service JobService
-//
-//func InitJobService(config Config) {
-//	service = NewCensorClient(config)
-//}
-
-//func GetJobService() JobService {
-//	return service
-//}
 
 type CensorClient struct {
 	CensorCallback string
@@ -94,7 +76,7 @@ func (c *CensorClient) JobClose(ctx context.Context, req *JobCreateResponseData)
 	log := logger.ReqLogger(ctx)
 	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/close"
 
-	resp := &api.Response{}
+	resp := &rest.Response{}
 	err := c.client.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
 		return err
