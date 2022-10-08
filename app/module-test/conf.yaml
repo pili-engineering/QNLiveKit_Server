@@ -71,3 +71,8 @@ prome:
 
 callback:
   addr: "http://localhost:9999/callback"
+
+censor:
+  callback: "http://10.200.20.28:8099"
+  bucket: "niu-cube"
+  addr: "http://10.200.20.28:8099"

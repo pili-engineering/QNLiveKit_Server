@@ -12,6 +12,7 @@ import (
 	_ "github.com/qbox/livekit/module/base/live/module"
 	_ "github.com/qbox/livekit/module/base/stats/module"
 	_ "github.com/qbox/livekit/module/base/user/module"
+	_ "github.com/qbox/livekit/module/biz/censor/module"
 	_ "github.com/qbox/livekit/module/biz/item/module"
 	_ "github.com/qbox/livekit/module/biz/mic/module"
 	_ "github.com/qbox/livekit/module/biz/relay/module"

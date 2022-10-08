@@ -1,43 +1,46 @@
-package admin
+package impl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
+	"github.com/qbox/livekit/module/biz/censor/config"
+	"github.com/qbox/livekit/module/biz/censor/service"
 	"github.com/qbox/livekit/module/store/mysql"
 	"github.com/qbox/livekit/utils/logger"
 )
 
-type CCService interface {
-	UpdateCensorConfig(ctx context.Context, mod *model.CensorConfig) error
-	GetCensorConfig(ctx context.Context) (*model.CensorConfig, error)
-	CreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity) error
-	StopCensorJob(ctx context.Context, liveId string) error
-	GetLiveCensorJobByLiveId(ctx context.Context, liveId string) (*model.LiveCensor, error)
-	GetLiveCensorJobByJobId(ctx context.Context, jobId string) (*model.LiveCensor, error)
-
-	GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error)
-	SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error
-	SaveCensorImage(ctx context.Context, image *model.CensorImage) error
-	BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error
-	SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error)
-	SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error)
-	GetUnreviewCount(ctx context.Context, liveId string) (len int, err error)
+type CensorServiceImpl struct {
+	Callback string
+	Bucket   string
+	Addr     string
+	Client   *CensorClient
 }
 
-type CensorService struct {
+var instance *CensorServiceImpl
+
+func GetInstance() *CensorServiceImpl {
+	return instance
 }
 
-var cService CCService = &CensorService{}
-
-func GetCensorService() CCService {
-	return cService
+func ConfigCensorService(conf *config.Config) {
+	instance = &CensorServiceImpl{
+		Callback: conf.Callback,
+		Bucket:   conf.Bucket,
+		Addr:     conf.Addr,
+	}
 }
 
-func (c *CensorService) UpdateCensorConfig(ctx context.Context, mod *model.CensorConfig) error {
+func (c *CensorServiceImpl) PreStart() error {
+	c.Client = NewCensorClient(c.Callback, c.Bucket)
+	return nil
+}
+
+func (c *CensorServiceImpl) UpdateCensorConfig(ctx context.Context, mod *model.CensorConfig) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	mod.ID = 1
@@ -48,7 +51,7 @@ func (c *CensorService) UpdateCensorConfig(ctx context.Context, mod *model.Censo
 	return nil
 }
 
-func (c *CensorService) GetCensorConfig(ctx context.Context) (*model.CensorConfig, error) {
+func (c *CensorServiceImpl) GetCensorConfig(ctx context.Context) (*model.CensorConfig, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	mod := &model.CensorConfig{}
@@ -70,7 +73,7 @@ func (c *CensorService) GetCensorConfig(ctx context.Context) (*model.CensorConfi
 	return mod, nil
 }
 
-func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity) error {
+func (c *CensorServiceImpl) CreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity) error {
 	log := logger.ReqLogger(ctx)
 	config, err := c.GetCensorConfig(ctx)
 	if err != nil {
@@ -80,7 +83,7 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 	if config.Enable == false {
 		return nil
 	}
-	resp, err := GetJobService().JobCreate(ctx, liveEntity, config)
+	resp, err := c.Client.JobCreate(ctx, liveEntity, config)
 	if err != nil {
 		log.Errorf("JobCreate Error %v", err)
 		return err
@@ -93,7 +96,7 @@ func (c *CensorService) CreateCensorJob(ctx context.Context, liveEntity *model.L
 	return nil
 }
 
-func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error {
+func (c *CensorServiceImpl) SaveLiveCensorJob(ctx context.Context, liveId string, jobId string, config *model.CensorConfig) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{
@@ -112,7 +115,7 @@ func (c *CensorService) SaveLiveCensorJob(ctx context.Context, liveId string, jo
 	return nil
 }
 
-func (c *CensorService) GetLiveCensorJobByLiveId(ctx context.Context, liveId string) (*model.LiveCensor, error) {
+func (c *CensorServiceImpl) GetLiveCensorJobByLiveId(ctx context.Context, liveId string) (*model.LiveCensor, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{}
@@ -123,7 +126,7 @@ func (c *CensorService) GetLiveCensorJobByLiveId(ctx context.Context, liveId str
 	return m, nil
 }
 
-func (c *CensorService) StopCensorJob(ctx context.Context, liveId string) error {
+func (c *CensorServiceImpl) StopCensorJob(ctx context.Context, liveId string) error {
 	log := logger.ReqLogger(ctx)
 	liveCensorJob, err := c.GetLiveCensorJobByLiveId(ctx, liveId)
 	if err != nil {
@@ -134,7 +137,7 @@ func (c *CensorService) StopCensorJob(ctx context.Context, liveId string) error 
 	req := &JobCreateResponseData{
 		JobID: liveCensorJob.JobID,
 	}
-	err = GetJobService().JobClose(ctx, req)
+	err = c.Client.JobClose(ctx, req)
 	if err != nil {
 		log.Errorf("post StopCensorJob Error %v", err)
 		return err
@@ -142,7 +145,7 @@ func (c *CensorService) StopCensorJob(ctx context.Context, liveId string) error 
 	return nil
 }
 
-func (c *CensorService) GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error) {
+func (c *CensorServiceImpl) GetCensorImageById(ctx context.Context, imageId uint) (*model.CensorImage, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.CensorImage{}
@@ -153,7 +156,7 @@ func (c *CensorService) GetCensorImageById(ctx context.Context, imageId uint) (*
 	return m, nil
 }
 
-func (c *CensorService) GetLiveCensorJobByJobId(ctx context.Context, jobId string) (*model.LiveCensor, error) {
+func (c *CensorServiceImpl) GetLiveCensorJobByJobId(ctx context.Context, jobId string) (*model.LiveCensor, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{}
@@ -164,7 +167,7 @@ func (c *CensorService) GetLiveCensorJobByJobId(ctx context.Context, jobId strin
 	return m, nil
 }
 
-func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.CensorImage) error {
+func (c *CensorServiceImpl) SaveCensorImage(ctx context.Context, image *model.CensorImage) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	err := db.Model(model.CensorImage{}).Save(image).Error
@@ -174,14 +177,14 @@ func (c *CensorService) SaveCensorImage(ctx context.Context, image *model.Censor
 	return nil
 }
 
-func (c *CensorService) GetUnreviewCount(ctx context.Context, liveId string) (len int, err error) {
+func (c *CensorServiceImpl) GetUnreviewCount(ctx context.Context, liveId string) (len int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	err = db.Model(&model.CensorImage{}).Where(" is_review = ? and live_id = ? ", 0, liveId).Count(&len).Error
 	return
 }
 
-func (c *CensorService) SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error) {
+func (c *CensorServiceImpl) SearchCensorImage(ctx context.Context, isReview *int, pageNum, pageSize int, liveId *string) (image []model.CensorImage, totalCount int, err error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	image = make([]model.CensorImage, 0)
@@ -217,7 +220,7 @@ func (c *CensorService) SearchCensorImage(ctx context.Context, isReview *int, pa
 const IsReviewNo = 0
 const IsReviewYes = 1
 
-func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []CensorLive, totalCount int, err error) {
+func (c *CensorServiceImpl) SearchCensorLive(ctx context.Context, isReview *int, pageNum, pageSize int) (censorLive []service.CensorLive, totalCount int, err error) {
 
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLiveReadOnly(log.ReqID())
@@ -246,7 +249,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 		if err != nil {
 			return nil, 0, err
 		}
-		cl := CensorLive{
+		cl := service.CensorLive{
 			LiveId:         live.LiveId,
 			Title:          live.Title,
 			AnchorId:       live.AnchorId,
@@ -275,7 +278,7 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 	return
 }
 
-func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error {
+func (c *CensorServiceImpl) BatchUpdateCensorImage(ctx context.Context, images []uint, updates map[string]interface{}) error {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	db = db.Model(model.CensorImage{})
@@ -287,26 +290,6 @@ func (c *CensorService) BatchUpdateCensorImage(ctx context.Context, images []uin
 	} else {
 		return nil
 	}
-}
-
-type CensorLive struct {
-	LiveId         string `json:"live_id"`
-	Title          string `json:"title"`
-	AnchorId       string `json:"anchor_id"`
-	Nick           string `json:"nick"`
-	Status         int    `json:"live_status"`
-	AnchorStatus   int    `json:"anchor_status"`
-	StopReason     string `json:"stop_reason"`
-	StopAt         int64  `json:"stop_at"`
-	StartAt        int64  `json:"start_at"`
-	Count          int    `json:"count"`           //待审核次数
-	ViolationCount int    `json:"violation_count"` //违规次数
-	AiCount        int    `json:"ai_count"`        ///ai预警次数
-	Time           int64  `json:"time"`
-	PushUrl        string `json:"push_url"`
-	RtmpPlayUrl    string `json:"rtmp_play_url"`
-	FlvPlayUrl     string `json:"flv_play_url"`
-	HlsPlayUrl     string `json:"hls_play_url"`
 }
 
 type JobQueryRequest struct {
@@ -451,4 +434,9 @@ type JobCreateResponse struct {
 
 type JobCreateResponseData struct {
 	JobID string `json:"job"`
+}
+
+func (c *CensorServiceImpl) ImageBucketToUrl(url string) string {
+	split := strings.Split(url, c.Bucket)
+	return c.Addr + split[1]
 }
