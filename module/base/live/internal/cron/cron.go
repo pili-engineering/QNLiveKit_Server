@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/qbox/livekit/core/module/cron"
+	"github.com/qbox/livekit/core/module/uuid"
 	"github.com/qbox/livekit/module/base/live/internal/impl"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/timestamp"
@@ -59,8 +60,9 @@ func RegisterCrons() {
 
 	// 每秒统计缓存中的直播间点赞，写入DB
 	// 因为存在补数据，这里不用每秒任务
-	cron.AddSingleTaskFunc("@every second", func() {
-		log := logger.New("FlushCacheLikes")
+	cron.AddSingleTaskFunc("@every 1s", func() {
+		//log := logger.New("FlushCacheLikes")
+		log := logger.New(uuid.Gen())
 
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
