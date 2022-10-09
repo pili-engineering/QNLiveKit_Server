@@ -5,7 +5,7 @@ import (
 )
 
 func AddFunc(spec string, cmd func()) (cron.EntryID, error) {
-	return instance.AddSingleTaskFunc(spec, cmd)
+	return instance.AddFunc(spec, cmd)
 }
 
 func AddSingleTaskFunc(spec string, cmd func()) (cron.EntryID, error) {
