@@ -8,16 +8,26 @@
 package main
 
 import (
-	"context"
 	"flag"
 	_ "net/http/pprof"
 
-	"github.com/qbox/livekit/biz/token"
-
-	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/core/application"
-	"github.com/qbox/livekit/module/base/stats/internal/impl"
-	log "github.com/qbox/livekit/utils/logger"
+	_ "github.com/qbox/livekit/module/base/auth/module"
+	_ "github.com/qbox/livekit/module/base/callback"
+	_ "github.com/qbox/livekit/module/base/live/module"
+	_ "github.com/qbox/livekit/module/base/stats/module"
+	_ "github.com/qbox/livekit/module/base/user/module"
+	_ "github.com/qbox/livekit/module/biz/censor/module"
+	_ "github.com/qbox/livekit/module/biz/gift/module"
+	_ "github.com/qbox/livekit/module/biz/item/module"
+	_ "github.com/qbox/livekit/module/biz/mic/module"
+	_ "github.com/qbox/livekit/module/biz/relay/module"
+	_ "github.com/qbox/livekit/module/extend/prome"
+	_ "github.com/qbox/livekit/module/fun/im"
+	_ "github.com/qbox/livekit/module/fun/pili"
+	_ "github.com/qbox/livekit/module/fun/rtc"
+	_ "github.com/qbox/livekit/module/store/cache"
+	_ "github.com/qbox/livekit/module/store/mysql"
 )
 
 var confPath = flag.String("f", "", "live -f /path/to/config")
@@ -25,31 +35,4 @@ var confPath = flag.String("f", "", "live -f /path/to/config")
 func main() {
 	flag.Parse()
 	application.StartWithConfig(*confPath)
-
-	initAllService()
-
-	errCh := make(chan error)
-
-	impl.GetService().ReportOnlineMessage(context.Background())
-
-	err := <-errCh
-	log.StdLog.Fatalf("exit %v", err)
-}
-
-func initAllService() {
-	token.InitService(token.Config{
-		JwtKey: config.AppConfig.JwtKey,
-	})
-	impl.InitService()
-
-	//admin.InitJobService(admin.Config{
-	//	AccessKey:      config.AppConfig.RtcConfig.AccessKey,
-	//	SecretKey:      config.AppConfig.RtcConfig.SecretKey,
-	//	CensorCallback: config.AppConfig.CensorCallback,
-	//	CensorBucket:   config.AppConfig.CensorBucket,
-	//})
-
-	//gift.InitService(gift.Config{
-	//	GiftAddr: config.AppConfig.GiftAddr,
-	//})
 }

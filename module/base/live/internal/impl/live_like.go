@@ -140,25 +140,23 @@ func (s *Service) FlushCacheLikes(ctx context.Context) {
 		lastTime, err := s.getLastFlushTime(ctx)
 		if err != nil {
 			log.Errorf("getLastFlushTime error %s", err.Error())
-			time.Sleep(time.Second)
-			continue
+			return
 		}
 		if lastTime >= now {
-			time.Sleep(time.Second)
-			continue
+			return
 		}
 
 		from := lastTime - flushSeconds + 1
 		to := lastTime + 1
 		if err := s.flushCacheLikes(ctx, from, to); err != nil {
 			log.Errorf("flushCacheLikes from %d to %d error %s", from, to, err.Error())
-			time.Sleep(time.Second)
-			continue
+			return
 		}
 
 		_, err = s.updateLastFlushTime(ctx, lastTime, now)
 		if err != nil {
 			log.Errorf("updateLastFlushTime error %s", err)
+			return
 		}
 	}
 }
