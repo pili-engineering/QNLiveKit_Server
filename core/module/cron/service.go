@@ -61,58 +61,10 @@ func (s *Service) isSingleTaskNode() bool {
 //
 //	liveService := live.GetService()
 //
-//	// 定时老化直播间，单节点执行
-//	c.AddFunc("0/3 * * * * ?", func() {
-//		if !isSingleTaskNode() {
-//			return
-//		}
 //
-//		now := time.Now()
-//		nowStr := now.Format(timestamp.TimestampFormatLayout)
-//		log := logger.New("TimeoutLiveRoom")
-//		log.WithFields(map[string]interface{}{"start": nowStr})
+
 //
-//		ctx := context.Background()
-//		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
-//
-//		liveService.TimeoutLiveRoom(ctx, now)
-//	})
-//
-//	// 定时老化直播间用户，单节点执行
-//	c.AddFunc("0/3 * * * * ?", func() {
-//		if !isSingleTaskNode() {
-//			return
-//		}
-//
-//		now := time.Now()
-//		nowStr := now.Format(timestamp.TimestampFormatLayout)
-//
-//		log := logger.New("TimeoutLiveUser")
-//		log.WithFields(map[string]interface{}{"start": nowStr})
-//
-//		ctx := context.Background()
-//		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
-//
-//		liveService.TimeoutLiveUser(ctx, now)
-//	})
-//
-//	// 上报直播间信息，单节点执行
-//	c.AddFunc("0 0 2 * * ?", func() {
-//		if !isSingleTaskNode() {
-//			return
-//		}
-//
-//		now := time.Now()
-//		nowStr := now.Format(timestamp.TimestampFormatLayout)
-//
-//		log := logger.New("ReportOnlineMessage")
-//		log.WithFields(map[string]interface{}{"start": nowStr})
-//
-//		ctx := context.Background()
-//		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
-//
-//		report.GetService().ReportOnlineMessage(ctx)
-//	})
+
 //
 //
 //	// 每秒统计缓存中的直播间点赞，写入DB

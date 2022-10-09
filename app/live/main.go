@@ -8,16 +8,10 @@
 package main
 
 import (
-	"context"
 	"flag"
 	_ "net/http/pprof"
 
-	"github.com/qbox/livekit/biz/token"
-
-	"github.com/qbox/livekit/app/live/internal/config"
 	"github.com/qbox/livekit/core/application"
-	"github.com/qbox/livekit/module/base/stats/internal/impl"
-	log "github.com/qbox/livekit/utils/logger"
 )
 
 var confPath = flag.String("f", "", "live -f /path/to/config")
@@ -25,31 +19,4 @@ var confPath = flag.String("f", "", "live -f /path/to/config")
 func main() {
 	flag.Parse()
 	application.StartWithConfig(*confPath)
-
-	initAllService()
-
-	errCh := make(chan error)
-
-	impl.GetService().ReportOnlineMessage(context.Background())
-
-	err := <-errCh
-	log.StdLog.Fatalf("exit %v", err)
-}
-
-func initAllService() {
-	token.InitService(token.Config{
-		JwtKey: config.AppConfig.JwtKey,
-	})
-	impl.InitService()
-
-	//admin.InitJobService(admin.Config{
-	//	AccessKey:      config.AppConfig.RtcConfig.AccessKey,
-	//	SecretKey:      config.AppConfig.RtcConfig.SecretKey,
-	//	CensorCallback: config.AppConfig.CensorCallback,
-	//	CensorBucket:   config.AppConfig.CensorBucket,
-	//})
-
-	//gift.InitService(gift.Config{
-	//	GiftAddr: config.AppConfig.GiftAddr,
-	//})
 }
