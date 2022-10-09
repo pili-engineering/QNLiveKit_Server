@@ -4,6 +4,7 @@ import (
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/core/config"
 	"github.com/qbox/livekit/module/base/stats/internal/controller/client"
+	"github.com/qbox/livekit/module/base/stats/internal/cron"
 	"github.com/qbox/livekit/module/base/stats/internal/impl"
 	"github.com/qbox/livekit/module/base/stats/service"
 )
@@ -25,5 +26,7 @@ func (m *Module) Config(c *config.Config) error {
 
 func (m *Module) PreStart() error {
 	client.RegisterRoutes()
+
+	cron.RegisterCrons()
 	return nil
 }
