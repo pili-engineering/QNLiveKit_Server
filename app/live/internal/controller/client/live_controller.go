@@ -644,7 +644,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].StopReason = liveInfo.StopReason
 		list[i].StopUserId = liveInfo.StopUserId
 		if liveInfo.StartAt != nil {
-			list[i].StartTime = liveInfo.StopAt.Unix()
+			list[i].StartTime = liveInfo.StartAt.Unix()
 		}
 		if liveInfo.StopAt != nil {
 			list[i].StopTime = liveInfo.StopAt.Unix()
