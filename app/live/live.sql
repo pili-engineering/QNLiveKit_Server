@@ -23,7 +23,6 @@ CREATE TABLE `live_entities` (
    `stop_reason` varchar(64) DEFAULT '',
    `stop_user_id` varchar(64) DEFAULT '',
    `stop_at` datetime DEFAULT NULL,
-
    `unreview_censor_count` int DEFAULT  NULL,
    `last_censor_time` int DEFAULT NULL,
    PRIMARY KEY (`id`),
