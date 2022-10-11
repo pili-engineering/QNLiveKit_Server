@@ -32,5 +32,6 @@ func (m *Module) Config(c *config.Config) error {
 		return err
 	}
 
+	m.SetConfigSuccess()
 	return nil
 }

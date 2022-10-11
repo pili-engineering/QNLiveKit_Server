@@ -21,6 +21,7 @@ type Module struct {
 
 func (m *Module) Config(c *config.Config) error {
 	service.Instance = &impl.ItemService{}
+	m.SetConfigSuccess()
 	return nil
 }
 
@@ -28,4 +29,8 @@ func (m *Module) PreStart() error {
 	client.RegisterRoutes()
 	server.RegisterRoutes()
 	return nil
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"live"}
 }

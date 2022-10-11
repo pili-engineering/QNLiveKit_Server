@@ -27,6 +27,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	InitService(conf)
+	m.SetConfigSuccess()
 	return nil
 }
 

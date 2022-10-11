@@ -22,6 +22,7 @@ type Module struct {
 
 func (m *Module) Config(c *config.Config) error {
 	service.Instance = &impl.Service{}
+	m.SetConfigSuccess()
 	return nil
 }
 
@@ -31,4 +32,8 @@ func (m *Module) PreStart() error {
 
 	cron.RegisterCrons()
 	return nil
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"mysql", "cache", "user"}
 }
