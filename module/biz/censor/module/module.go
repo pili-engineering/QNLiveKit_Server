@@ -34,6 +34,7 @@ func (m *Module) Config(c *config.Config) error {
 
 	impl.ConfigCensorService(&conf)
 
+	m.SetConfigSuccess()
 	return nil
 }
 
@@ -44,4 +45,8 @@ func (m *Module) PreStart() error {
 
 	admin.RegisterRoutes()
 	return impl.GetInstance().PreStart()
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"account"}
 }

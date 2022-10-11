@@ -28,7 +28,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	instance = newService(singleTaskNode)
-
+	m.SetConfigSuccess()
 	return nil
 }
 

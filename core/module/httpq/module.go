@@ -16,6 +16,7 @@ func init() {
 var _ application.Module = &Module{}
 
 type Module struct {
+	application.EmptyModule
 }
 
 func (m *Module) Config(c *config.Config) error {
@@ -33,7 +34,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	instance = newServer(&conf)
-
+	m.SetConfigSuccess()
 	return nil
 }
 

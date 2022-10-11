@@ -26,5 +26,9 @@ func (m *Module) Config(c *config.Config) error {
 		return err
 	}
 
-	return defaultConfig.Validate()
+	err := defaultConfig.Validate()
+	if err == nil {
+		m.SetConfigSuccess()
+	}
+	return err
 }

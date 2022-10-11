@@ -29,6 +29,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	impl.ConfigService(conf)
+	m.SetConfigSuccess()
 	return nil
 }
 
@@ -37,4 +38,8 @@ func (m *Module) PreStart() error {
 	admin.RegisterRoutes()
 	server.RegisterRoutes()
 	return nil
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"httpq", "user", "admin"}
 }

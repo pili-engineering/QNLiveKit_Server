@@ -32,5 +32,6 @@ func (m *Module) Config(c *config.Config) error {
 		addr:   addr,
 		client: rpc.NewClientHeader(header),
 	}
+	m.SetConfigSuccess()
 	return nil
 }

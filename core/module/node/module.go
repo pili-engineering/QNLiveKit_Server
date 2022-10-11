@@ -17,6 +17,7 @@ type Module struct {
 
 func (m *Module) Config(c *config.Config) error {
 	if c == nil {
+		m.SetConfigSuccess()
 		return nil
 	}
 
@@ -24,6 +25,6 @@ func (m *Module) Config(c *config.Config) error {
 		return err
 	}
 
+	m.SetConfigSuccess()
 	return nil
 }
-

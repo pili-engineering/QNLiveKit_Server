@@ -32,7 +32,7 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	instance = newService(&conf)
-
+	m.SetConfigSuccess()
 	return nil
 }
 
