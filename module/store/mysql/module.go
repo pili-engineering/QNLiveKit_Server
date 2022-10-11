@@ -30,5 +30,6 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	Init(conf.Databases...)
+	m.SetConfigSuccess()
 	return nil
 }
