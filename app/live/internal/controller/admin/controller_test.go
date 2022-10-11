@@ -11,18 +11,18 @@ import (
 
 func TestCensorController_notifyCensorBlock(t *testing.T) {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Default:  "live",
 		Database: "live",
 	},
 		&mysql.ConfigStructure{
-			Host:     "localhost",
+			Host:     "127.0.0.1",
 			Port:     3306,
 			Username: "root",
-			Password: "123456",
+			//Password: "123456",
 			Database: "live",
 			Default:  "live",
 			ReadOnly: true,
