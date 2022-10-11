@@ -71,6 +71,24 @@ func (m *ModuleManager) configAllModules() error {
 		}
 	}
 
+	for name, module := range m.modules {
+		if !module.IsConfigSuccess() {
+			continue
+		}
+
+		if len(module.RequireModules()) == 0 {
+			continue
+		}
+
+		for _, rName := range module.RequireModules() {
+			rModule := m.modules[rName]
+			if rModule == nil || !rModule.IsConfigSuccess() {
+				log.Errorf("module %s not config success, required by %s", rName, name)
+				return fmt.Errorf("module %s not config success, required by %s", rName, name)
+			}
+		}
+	}
+
 	return nil
 }
 

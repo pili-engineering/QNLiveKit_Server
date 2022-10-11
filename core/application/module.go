@@ -23,14 +23,22 @@ type Module interface {
 	// 释放资源
 	// io/cache flush
 	Stop() error
+
+	// IsConfigSuccess 模块是否已经完成配置
+	IsConfigSuccess() bool
+
+	// RequireModules 返回本模块依赖的其他模块列表
+	RequireModules() []string
 }
 
 var _ Module = &EmptyModule{}
 
 type EmptyModule struct {
+	configSuccess bool
 }
 
 func (m *EmptyModule) Config(c *config.Config) error {
+	m.configSuccess = true
 	return nil
 }
 
@@ -44,4 +52,16 @@ func (m *EmptyModule) Start() error {
 
 func (m *EmptyModule) Stop() error {
 	return nil
+}
+
+func (m *EmptyModule) IsConfigSuccess() bool {
+	return m.configSuccess
+}
+
+func (m *EmptyModule) RequireModules() []string {
+	return nil
+}
+
+func (m *EmptyModule) SetConfigSuccess() {
+	m.configSuccess = true
 }

@@ -32,11 +32,20 @@ func (m *Module) Config(c *config.Config) error {
 	}
 
 	InitService(conf)
+	m.SetConfigSuccess()
 	return nil
 }
 
 func (m *Module) PreStart() error {
+	if service == nil {
+		return nil
+	}
+
 	trace.SetImAppID(service.AppId())
 	appinfo.SetImAppId(service.AppId())
 	return nil
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"trace", "appinfo"}
 }

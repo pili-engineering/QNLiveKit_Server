@@ -19,3 +19,7 @@ func (m *Module) PreStart() error {
 	Init(mNode.NodeId())
 	return nil
 }
+
+func (m *Module) RequireModules() []string {
+	return []string{"node"}
+}
