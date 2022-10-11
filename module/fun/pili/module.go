@@ -31,6 +31,9 @@ func (m *Module) Config(c *config.Config) error {
 }
 
 func (m *Module) PreStart() error {
+	if service == nil {
+		return nil
+	}
 	trace.SetPiliHub(service.PiliHub())
 	return nil
 }
