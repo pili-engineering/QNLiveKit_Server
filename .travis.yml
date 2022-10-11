@@ -2,6 +2,10 @@ language: go
 go:
   - 1.17.x
 sudo: true
+service:
+  - mysql
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS live_test;'
 before_script:
   - cd ..
   - export QBOXROOT=`pwd`

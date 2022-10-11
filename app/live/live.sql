@@ -20,11 +20,9 @@ CREATE TABLE `live_entities` (
    `created_at` datetime DEFAULT NULL,
    `updated_at` datetime DEFAULT NULL,
    `deleted_at` datetime DEFAULT NULL,
-
    `stop_reason` varchar(64) DEFAULT '',
    `stop_user_id` varchar(64) DEFAULT '',
    `stop_at` datetime DEFAULT NULL,
-
    `unreview_censor_count` int DEFAULT  NULL,
    `last_censor_time` int DEFAULT NULL,
    PRIMARY KEY (`id`),

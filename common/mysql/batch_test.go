@@ -25,10 +25,10 @@ func (BatchTest) TableName() string {
 
 func TestBatchInsert(t *testing.T) {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 	})
 
