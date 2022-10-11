@@ -22,17 +22,17 @@ const testLiveId = "test_live_1"
 
 func itemSetup() {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 		Default:  "live",
 	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 		Default:  "live",
 		ReadOnly: true,

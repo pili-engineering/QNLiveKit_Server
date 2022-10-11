@@ -219,14 +219,14 @@ func TestService_getRoomLikes(t *testing.T) {
 
 func TestService_updateLastFlushTime(t *testing.T) {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 		Default:  "live",
 	}, &mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
@@ -278,17 +278,17 @@ func TestService_updateLastFlushTime(t *testing.T) {
 
 func TestService_getLastFlushTime(t *testing.T) {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 		Default:  "live",
 	}, &mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
+		//Password: "123456",
 		Database: "live_test",
 		Default:  "live",
 		ReadOnly: true,
@@ -329,18 +329,18 @@ func TestService_getRoomLikeUsers(t *testing.T) {
 
 func TestService_flushCacheLikes(t *testing.T) {
 	mysql.Init(&mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
-		Database: "live",
+		//Password: "123456",
+		Database: "live_test",
 		Default:  "live",
 	}, &mysql.ConfigStructure{
-		Host:     "localhost",
+		Host:     "127.0.0.1",
 		Port:     3306,
 		Username: "root",
-		Password: "123456",
-		Database: "live",
+		//Password: "123456",
+		Database: "live_test",
 		Default:  "live",
 		ReadOnly: true,
 	})

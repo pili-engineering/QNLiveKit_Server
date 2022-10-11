@@ -5,7 +5,7 @@ sudo: true
 service:
   - mysql
 before_install:
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS live;'
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS live_test;'
 before_script:
   - cd ..
   - export QBOXROOT=`pwd`
