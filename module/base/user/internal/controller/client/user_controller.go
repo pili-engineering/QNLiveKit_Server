@@ -24,7 +24,7 @@ func RegisterRoutes() {
 	httpq.ClientHandle(http.MethodGet, "/user/profile", UserController.GetUserProfile)
 	httpq.ClientHandle(http.MethodGet, "/user/user/:id", UserController.GetUserInfo)
 	httpq.ClientHandle(http.MethodPut, "/user/user", UserController.PutUserInfo)
-	httpq.ClientHandle(http.MethodGet, "/user/users", UserController.GetUserInfo)
+	httpq.ClientHandle(http.MethodGet, "/user/users", UserController.GetUsersInfo)
 	httpq.ClientHandle(http.MethodGet, "/user/imusers", UserController.GetImUsersInfo)
 }
 
