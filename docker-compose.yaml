@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  qnlive:
+    build: .
+    ports:
+      - "28099:8099"
+    links:
+      - mysql
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      TZ: "Asia/Shanghai"
+    volumes:
+      - "./deploy/.mysql/data:/var/lib/mysql"
+      - "./deploy/.mysql/logs:/var/log/mysql"
+
