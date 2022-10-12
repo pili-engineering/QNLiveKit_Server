@@ -19,7 +19,7 @@ auth:
 
 cache:
   type: node
-  addr: 100.100.64.202:6379
+  addr: "redis:6379"
 
 mysql:
   databases:

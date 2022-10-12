@@ -4,14 +4,27 @@ services:
     build: .
     ports:
       - "28099:8099"
+    depends_on:
+      - mysql
+      - redis
     links:
       - mysql
+      - redis
+    restart: always
+    environment:
+      WAIT_HOSTS: mysql:3306
   mysql:
     image: mysql
     environment:
       MYSQL_ROOT_PASSWORD: "123456"
       TZ: "Asia/Shanghai"
     volumes:
+      - "./deploy/.mysql/init.d:/docker-entrypoint-initdb.d"
       - "./deploy/.mysql/data:/var/lib/mysql"
       - "./deploy/.mysql/logs:/var/log/mysql"
-
+    ports:
+      - "23306:3306"
+  redis:
+    image: redis
+    ports:
+      - "26379:6379"

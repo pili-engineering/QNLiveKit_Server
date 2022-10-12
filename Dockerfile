@@ -21,7 +21,9 @@ RUN apk --no-cache add ca-certificates && apk update && apk add tzdata
 
 WORKDIR /root/
 COPY --from=builder /workspace/qnlive .
+COPY deploy/wait .
 COPY deploy/qnlive-entrypoint.sh .
 COPY deploy/qnlive.yaml /etc/qnlive.yaml
+RUN chmod +x ./qnlive-entrypoint.sh && chmod +x ./wait
 
-CMD ["sh", "qnlive-entrypoint.sh"]
+CMD ./wait && ./qnlive-entrypoint.sh
