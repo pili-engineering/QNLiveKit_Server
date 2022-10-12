@@ -55,9 +55,9 @@ func (*giftController) GetGiftConfig(context *gin.Context) {
 		})
 		return
 	}
-	var giftDtos []*dto.GiftConfigDto
+	giftDtos := make([]dto.GiftConfigDto, 0)
 	for _, v := range giftEntities {
-		giftDtos = append(giftDtos, dto.GiftEntityToDto(v))
+		giftDtos = append(giftDtos, *dto.GiftEntityToDto(v))
 	}
 	response := &ListGiftConfigResponse{}
 	response.Response.Code = 200
@@ -69,7 +69,7 @@ func (*giftController) GetGiftConfig(context *gin.Context) {
 
 type ListGiftConfigResponse struct {
 	api.Response
-	Data []*dto.GiftConfigDto `json:"data"`
+	Data []dto.GiftConfigDto `json:"data"`
 }
 
 func (c *giftController) ListGiftByLiveId(ctx *gin.Context) {

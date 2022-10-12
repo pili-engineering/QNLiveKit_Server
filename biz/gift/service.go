@@ -2,11 +2,12 @@ package gift
 
 import (
 	"context"
+	"time"
+
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/mysql"
 	"github.com/qbox/livekit/utils/logger"
-	"time"
 )
 
 type GService interface {
@@ -70,11 +71,15 @@ func (s *Service) DeleteGiftEntity(context context.Context, giftId int) error {
 	return nil
 }
 
-func (s *Service) GetListGiftEntity(context context.Context, typeId int) ([]*model.GiftEntity, error) {
+func (s *Service) GetListGiftEntity(context context.Context, typeId int) (entities []*model.GiftEntity, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())
-	entities := make([]*model.GiftEntity, 0)
-	err := db.Model(&model.GiftEntity{}).Where("type = ?", typeId).Order("`order` asc").Order("created_at desc").Find(&entities).Error
+	entities = make([]*model.GiftEntity, 0)
+	if typeId == -1 {
+		err = db.Model(&model.GiftEntity{}).Order("`order` asc").Order("created_at desc").Find(&entities).Error
+	} else {
+		err = db.Model(&model.GiftEntity{}).Where("type = ?", typeId).Order("`order` asc").Order("created_at desc").Find(&entities).Error
+	}
 	if err != nil {
 		log.Errorf("list gift config error %s", err.Error())
 		return nil, api.ErrDatabase
