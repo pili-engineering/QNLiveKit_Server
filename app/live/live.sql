@@ -157,7 +157,9 @@ CREATE TABLE `stats_single_live`(
       `type` int DEFAULT NULL,
       `count` int DEFAULT 0,
       `updated_at` datetime DEFAULT NULL,
-      PRIMARY KEY (`id`)
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `uix_type_live_user_biz` (`type`,`live_id`,`user_id`,`biz_id`),
+      KEY `idx_live_user` (`live_id`,`user_id`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `admin_user` (
@@ -270,4 +272,10 @@ CREATE TABLE `gift_config` (
      PRIMARY KEY (`id`),
      UNIQUE KEY uid_gift_id (`gift_id`),
      KEY idx_type_order (`type`,`order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `live_like_flush` (
+   `id` int unsigned NOT NULL,
+   `last_update_time` int unsigned NOT NULL,
+   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
