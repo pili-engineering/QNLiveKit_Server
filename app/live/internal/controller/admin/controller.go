@@ -531,7 +531,7 @@ func (c *CensorController) notifyCensorBlock(ctx context.Context, liveId string)
 
 	notifyItem := LiveNotifyItem{
 		LiveId:  liveId,
-		Message: "请注意您的直播内容\\n如严重违规，管理员将强行关闭直播间。",
+		Message: "请注意您的直播内容\n如严重违规，管理员将强行关闭直播间。",
 	}
 	err = notify.SendNotifyToUser(ctx, anchor, notify.ActionTypeCensorNotify, &notifyItem)
 	if err != nil {
