@@ -42,7 +42,7 @@ func (c *Client) SendCommandMessageToGroup(ctx context.Context, fromUserId int64
 		Type:          TargetTypeGroup,
 		FromUserId:    fromUserId,
 		Targets:       []int64{toGroupId},
-		ContentType:   ContentTypeText,
+		ContentType:   ContentTypeCommand,
 		Content:       content,
 	}
 
@@ -55,7 +55,7 @@ func (c *Client) SendCommandMessageToUser(ctx context.Context, fromUserId int64,
 		Type:          TargetTypeUser,
 		FromUserId:    fromUserId,
 		Targets:       []int64{toUserId},
-		ContentType:   ContentTypeText,
+		ContentType:   ContentTypeCommand,
 		Content:       content,
 	}
 
