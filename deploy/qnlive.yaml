@@ -2,12 +2,11 @@ node:
   node_id: 2
 
 account:
-  access_key: QxZugR8TAhI38AiJ_cptTl3RbzLyca3t-AAiH-Hh
-  secret_key: 4yv8mE9kFeoE31PVlIjWvi3nfTytwT0JiAxWjCDa
+  access_key: ${QINIU_ACCESS_KEY}
+  secret_key: ${QINIU_SECRET_KEY}
 
 httpq:
   addr: ":8099"
-
 
 auth:
   jwt_key: jwtkey
@@ -48,7 +47,7 @@ mysql:
 im:
   app_id: cigzypnhoyno
   endpoint: https://s-1-3-s-api.maximtop.cn
-  token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJhcHAiOiJjaWd6eXBuaG95bm8iLCJzdWIiOiIxNTUyIiwiY2x1c3RlciI6MCwicm9sZSI6MiwiaWF0IjoxNjMwNTc0MzEzfQ.kp_SBqnwd9V8w8-C3lB1r64JGYtloMNZoJZAB5kFuRfgQc4b6qEsY6jx_nZIFa_noyNu2R15_WsPDOFuB39idg
+  token: ${IM_ADMIN_TOKEN}
 
 rtc:
   app_id: fleqfq6yc
@@ -58,7 +57,7 @@ pili:
   room_token_expire_s: 3600
   playback_url: https://pili-playback.qnsdk.com
   security_type: none
-  publish_key: 34ba6bfe-6d6c-4e35-8376-dfd667f0431b
+  publish_key: ${PILI_PUB_KEY}
   publish_expire_s: 3600
   stream_pattern: qn_live_kit-%s
   publish_url: rtmp://pili-publish.qnsdk.com
