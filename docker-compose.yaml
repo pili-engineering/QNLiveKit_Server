@@ -13,6 +13,10 @@ services:
     restart: always
     environment:
       WAIT_HOSTS: mysql:3306
+      QINIU_ACCESS_KEY:
+      QINIU_SECRET_KEY:
+      IM_ADMIN_TOKEN:
+      PILI_PUB_KEY:
   mysql:
     image: mysql
     environment:

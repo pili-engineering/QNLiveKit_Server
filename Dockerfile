@@ -17,7 +17,7 @@ COPY ./ ./
 RUN GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -o qnlive ./app/live/main.go
 
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates && apk update && apk add tzdata
+RUN apk update && apk --no-cache add ca-certificates tzdata bash
 
 WORKDIR /root/
 COPY --from=builder /workspace/qnlive .
