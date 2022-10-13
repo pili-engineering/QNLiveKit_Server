@@ -23,7 +23,8 @@ WORKDIR /root/
 COPY --from=builder /workspace/qnlive .
 COPY deploy/wait .
 COPY deploy/qnlive-entrypoint.sh .
+COPY deploy/qnlive-config-env.sh .
 COPY deploy/qnlive.yaml /etc/qnlive.yaml
-RUN chmod +x ./qnlive-entrypoint.sh && chmod +x ./wait
+RUN chmod +x ./qnlive-entrypoint.sh ./qnlive-config-env.sh ./wait
 
 CMD ./wait && ./qnlive-entrypoint.sh
