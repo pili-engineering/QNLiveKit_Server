@@ -1,0 +1,99 @@
+node:
+  node_id: 1
+
+account:
+  access_key: ${QINIU_ACCESS_KEY}
+  secret_key: ${QINIU_SECRET_KEY}
+
+httpq:
+  addr: ":8099"
+
+auth:
+  jwt_key: jwtkey
+  server:
+    enable: true
+    access_key: ak
+    secret_key: sk
+
+
+cache:
+  type: node
+  addr: "redis:6379"
+
+mysql:
+  databases:
+    - host: mysql
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+
+    - host: mysql
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+      read_only: true
+
+
+im:
+  app_id: cigzypnhoyno
+  endpoint: https://s-1-3-s-api.maximtop.cn
+  token: ${IM_ADMIN_TOKEN}
+
+rtc:
+  app_id: fleqfq6yc
+
+pili:
+  hub: sdk-live
+  room_token_expire_s: 3600
+  playback_url: https://pili-playback.qnsdk.com
+  security_type: none
+  publish_key: ${PILI_PUB_KEY}
+  publish_expire_s: 3600
+  stream_pattern: qn_live_kit-%s
+  publish_url: rtmp://pili-publish.qnsdk.com
+  publish_domain: pili-publish.qnsdk.com
+  rtmp_play_url: rtmp://pili-rtmp.qnsdk.com
+  flv_play_url: https://pili-hdl.qnsdk.com
+  hls_play_url: https://pili-hls.qnsdk.com
+  media_url: https://pili-medai.qnsdk.com
+
+cron:
+  single_task_node: 1
+
+
+prome:
+  client_mode: exporter
+  exporter_config:
+    listen_addr: ":9100"
+  pusher_config:
+    url: "http://100.100.64.202:9091"
+    job: live
+    instance: localhost
+    interval_s: 10
+
+
+callback:
+  addr: "http://localhost:9999/callback"
+
+censor:
+  callback: "http://10.200.20.28:8099"
+  bucket: "niu-cube"
+  addr: "http://10.200.20.28:8099"
+
+gift:
+  gift_addr: "123"
+
+
+
+
+
