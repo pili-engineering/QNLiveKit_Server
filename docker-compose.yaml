@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+  qnlive:
+    build: .
+    ports:
+      - "28099:8099"
+    depends_on:
+      - mysql
+      - redis
+    links:
+      - mysql
+      - redis
+    restart: always
+    environment:
+      TZ: "Asia/Shanghai"
+      WAIT_HOSTS: mysql:3306
+      QINIU_ACCESS_KEY:
+      QINIU_SECRET_KEY:
+      IM_ADMIN_TOKEN:
+      PILI_PUB_KEY:
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      TZ: "Asia/Shanghai"
+    volumes:
+      - "./deploy/mysql/init.d:/docker-entrypoint-initdb.d"
+      - "./deploy/.mysql/data:/var/lib/mysql"
+      - "./deploy/.mysql/logs:/var/log/mysql"
+  redis:
+    image: redis
