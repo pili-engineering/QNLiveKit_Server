@@ -1,5 +1,5 @@
 node:
-  node_id: 2
+  node_id: 1
 
 account:
   access_key: ${QINIU_ACCESS_KEY}
