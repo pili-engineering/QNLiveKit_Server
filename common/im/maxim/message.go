@@ -2,6 +2,7 @@ package maxim
 
 import (
 	"context"
+
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/utils/logger"
 	"github.com/qbox/livekit/utils/rpc"
@@ -41,7 +42,7 @@ func (c *Client) SendCommandMessageToGroup(ctx context.Context, fromUserId int64
 		Type:          TargetTypeGroup,
 		FromUserId:    fromUserId,
 		Targets:       []int64{toGroupId},
-		ContentType:   ContentTypeCommand,
+		ContentType:   ContentTypeText,
 		Content:       content,
 	}
 
@@ -54,7 +55,7 @@ func (c *Client) SendCommandMessageToUser(ctx context.Context, fromUserId int64,
 		Type:          TargetTypeUser,
 		FromUserId:    fromUserId,
 		Targets:       []int64{toUserId},
-		ContentType:   ContentTypeCommand,
+		ContentType:   ContentTypeText,
 		Content:       content,
 	}
 
