@@ -202,7 +202,7 @@ func (s *UserService) createUser(ctx context.Context, user *model.LiveUserEntity
 	db := mysql.GetLive(log.ReqID())
 	result := db.Create(user)
 	if result.Error != nil {
-		log.Errorf("create user %+v, error %+v", result.Error)
+		log.Errorf("create user %+v, error %+v", user, result.Error)
 		return nil, rest.ErrInternal
 	}
 

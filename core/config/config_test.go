@@ -17,7 +17,7 @@ func TestConfig_Sub(t *testing.T) {
 	path := "config.yaml"
 	c, _ := LoadConfig(path)
 
-	sub := c.Sub("impl")
+	sub := c.Sub("cron_config")
 	assert.NotNil(t, sub)
 }
 

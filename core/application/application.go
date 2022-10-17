@@ -26,7 +26,7 @@ func StartWithConfig(path string) error {
 
 	errCh := make(chan error)
 	go func() {
-		c := make(chan os.Signal)
+		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
 		sig := <-c
 		errCh <- fmt.Errorf("signal %s", sig)

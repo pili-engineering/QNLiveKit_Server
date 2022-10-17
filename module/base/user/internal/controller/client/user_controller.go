@@ -151,7 +151,7 @@ func (*userController) GetImUsersInfo(ctx *gin.Context) (interface{}, error) {
 	userService := impl.GetService()
 	users, err := userService.ListImUser(ctx, req.ImUserIds)
 	if err != nil {
-		log.Errorf("find user imUserIds:%s error %v", req.ImUserIds, err)
+		log.Errorf("find user imUserIds:%+v error %v", req.ImUserIds, err)
 		return nil, rest.ErrInternal
 	}
 

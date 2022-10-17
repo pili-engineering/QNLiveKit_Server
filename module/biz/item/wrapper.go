@@ -7,3 +7,7 @@ import (
 func GetService() service.IItemService {
 	return service.Instance
 }
+
+func InitService() {
+
+}

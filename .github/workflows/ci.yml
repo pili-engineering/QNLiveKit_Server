@@ -1,0 +1,46 @@
+name: Go
+
+on:
+  push:
+    branches: [ "master", "develop", "module-2"]
+  pull_request:
+    branches: [ "master", "develop", "module-2"]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: go build -v ./app/live
+
+    - name: gofmt
+      run: find . -name "*.go" |  xargs gofmt -s -l -e
+
+    - name: govet
+      run: go list ./... | xargs go vet -composites=false
+
+    - name: Set up redis
+      uses: zhulik/redis-action@1.1.0
+      with:
+        redis version: '5'
+        number of databases: 1
+
+    - name: Set up mysql
+      uses: mirromutth/mysql-action@v1.1
+      with:
+        mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
+        mysql database: 'live_test' # Optional, default value is "test". The specified database which will be create
+        mysql root password: 123456 # Required if "mysql user" is empty, default is empty. The root superuser password
+        mysql user: 'live' # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Can use secrets, too
+        mysql password: 123456 # Required if "mysql user" exists. The password for the "mysql user"
+
+    - name: Test
+      run: go test -v -race ./...

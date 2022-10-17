@@ -1,8 +1,6 @@
 package cache
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/core/config"
 )
@@ -24,7 +22,6 @@ func (m *Module) Config(c *config.Config) error {
 
 	conf := Config{}
 	if err := c.Unmarshal(&conf); err != nil {
-		log.Error("Unmarshal config error %v", err)
 		return err
 	}
 

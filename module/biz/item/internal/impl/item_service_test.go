@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/module/base/live"
 	"github.com/qbox/livekit/module/store/mysql"
 )
 
@@ -45,6 +46,8 @@ func itemSetup() {
 	}
 	mysql.GetLive().Save(&liveEntity)
 
+	live.InitService()
+
 	items := make([]*model.ItemEntity, 0, 50)
 	for i := uint(1); i <= 50; i++ {
 		item := &model.ItemEntity{
@@ -65,7 +68,8 @@ func itemSetup() {
 		}
 		items = append(items, item)
 	}
-	itemService := GetInstance()
+
+	itemService := ItemService{}
 	itemService.AddItems(context.Background(), testLiveId, items)
 
 }
@@ -157,7 +161,7 @@ func TestItemService_DelItems(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	itemService := GetInstance()
+	itemService := ItemService{}
 	err := itemService.DelItems(context.Background(), testLiveId, []string{"item_1", "item_2"})
 	assert.Nil(t, err)
 
@@ -209,7 +213,7 @@ func TestItemService_ListItems(t *testing.T) {
 		},
 	}
 
-	s := GetInstance()
+	s := &ItemService{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := s.ListItems(context.Background(), tt.liveId, tt.showOffline)
@@ -223,7 +227,7 @@ func TestItemService_UpdateItemStatus(t *testing.T) {
 	itemSetup()
 	defer itemTearDown()
 
-	s := GetInstance()
+	s := ItemService{}
 	err := s.UpdateItemStatus(context.Background(), "", nil)
 	assert.Nil(t, err)
 
