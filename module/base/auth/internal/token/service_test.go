@@ -15,13 +15,12 @@ import (
 )
 
 func TestTokenService_GenAuthToken(t1 *testing.T) {
-	InitService(Config{JwtKey: "jwtTest"})
 	authToken := AuthToken{
 		AppId:  "test-app",
 		UserId: "test-user",
 	}
 
-	tokenService := GetService()
+	tokenService := NewService("jwtTest")
 	token, err := tokenService.GenAuthToken(&authToken)
 	assert.Nil(t1, err)
 	assert.NotEmpty(t1, token)
