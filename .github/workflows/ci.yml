@@ -21,5 +21,11 @@ jobs:
     - name: Build
       run: go build -v ./app/live
 
+    - name: gofmt
+      run: find . -name "*.go" |  xargs gofmt -s -l -e
+
+    - name: govet
+      run: go list ./... | xargs go vet -composites=false
+
     - name: Test
-      run: go test -v ./...
+      run: go test -v -race ./...
