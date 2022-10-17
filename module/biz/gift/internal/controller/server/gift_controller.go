@@ -92,7 +92,7 @@ func (*giftController) GetGiftConfig(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrInternal
 	}
 
-	var giftDtos []*dto.GiftConfigDto
+	giftDtos := make([]*dto.GiftConfigDto, 0, len(giftEntities))
 	for _, v := range giftEntities {
 		giftDtos = append(giftDtos, dto.GiftEntityToDto(v))
 	}
