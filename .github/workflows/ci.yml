@@ -28,13 +28,13 @@ jobs:
       run: go list ./... | xargs go vet -composites=false
 
     - name: Set up redis
-    - uses: zhulik/redis-action@1.1.0
+      uses: zhulik/redis-action@1.1.0
       with:
         redis version: '5'
         number of databases: 1
 
     - name: Set up mysql
-    - uses: mirromutth/mysql-action@v1.1
+      uses: mirromutth/mysql-action@v1.1
       with:
         mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
         mysql database: 'live_test' # Optional, default value is "test". The specified database which will be create
