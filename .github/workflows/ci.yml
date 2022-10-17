@@ -27,5 +27,10 @@ jobs:
     - name: govet
       run: go list ./... | xargs go vet -composites=false
 
+    - uses: zhulik/redis-action@1.1.0
+      with:
+        redis version: '5'
+        number of databases: 1
+
     - name: Test
       run: go test -v -race ./...
