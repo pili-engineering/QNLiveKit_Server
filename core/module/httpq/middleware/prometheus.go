@@ -11,7 +11,7 @@ import (
 var (
 	// httpHistogram prometheus 模型
 	httpHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   "http_server",
+		Namespace:   "qnlive_api",
 		Subsystem:   "",
 		Name:        "request",
 		Help:        "Histogram of response latency (seconds) of http handlers.",

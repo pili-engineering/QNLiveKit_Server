@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 file_env() {
 	local var="$1"

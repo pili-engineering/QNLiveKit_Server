@@ -48,3 +48,5 @@ internal/common/tracer/test.log
 
 # deploy data
 .mysql
+.grafana
+.prometheus
