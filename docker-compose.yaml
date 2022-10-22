@@ -50,7 +50,13 @@ services:
     environment:
       TZ: "Asia/Shanghai"
       PORT_GRAFANA: 3000
+      GF_SECURITY_ADMIN_PASSWORD: 12345678
+      GF_USERS_ALLOW_SIGN_UP: false
     volumes:
       - ./deploy/.grafana/data:/var/lib/grafana
+      - ./deploy/grafana/config/grafana.ini:/etc/grafana/grafana.ini
+      - ./deploy/grafana/provisioning/:/etc/grafana/provisioning/
+    depends_on:
+      - prometheus
     ports:
       - "${PORT_GRAFANA}:3000"
