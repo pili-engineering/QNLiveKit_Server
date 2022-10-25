@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/qbox/livekit/utils/prom"
 )
 
 var (
@@ -17,11 +19,11 @@ var (
 	}, []string{"handler", "method", "code"})
 
 	// httpTimeGaugeVec http 请求时间统计
-	httpTimeGaugeVec = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	httpTimeGaugeVec = prom.NewGaugeVec(prom.GaugeOpts{
 		Namespace: "qnlive",
 		Name:      "http_api_time",
 		Help:      "response latency (mill second) of http handlers.",
-	}, []string{"handler", "method", "code"})
+	}, []string{"handler", "method", "code"}, 30*1000)
 )
 
 // init 初始化prometheus模型
