@@ -38,7 +38,6 @@ flvdump/
 dump.rdb
 jobs.json
 forwardJobs.json
-core
 
 # devspace
 .devspace/
@@ -46,3 +45,8 @@ core
 # log files
 internal/common/service/message/nats/nats_event.log
 internal/common/tracer/test.log
+
+# deploy data
+.mysql
+.grafana
+.prometheus

@@ -1,0 +1,13 @@
+# config file version
+apiVersion: 1
+
+datasources:  #配置Prometheus的数据源
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prometheus:9090  #在相同的docker compose下，可以直接用prometheus服务名直接访问
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: true

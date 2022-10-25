@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/qbox/livekit/biz/model"
-	"github.com/qbox/livekit/common/api"
-	"github.com/qbox/livekit/common/im"
+	"github.com/qbox/livekit/core/rest"
+	"github.com/qbox/livekit/module/fun/im"
 	"github.com/qbox/livekit/utils/logger"
 )
 
@@ -40,7 +40,7 @@ func SendNotifyToUser(ctx context.Context, user *model.LiveUserEntity, action Ac
 	log := logger.ReqLogger(ctx)
 	if user == nil || user.ImUserid == 0 {
 		log.Errorf("no target im user info")
-		return api.ErrInvalidArgument
+		return rest.ErrBadRequest
 	}
 
 	command := &LiveCommand{
@@ -61,12 +61,12 @@ func SendNotifyToLive(ctx context.Context, user *model.LiveUserEntity, live *mod
 	log := logger.ReqLogger(ctx)
 	if live == nil || live.ChatId == 0 {
 		log.Errorf("no live group info ")
-		return api.ErrInvalidArgument
+		return rest.ErrBadRequest
 	}
 
 	if user == nil || user.ImUserid == 0 {
 		log.Errorf("no user im info")
-		return api.ErrInvalidArgument
+		return rest.ErrBadRequest
 	}
 
 	command := &LiveCommand{
