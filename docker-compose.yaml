@@ -3,7 +3,7 @@ services:
   qnlive:
     build: .
     ports:
-      - "28099:8099"
+      - "${PORT_LIVE}:80"
     depends_on:
       - mysql
       - redis
@@ -12,12 +12,13 @@ services:
       - redis
     restart: always
     environment:
-      TZ: "Asia/Shanghai"
       WAIT_HOSTS: mysql:3306
+      TZ: "Asia/Shanghai"
       QINIU_ACCESS_KEY:
       QINIU_SECRET_KEY:
       IM_ADMIN_TOKEN:
       PILI_PUB_KEY:
+      PORT_LIVE: 80
   mysql:
     image: mysql
     environment:
@@ -29,3 +30,33 @@ services:
       - "./deploy/.mysql/logs:/var/log/mysql"
   redis:
     image: redis
+  prometheus:
+    image: prom/prometheus:v2.28.1
+    restart: always
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./deploy/.prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "${PORT_PROMETHEUS}:9090"
+    environment:
+      TZ: "Asia/Shanghai"
+      PORT_PROMETHEUS: 9090
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    environment:
+      TZ: "Asia/Shanghai"
+      PORT_GRAFANA: 3000
+      GF_SECURITY_ADMIN_PASSWORD: 12345678
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - ./deploy/.grafana/data:/var/lib/grafana
+      - ./deploy/grafana/config/grafana.ini:/etc/grafana/grafana.ini
+      - ./deploy/grafana/provisioning/:/etc/grafana/provisioning/
+    depends_on:
+      - prometheus
+    ports:
+      - "${PORT_GRAFANA}:3000"

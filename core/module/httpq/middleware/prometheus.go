@@ -11,13 +11,13 @@ import (
 var (
 	// httpHistogram prometheus 模型
 	httpHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   "http_server",
+		Namespace:   "qnlive_api",
 		Subsystem:   "",
 		Name:        "request",
 		Help:        "Histogram of response latency (seconds) of http handlers.",
 		ConstLabels: nil,
 		Buckets:     nil,
-	}, []string{"handler", "method", "code", "path"})
+	}, []string{"route", "method", "code", "path"})
 )
 
 // init 初始化prometheus模型
@@ -31,10 +31,10 @@ func Prometheus() gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 
-		handler := c.HandlerName()
+		route := c.FullPath()
 		path := c.Request.URL.Path
 		httpHistogram.WithLabelValues(
-			handler,
+			route,
 			c.Request.Method,
 			strconv.Itoa(c.Writer.Status()),
 			path,

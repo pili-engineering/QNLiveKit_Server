@@ -6,7 +6,7 @@ account:
   secret_key: ${QINIU_SECRET_KEY}
 
 httpq:
-  addr: ":8099"
+  addr: ":80"
 
 auth:
   jwt_key: jwtkey
