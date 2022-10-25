@@ -8,6 +8,7 @@
 package server
 
 import (
+	"github.com/qbox/livekit/biz/admin"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -22,6 +23,7 @@ import (
 func RegisterAuthRoutes(group *gin.RouterGroup) {
 	authGroup := group.Group("/auth")
 	authGroup.GET("/token", AuthController.GetAuthToken)
+	authGroup.GET("/admin/token", AuthController.GetAdminAuthToken)
 }
 
 var AuthController = &authController{}
@@ -46,6 +48,59 @@ type GetAuthTokenResponse struct {
 		AccessToken string `json:"access_token"`
 		ExpiresAt   int64  `json:"expires_at"`
 	} `json:"data"`
+}
+
+func (*authController) GetAdminAuthToken(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+
+	req := &GetAuthTokenRequest{}
+	if err := ctx.BindQuery(&req); err != nil {
+		log.Errorf("bind request error %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+
+	if !req.IsValid() {
+		log.Errorf("invalid request %v", req)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
+		return
+	}
+
+	adminService := admin.GetManagerService()
+	_, err := adminService.FindOrCreateAdminUser(ctx, req.UserId)
+	if err != nil {
+		log.Errorf("get user userId:%s, error:%v", req.UserId, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrInternal))
+		return
+	}
+
+	authToken := token.AuthToken{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: req.ExpiresAt,
+		},
+		AppId:    req.AppId,
+		UserId:   req.UserId,
+		DeviceId: req.DeviceId,
+		Role:     "admin",
+	}
+
+	tokenService := token.GetService()
+	if token, err := tokenService.GenAuthToken(&authToken); err != nil {
+		log.Errorf("")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
+		return
+	} else {
+		resp := &GetAuthTokenResponse{
+			Response: api.Response{
+				RequestId: log.ReqID(),
+				Code:      0,
+				Message:   "success",
+			},
+		}
+		resp.Data.AccessToken = token
+		resp.Data.ExpiresAt = authToken.ExpiresAt
+		ctx.JSON(http.StatusOK, resp)
+	}
 }
 
 func (*authController) GetAuthToken(ctx *gin.Context) {

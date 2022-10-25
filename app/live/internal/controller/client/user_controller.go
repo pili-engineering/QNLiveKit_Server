@@ -10,9 +10,12 @@ package client
 import (
 	"net/http"
 
+	"github.com/qbox/livekit/app/live/internal/dto"
+
 	"github.com/qbox/livekit/biz/user"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
 	"github.com/qbox/livekit/utils/logger"
@@ -34,7 +37,7 @@ type userController struct {
 
 type GetProfileResponse struct {
 	api.Response
-	Data *UserProfileDto `json:"data"`
+	Data *dto.UserProfileDto `json:"data"`
 }
 
 //获取用户自己的Profile 信息
@@ -56,7 +59,7 @@ func (*userController) GetUserProfile(ctx *gin.Context) {
 		return
 	}
 
-	dto := User2ProfileDto(userEntity)
+	dto := dto.User2ProfileDto(userEntity)
 	resp := GetProfileResponse{
 		Response: api.Response{
 			RequestId: log.ReqID(),
@@ -80,7 +83,7 @@ func (*userController) PutUserInfo(ctx *gin.Context) {
 		return
 	}
 
-	updateInfo := UserDto{}
+	updateInfo := dto.UserDto{}
 	if err := ctx.BindJSON(&updateInfo); err != nil {
 		log.Errorf("bind json error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
@@ -89,7 +92,7 @@ func (*userController) PutUserInfo(ctx *gin.Context) {
 	updateInfo.UserId = uInfo.UserId
 
 	userService := user.GetService()
-	err := userService.UpdateUserInfo(ctx, UserDto2Entity(&updateInfo))
+	err := userService.UpdateUserInfo(ctx, dto.UserDto2Entity(&updateInfo))
 	if err != nil {
 		log.Errorf("update user info error %v", err)
 		ctx.AbortWithStatusJSON(http.StatusNotFound, api.ErrorWithRequestId(log.ReqID(), api.ErrInternal))
@@ -101,7 +104,7 @@ func (*userController) PutUserInfo(ctx *gin.Context) {
 
 type GetUserInfoResponse struct {
 	api.Response
-	Data *UserDto
+	Data *dto.UserDto `json:"data"`
 }
 
 //获取其他用户信息
@@ -118,14 +121,14 @@ func (*userController) GetUserInfo(ctx *gin.Context) {
 	userId := ctx.Param("id")
 
 	userService := user.GetService()
-	userEntity, err := userService.FindOrCreateUser(ctx, userId)
+	userEntity, err := userService.FindUser(ctx, userId)
 	if err != nil {
-		log.Errorf("find or create user %s error %v", userId, err)
+		log.Errorf("find  user %s error %v", userId, err)
 		ctx.AbortWithStatusJSON(http.StatusNotFound, api.ErrorWithRequestId(log.ReqID(), api.ErrInternal))
 		return
 	}
 
-	dto := User2Dto(userEntity)
+	dto := dto.User2Dto(userEntity)
 	resp := GetUserInfoResponse{
 		Response: api.SuccessResponse(log.ReqID()),
 		Data:     dto,
@@ -140,7 +143,7 @@ type GetUsersInfoRequest struct {
 
 type GetUsersInfoResponse struct {
 	api.Response
-	Data []*UserDto
+	Data []*dto.UserDto `json:"data"`
 }
 
 //批量获取其他用户信息
@@ -175,9 +178,9 @@ func (*userController) GetUsersInfo(ctx *gin.Context) {
 		return
 	}
 
-	dtos := make([]*UserDto, 0, len(users))
+	dtos := make([]*dto.UserDto, 0, len(users))
 	for _, u := range users {
-		dtos = append(dtos, User2Dto(u))
+		dtos = append(dtos, dto.User2Dto(u))
 	}
 	resp := GetUsersInfoResponse{
 		Response: api.SuccessResponse(log.ReqID()),
@@ -223,9 +226,9 @@ func (*userController) GetImUsersInfo(ctx *gin.Context) {
 		return
 	}
 
-	dtos := make([]*UserDto, 0, len(users))
+	dtos := make([]*dto.UserDto, 0, len(users))
 	for _, u := range users {
-		dtos = append(dtos, User2Dto(u))
+		dtos = append(dtos, dto.User2Dto(u))
 	}
 	resp := GetUsersInfoResponse{
 		Response: api.SuccessResponse(log.ReqID()),

@@ -63,11 +63,13 @@ im_config:
 rtc_config:
   app_id: {{ app_id }}
   access_key: {{ ak }}
-  secret_key: {{ ak }}
+  secret_key: {{ sk }}
   room_token_expire_s: 3600
-  publish_key: {{ publish_key }}
-  playback_url: https://{{xxx}}-playback.com
   hub: {{ 直播hub }} 
+  security_type: none
+  publish_key: {{ publish_key }}
+  publish_expire_s: 3600
+  playback_url: https://{{xxx}}-playback.com
   stream_pattern: qn_live_kit-%s
   publish_url: rtmp://{{xxx}}-publish.com
   publish_domain: {{xxx}}-publish.com
@@ -160,10 +162,12 @@ rtc_config:
   access_key: {{ ak }}
   secret_key: {{ ak }}
   room_token_expire_s: 3600
-  publish_key: {{ publish_key }}
-  playback_url: https://{{xxx}}-playback.com
   hub: {{ 直播hub }} 
+  security_type: none
+  publish_key: {{ publish_key }}
+  publish_expire_s: 3600
   stream_pattern: qn_live_kit-%s
+  playback_url: https://{{xxx}}-playback.com
   publish_url: rtmp://{{xxx}}-publish.com
   publish_domain: {{xxx}}-publish.com
   rtmp_play_url: rtmp://{{xxx}}-rtmp.com
@@ -174,3 +178,10 @@ rtc_config:
 * rtc_config 段落配置rtc 应用相关的配置。
 * RTC 应用的配置，参考：[管理实时音视频](https://developer.qiniu.com/rtc/9858/applist)
 * 直播相关地址配置，参考：[直播云](https://developer.qiniu.com/pili)
+* 直播推流鉴权说明：目前直播推流鉴权，支持三种方式：无鉴权，限时鉴权，限时鉴权SK，不同鉴权模式的配置方式如下
+
+鉴权模式 | security_type | publish_key | publish_expire_s
+-------| --------------| ------------ | --------------
+无鉴权  |   none        | 无需指定，留空  | 过期时间秒。如：3600 表示 一小时后过期，推流URL 过期
+限时鉴权 |  expiry      | 使用配置的key 鉴权。从【直播空间设置】获取key | 同上
+限时鉴权SK | expiry_sk  | 使用RTC 用户的SK 鉴权。无需配置，留空。| 同上

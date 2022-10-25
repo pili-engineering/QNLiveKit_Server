@@ -14,8 +14,12 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/qbox/livekit/app/live/internal/dto"
 	"github.com/qbox/livekit/biz/live"
 	"github.com/qbox/livekit/biz/model"
+	"github.com/qbox/livekit/biz/notify"
+	"github.com/qbox/livekit/biz/report"
 	user2 "github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/auth/liveauth"
@@ -33,10 +37,12 @@ func RegisterLiveRoutes(group *gin.RouterGroup) {
 		liveGroup.GET("/room", LiveController.SearchLive)
 		liveGroup.POST("/room/user/:live_id", LiveController.JoinLive)
 		liveGroup.GET("/room/list", LiveController.LiveList)
+		liveGroup.GET("/room/list/anchor", LiveController.LiveListAnchor)
 		liveGroup.DELETE("/room/user/:live_id", LiveController.LeaveLive)
 		liveGroup.GET("/room/heartbeat/:live_id", LiveController.Heartbeat)
 		liveGroup.PUT("/room/extends", LiveController.UpdateExtends)
 		liveGroup.GET("/room/user_list", LiveController.LiveUserList)
+		liveGroup.PUT("/room/:live_id/like", LiveController.PutLike)
 	}
 }
 
@@ -45,50 +51,18 @@ type liveController struct {
 
 var LiveController = &liveController{}
 
-type LiveInfo struct {
-	LiveId     string        `json:"live_id"`
-	Title      string        `json:"title"`
-	Notice     string        `json:"notice"`
-	CoverUrl   string        `json:"cover_url"`
-	Extends    model.Extends `json:"extends"`
-	AnchorInfo struct {
-		UserId     string        `json:"user_id"`
-		ImUserId   int64         `json:"im_userid"`
-		ImUsername string        `json:"im_username"`
-		Nick       string        `json:"nick"`
-		Avatar     string        `json:"avatar"`
-		Extends    model.Extends `json:"extends"`
-	} `json:"anchor_info"`
-	AnchorStatus model.LiveRoomUserStatus
-	RoomToken    string `json:"room_token"`
-	PkId         string `json:"pk_id"`
-	OnlineCount  int    `json:"online_count"`
-	StartTime    int64  `json:"start_time"`
-	EndTime      int64  `json:"end_time"`
-	ChatId       int64  `json:"chat_id"`
-	PushUrl      string `json:"push_url"`
-	HlsUrl       string `json:"hls_url"`
-	RtmpUrl      string `json:"rtmp_url"`
-	FlvUrl       string `json:"flv_url"`
-	Pv           int    `json:"pv"`
-	Uv           int    `json:"uv"`
-	TotalCount   int    `json:"total_count"`
-	TotalMics    int    `json:"total_mics"`
-	LiveStatus   int    `json:"live_status"`
-}
-
 type LiveResponse struct {
 	api.Response
-	Data LiveInfo `json:"data"`
+	Data dto.LiveInfoDto `json:"data"`
 }
 
 type LiveListResponse struct {
 	api.Response
 	Data struct {
-		TotalCount int        `json:"total_count"`
-		PageTotal  int        `json:"page_total"`
-		EndPage    bool       `json:"end_page"`
-		List       []LiveInfo `json:"list"`
+		TotalCount int               `json:"total_count"`
+		PageTotal  int               `json:"page_total"`
+		EndPage    bool              `json:"end_page"`
+		List       []dto.LiveInfoDto `json:"list"`
 	} `json:"data"`
 }
 
@@ -104,7 +78,8 @@ func (*liveController) CreateLive(context *gin.Context) {
 		})
 		return
 	}
-	liveEntity, err := live.GetService().CreateLive(context, request, userInfo.UserId)
+	request.AnchorId = userInfo.UserId
+	liveEntity, err := live.GetService().CreateLive(context, request)
 	if err != nil {
 		log.Errorf("create liveEntity failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
@@ -134,16 +109,17 @@ func (*liveController) CreateLive(context *gin.Context) {
 	response.Data.CoverUrl = liveEntity.CoverUrl
 	response.Data.Extends = liveEntity.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveEntity.PkId
 	response.Data.OnlineCount = liveEntity.OnlineCount
-	response.Data.StartTime = liveEntity.StartAt.UnixMilli()
-	response.Data.EndTime = liveEntity.EndAt.UnixMilli()
+	if liveEntity.StartAt != nil {
+		response.Data.StartTime = liveEntity.StartAt.Unix()
+	}
+	response.Data.EndTime = liveEntity.EndAt.Unix()
 	response.Data.ChatId = liveEntity.ChatId
 	response.Data.PushUrl = liveEntity.PushUrl
 	response.Data.HlsUrl = liveEntity.HlsPlayUrl
@@ -229,8 +205,7 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -238,8 +213,7 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = onlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -250,6 +224,14 @@ func (c *liveController) LiveRoomInfo(context *gin.Context) {
 	response.Data.TotalCount = 0
 	response.Data.TotalMics = 0
 	response.Data.LiveStatus = liveInfo.Status
+	response.Data.StopReason = liveInfo.StopReason
+	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
+	if liveInfo.StopAt != nil {
+		response.Data.StopTime = liveInfo.StopAt.Unix()
+	}
 	context.JSON(http.StatusOK, response)
 }
 
@@ -333,8 +315,7 @@ func (*liveController) StartLive(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -342,8 +323,10 @@ func (*liveController) StartLive(context *gin.Context) {
 	response.Data.RoomToken = roomToken
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -427,7 +410,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 	response.Data.TotalCount = totalCount1 + totalCount2 + totalCount3
 	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
 	response.Data.EndPage = endPage
-	list := make([]LiveInfo, len(liveList), len(liveList))
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
 	for i := range liveList {
 		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
 		if err != nil {
@@ -448,8 +431,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].CoverUrl = liveInfo.CoverUrl
 		list[i].Extends = liveInfo.Extends
 		list[i].AnchorInfo.UserId = user.UserId
-		list[i].AnchorInfo.ImUserId = user.ImUserid
-		list[i].AnchorInfo.ImUsername = user.ImUsername
+		list[i].AnchorInfo.ImUserid = user.ImUserid
 		list[i].AnchorInfo.Nick = user.Nick
 		list[i].AnchorInfo.Avatar = user.Avatar
 		list[i].AnchorInfo.Extends = user.Extends
@@ -457,8 +439,7 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.UnixMilli()
-		list[i].EndTime = liveInfo.EndAt.UnixMilli()
+		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
 		list[i].HlsUrl = liveInfo.HlsPlayUrl
@@ -469,6 +450,14 @@ func (c *liveController) SearchLive(context *gin.Context) {
 		list[i].TotalCount = 0
 		list[i].TotalMics = 0
 		list[i].LiveStatus = liveInfo.Status
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StartAt != nil {
+			list[i].StartTime = liveInfo.StartAt.Unix()
+		}
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
 	}
 	response.Data.List = list
 	context.JSON(http.StatusOK, response)
@@ -508,6 +497,14 @@ func (c *liveController) JoinLive(context *gin.Context) {
 		})
 		return
 	}
+	rService := report.GetService()
+	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
+		LiveId: liveId,
+		UserId: userInfo.UserId,
+		Type:   model.StatsTypeLive,
+		Count:  1,
+	}
+	rService.UpdateSingleLive(context, statsSingleLiveEntity)
 	anchorStatus, _ := c.getLiveAnchorStatus(context, liveInfo.LiveId, liveInfo.AnchorId)
 	response := &LiveResponse{}
 	response.Response.Code = 200
@@ -519,8 +516,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.CoverUrl = liveInfo.CoverUrl
 	response.Data.Extends = liveInfo.Extends
 	response.Data.AnchorInfo.UserId = user.UserId
-	response.Data.AnchorInfo.ImUserId = user.ImUserid
-	response.Data.AnchorInfo.ImUsername = user.ImUsername
+	response.Data.AnchorInfo.ImUserid = user.ImUserid
 	response.Data.AnchorInfo.Nick = user.Nick
 	response.Data.AnchorInfo.Avatar = user.Avatar
 	response.Data.AnchorInfo.Extends = user.Extends
@@ -528,8 +524,7 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.RoomToken = ""
 	response.Data.PkId = liveInfo.PkId
 	response.Data.OnlineCount = liveInfo.OnlineCount
-	response.Data.StartTime = liveInfo.StartAt.UnixMilli()
-	response.Data.EndTime = liveInfo.EndAt.UnixMilli()
+	response.Data.EndTime = liveInfo.EndAt.Unix()
 	response.Data.ChatId = liveInfo.ChatId
 	response.Data.PushUrl = liveInfo.PushUrl
 	response.Data.HlsUrl = liveInfo.HlsPlayUrl
@@ -540,6 +535,14 @@ func (c *liveController) JoinLive(context *gin.Context) {
 	response.Data.TotalCount = 0
 	response.Data.TotalMics = 0
 	response.Data.LiveStatus = liveInfo.Status
+	response.Data.StopReason = liveInfo.StopReason
+	response.Data.StopUserId = liveInfo.StopUserId
+	if liveInfo.StartAt != nil {
+		response.Data.StartTime = liveInfo.StartAt.Unix()
+	}
+	if liveInfo.StopAt != nil {
+		response.Data.StopTime = liveInfo.StopAt.Unix()
+	}
 	context.JSON(http.StatusOK, response)
 }
 
@@ -597,7 +600,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 	response.Data.TotalCount = totalCount
 	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
 	response.Data.EndPage = endPage
-	list := make([]LiveInfo, len(liveList), len(liveList))
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
 	for i := range liveList {
 		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
 		if err != nil {
@@ -619,8 +622,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].CoverUrl = liveInfo.CoverUrl
 		list[i].Extends = liveInfo.Extends
 		list[i].AnchorInfo.UserId = user.UserId
-		list[i].AnchorInfo.ImUserId = user.ImUserid
-		list[i].AnchorInfo.ImUsername = user.ImUsername
+		list[i].AnchorInfo.ImUserid = user.ImUserid
 		list[i].AnchorInfo.Nick = user.Nick
 		list[i].AnchorInfo.Avatar = user.Avatar
 		list[i].AnchorInfo.Extends = user.Extends
@@ -628,8 +630,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].RoomToken = ""
 		list[i].PkId = liveInfo.PkId
 		list[i].OnlineCount = liveInfo.OnlineCount
-		list[i].StartTime = liveInfo.StartAt.UnixMilli()
-		list[i].EndTime = liveInfo.EndAt.UnixMilli()
+		list[i].EndTime = liveInfo.EndAt.Unix()
 		list[i].ChatId = liveInfo.ChatId
 		list[i].PushUrl = liveInfo.PushUrl
 		list[i].HlsUrl = liveInfo.HlsPlayUrl
@@ -640,6 +641,130 @@ func (c *liveController) LiveList(context *gin.Context) {
 		list[i].TotalCount = 0
 		list[i].TotalMics = 0
 		list[i].LiveStatus = liveInfo.Status
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StartAt != nil {
+			list[i].StartTime = liveInfo.StartAt.Unix()
+		}
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
+		log.Infof("liveInfo: %v", liveInfo)
+	}
+	response.Data.List = list
+	context.JSON(http.StatusOK, response)
+}
+
+func (c *liveController) LiveListAnchor(context *gin.Context) {
+	log := logger.ReqLogger(context)
+	pageNum := context.DefaultQuery("page_num", "1")
+	pageSize := context.DefaultQuery("page_size", "10")
+	uInfo := liveauth.GetUserInfo(context)
+	if uInfo == nil {
+		log.Errorf("user info not exist")
+		context.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), api.ErrNotFound))
+		return
+	}
+	anchorId := uInfo.UserId
+	pageNumInt, err := strconv.Atoi(pageNum)
+	if err != nil {
+		log.Errorf("page num is not int, err: %v", err)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page num is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		log.Errorf("page size is not int, err: %v", err)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page size is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	if pageNumInt <= 0 || pageSizeInt <= 0 {
+		log.Errorf("page num or page size is not right, page num: %v, page size: %v", pageNumInt, pageSizeInt)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "page num or page size is not right",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	liveList, totalCount, err := live.GetService().LiveListAnchor(context, pageNumInt, pageSizeInt, anchorId)
+	if err != nil {
+		log.Errorf("get live list anchor failed, err: %v", err)
+		context.JSON(http.StatusInternalServerError, api.Response{
+			Code:      http.StatusInternalServerError,
+			Message:   "get live list anchor failed",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+	endPage := false
+	if len(liveList) < pageSizeInt {
+		endPage = true
+	}
+	response := &LiveListResponse{}
+	response.Response.Code = 200
+	response.Response.Message = "success"
+	response.Response.RequestId = log.ReqID()
+	response.Data.TotalCount = totalCount
+	response.Data.PageTotal = int(math.Ceil(float64(response.Data.TotalCount) / float64(pageSizeInt)))
+	response.Data.EndPage = endPage
+	list := make([]dto.LiveInfoDto, len(liveList), len(liveList))
+	for i := range liveList {
+		liveInfo, err := live.GetService().LiveInfo(context, liveList[i].LiveId)
+		if err != nil {
+			log.Errorf("get liveInfo info failed, err: %v", err)
+			continue
+		}
+		log.Infof("liveInfo: %v", liveInfo)
+		user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
+		log.Infof("user: %v", user)
+		if err != nil {
+			log.Errorf("find user failed, err: %v", err)
+			continue
+		}
+		anchorStatus, _ := c.getLiveAnchorStatus(context, liveInfo.LiveId, liveInfo.AnchorId)
+
+		list[i].LiveId = liveInfo.LiveId
+		list[i].Title = liveInfo.Title
+		list[i].Notice = liveInfo.Notice
+		list[i].CoverUrl = liveInfo.CoverUrl
+		list[i].Extends = liveInfo.Extends
+		list[i].AnchorInfo.UserId = user.UserId
+		list[i].AnchorInfo.ImUserid = user.ImUserid
+		list[i].AnchorInfo.Nick = user.Nick
+		list[i].AnchorInfo.Avatar = user.Avatar
+		list[i].AnchorInfo.Extends = user.Extends
+		list[i].AnchorStatus = anchorStatus
+		list[i].RoomToken = ""
+		list[i].PkId = liveInfo.PkId
+		list[i].OnlineCount = liveInfo.OnlineCount
+		list[i].EndTime = liveInfo.EndAt.Unix()
+		list[i].ChatId = liveInfo.ChatId
+		list[i].PushUrl = liveInfo.PushUrl
+		list[i].HlsUrl = liveInfo.HlsPlayUrl
+		list[i].RtmpUrl = liveInfo.RtmpPlayUrl
+		list[i].FlvUrl = liveInfo.FlvPlayUrl
+		list[i].Pv = 0
+		list[i].Uv = 0
+		list[i].TotalCount = 0
+		list[i].TotalMics = 0
+		list[i].LiveStatus = liveInfo.Status
+		list[i].StopReason = liveInfo.StopReason
+		list[i].StopUserId = liveInfo.StopUserId
+		if liveInfo.StartAt != nil {
+			list[i].StartTime = liveInfo.StartAt.Unix()
+		}
+		if liveInfo.StopAt != nil {
+			list[i].StopTime = liveInfo.StopAt.Unix()
+		}
 		log.Infof("liveInfo: %v", liveInfo)
 	}
 	response.Data.List = list
@@ -853,4 +978,62 @@ func (*liveController) LiveUserList(context *gin.Context) {
 	response.Data.EndPage = endPage
 	response.Data.List = userInfoList
 	context.JSON(http.StatusOK, response)
+}
+
+type PutLikeRequest struct {
+	Count int64 `json:"count"`
+}
+
+type PutLikeResponse struct {
+	api.Response
+	Data struct {
+		Count int64 `json:"count"` //我在直播间内的点赞总数
+		Total int64 `json:"total"` //直播间的点赞总数
+	} `json:"data"`
+}
+
+func (*liveController) PutLike(ctx *gin.Context) {
+	log := logger.ReqLogger(ctx)
+	userInfo := ctx.MustGet(liveauth.UserCtxKey).(*liveauth.UserInfo)
+	req := PutLikeRequest{}
+	ctx.ShouldBindJSON(&req)
+	if req.Count == 0 {
+		req.Count = 1
+	}
+
+	liveId := ctx.Param("live_id")
+	liveInfo, err := live.GetService().LiveInfo(ctx, liveId)
+	if err != nil {
+		log.Errorf("get liveInfo info failed, err: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+	}
+
+	my, total, err := live.GetService().AddLike(ctx, liveId, userInfo.UserId, req.Count)
+	if err != nil {
+		log.Errorf("add like error %s", err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
+		return
+	}
+
+	u, err := user2.GetService().FindUser(ctx, userInfo.UserId)
+	if err == nil {
+		item := &notify.LikeNotifyItem{
+			LiveId: liveId,
+			UserId: userInfo.UserId,
+			Count:  req.Count,
+		}
+		go notify.SendNotifyToLive(ctx, u, liveInfo, notify.ActionTypeLikeNotify, item)
+	}
+
+	resp := &PutLikeResponse{
+		Response: api.SuccessResponse(log.ReqID()),
+		Data: struct {
+			Count int64 `json:"count"`
+			Total int64 `json:"total"`
+		}{
+			Count: my,
+			Total: total,
+		},
+	}
+	ctx.JSON(http.StatusOK, resp)
 }

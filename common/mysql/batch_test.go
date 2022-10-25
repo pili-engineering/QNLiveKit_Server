@@ -29,7 +29,7 @@ func TestBatchInsert(t *testing.T) {
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
-		Database: "qvm_sms_test",
+		Database: "live_test",
 	})
 
 	mysql.Get().DropTableIfExists(&BatchTest{})

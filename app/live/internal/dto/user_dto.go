@@ -5,7 +5,7 @@
 // @Date: 2022/5/23 11:17 上午
 // Copyright 2021 QINIU. All rights reserved
 
-package client
+package dto
 
 import "github.com/qbox/livekit/biz/model"
 

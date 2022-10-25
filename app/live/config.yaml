@@ -5,6 +5,7 @@ service:
   port: {{ port }}
 
 jwt_key: {{ jwt_key }}
+callback:
 
 mysqls:
   - host: 127.0.0.1
@@ -46,6 +47,8 @@ rtc_config:
   publish_key: {{ publish_key }}
   playback_url: https://{{xxx}}-playback.com
   hub: {{ 直播hub }}
+  security_type: none
+  publish_expire_s: 3600
   stream_pattern: qn_live_kit-%s
   publish_url: rtmp://{{xxx}}-publish.com
   publish_domain: {{xxx}}-publish.com

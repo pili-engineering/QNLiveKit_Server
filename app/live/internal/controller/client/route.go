@@ -20,4 +20,7 @@ func RegisterRoute(engine *gin.Engine) {
 	RegisterRelayRoutes(clientGroup)
 	RegisterLiveRoutes(clientGroup)
 	RegisterMicRoutes(clientGroup)
+	RegisterItemRoutes(clientGroup)
+	RegisterStatsRoutes(clientGroup)
+	RegisterGiftRoutes(clientGroup)
 }

@@ -104,7 +104,7 @@ func (s *RelayService) checkCanStartRelay(ctx context.Context, roomId string, us
 	liveService := GetService()
 	liveEntity, err := liveService.LiveInfo(ctx, roomId)
 	if err != nil {
-		log.Errorf("get live room %s error %v", roomId)
+		log.Errorf("get live room %s error %v", roomId, err)
 		return api.ErrNotFound
 	}
 	if liveEntity.Status != model.LiveStatusOn || liveEntity.AnchorId != userId {
@@ -112,7 +112,7 @@ func (s *RelayService) checkCanStartRelay(ctx context.Context, roomId string, us
 		return api.ErrNotFound
 	}
 
-	if liveEntity.RelaySessionId != "" {
+	if liveEntity.PkId != "" {
 		log.Errorf("live room (%s) is relaying", roomId)
 		return api.Error(log.ReqID(), api.ErrorCodeBadStatus, "live room already in relaying")
 	}
@@ -275,7 +275,7 @@ func (s *RelayService) GetRelayRoom(ctx context.Context, userId string, sid stri
 	} else if userId == relaySession.RecvUserId && liveRoom.LiveId == relaySession.RecvRoomId {
 		relayRoom = relaySession.InitRoomId
 	} else {
-		log.Errorf("user room (%s) not in relay session (%s)", liveRoom.LiveId, relaySession.ID)
+		log.Errorf("user room (%s) not in relay session (%s)", liveRoom.LiveId, relaySession.SID)
 		return nil, "", api.ErrNotFound
 	}
 

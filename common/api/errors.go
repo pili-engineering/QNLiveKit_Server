@@ -53,6 +53,15 @@ const (
 	ErrorCodeBadStatus      = 601
 	ErrorCodeDatabase       = 602
 	ErrorCodeTokenExpired   = 499
+
+	ErrorCodeUserAlreadyExisted = 10001 //用户已经存在
+
+	ErrorCodeLiveItemExceed = 20001 //直播间商品数量超过限制
+
+	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
+
+	ErrorCodeGiftPay        = 200002
+	ErrorCodeGiftPayFromBiz = 200003
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -63,3 +72,10 @@ var ErrTokenExpired = &Response{Code: ErrorCodeTokenExpired, Message: "Your toke
 var ErrInternal = &Response{Code: ErrorCodeInternal, Message: "Internal error"}
 var ErrDatabase = &Response{Code: ErrorCodeDatabase, Message: "Database error"}
 var ErrStatus = &Response{Code: ErrorCodeBadStatus, Message: "cant operate on this status"}
+
+var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "items exceed in live room"}
+
+var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}
+
+var ErrorGiftPay = &Response{Code: ErrorCodeGiftPay, Message: "PayGift Failure: Internal error"}
+var ErrorGiftPayFromBiz = &Response{Code: ErrorCodeGiftPayFromBiz, Message: "PayGift Failure: Biz Server error"}
