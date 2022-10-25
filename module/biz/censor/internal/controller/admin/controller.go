@@ -36,6 +36,7 @@ func RegisterRoutes() {
 	//censorGroup.GET("/live", censorController.SearchCensorLive)
 	//censorGroup.GET("/record", censorController.SearchRecordImage)
 	//censorGroup.POST("/audit", censorController.AuditRecordImage)
+	httpq.Handle(http.MethodPost, "/manager/censor/callback", censorController.CallbackCensorJob)
 
 	httpq.AdminHandle(http.MethodPost, "/censor/config", censorController.UpdateCensorConfig)
 	httpq.AdminHandle(http.MethodGet, "/censor/config", censorController.GetCensorConfig)
