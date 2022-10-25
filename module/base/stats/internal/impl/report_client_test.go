@@ -70,7 +70,7 @@ func saveStatsSingleLiveSetup() {
 		Default:  "live",
 		ReadOnly: true,
 	})
-
+	mysql2.GetLive().AutoMigrate(model.StatsSingleLiveEntity{})
 }
 
 func saveStatsSingleLiveTearDown() {
