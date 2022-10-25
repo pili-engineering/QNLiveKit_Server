@@ -39,7 +39,7 @@ func itemSetup() {
 		ReadOnly: true,
 	})
 
-	mysql.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{})
+	mysql.GetLive().AutoMigrate(model.ItemEntity{}, model.ItemDemonstrate{}, model.LiveEntity{}, model.ItemDemonstrateRecord{})
 
 	liveEntity := model.LiveEntity{
 		LiveId: testLiveId,
