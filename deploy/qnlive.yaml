@@ -68,7 +68,7 @@ pili:
   media_url: https://pili-medai.qnsdk.com
 
 cron:
-  single_task_node: 1
+  single_task_node: 2
 
 
 prome:
