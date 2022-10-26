@@ -1,10 +1,11 @@
 package prome
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -15,13 +16,10 @@ const (
 var (
 	// httpHistogram prometheus 模型
 	httpHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   "http_server",
-		Subsystem:   "",
-		Name:        "request",
-		Help:        "Histogram of response latency (seconds) of http handlers.",
-		ConstLabels: nil,
-		Buckets:     nil,
-	}, []string{"handler", "method", "code", "path"})
+		Namespace: "qnlive",
+		Name:      "http_api",
+		Help:      "Histogram of response latency (seconds) of http handlers.",
+	}, []string{"handler", "method", "code"})
 )
 
 // init 初始化prometheus模型
@@ -36,12 +34,10 @@ func Middleware() gin.HandlerFunc {
 		c.Next()
 
 		handler := c.HandlerName()
-		path := c.Request.URL.Path
 		httpHistogram.WithLabelValues(
 			handler,
 			c.Request.Method,
 			strconv.Itoa(c.Writer.Status()),
-			path,
 		).Observe(time.Since(start).Seconds())
 	}
 }
