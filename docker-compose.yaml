@@ -10,7 +10,6 @@ services:
     links:
       - mysql
       - redis
-    restart: always
     environment:
       WAIT_HOSTS: mysql:3306
       TZ: "Asia/Shanghai"
@@ -32,7 +31,6 @@ services:
     image: redis
   prometheus:
     image: prom/prometheus:v2.28.1
-    restart: always
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./deploy/.prometheus/data:/prometheus
@@ -46,7 +44,6 @@ services:
       PORT_PROMETHEUS: 9090
   grafana:
     image: grafana/grafana:latest
-    restart: always
     environment:
       TZ: "Asia/Shanghai"
       PORT_GRAFANA: 3000
