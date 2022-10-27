@@ -42,13 +42,13 @@ POST /server/gift/config
 删除指定的礼物配置。
 
 ## 路径
-DELETE /server/gift/config/{type}
+DELETE /server/gift/config/{gift_id}
 
 路径参数
 
 | 参数    | 类型       | 必填   | 说明   | 举例  |
 |-------|----------|  ----- |------|-----|
-| type  | integer  |  是 | 礼物类型 | 3   |
+| gift_id  | integer  |  是 | 礼物id | 3   |
 
 ## 请求头
 | 参数           | 说明            | 举例              |
@@ -73,7 +73,13 @@ DELETE /server/gift/config/{type}
 查看所有的礼物配置。
 
 ## 路径
-GET /server/gift/config
+GET /server/gift/config/{type}
+
+路径参数
+
+| 参数   | 类型  | 必填 | 说明                    | 举例 |
+|------|-----| ---- |-----------------------| ---- |
+| type | int | 是   | 类型 ID，type==-1时表示全部类型 |      |
 
 ## 请求头
 | 参数           | 说明            | 举例              |
@@ -94,6 +100,7 @@ GET /server/gift/config
     "data": [
         {
             "type": 1,          //礼物类型
+            "gift_id":3,        //礼物id
             "name": "红包",      //礼物名称
             "amount": 5,        //礼物金额，0 表示自定义金额,
             "img": "",          //礼物图片,
@@ -107,50 +114,11 @@ GET /server/gift/config
 }
 ```
 
-# 发送礼物
-直播间内用户，在直播间发送礼物。
-
-## 路径
-PUT /server/gift/live/{live_id}
-
-| 参数    | 类型   | 必填 | 说明      | 举例 |
-| ------- | ------       | ---- | --------- | ---- |
-| liveId | string       | 是   | 直播间 ID |      |
-
-
-## 请求头
-| 参数           | 说明            | 举例              |
-|----           | ---            | ---               |
-| Authorization | 鉴权token |      |
-
-
-## Body 参数
-```
-{
-    "biz_id":"",  //交易ID，唯一标识一次礼物发送，业务方生成
-    "user_id":"", //发送礼物的用户ID
-    "type":1,     //礼物类型，用户在礼物配置接口配置
-    "amount":99,  //礼物金额
-    "redo":false, //是否是重新发送 
-}
-```
-
-## 返回
-该接口正确处理请求时返回如下 JSON 数据
-```
-{
-    "request_id":"xxxxx", //请求ID
-    "code": 0,            //错误码：0，成功；其他，失败
-    "message": "success" //code 非0 时，错误原因描述
-}
-```
-
-
 # 查看直播间礼物列表
-查看直播间的礼物记录。
+查看直播间的礼物记录。只有主播才能查看。
 
 ## 路径
-GET /server/gift/live/{live_id}
+GET   /server/gift/list/user/{live_id}
 
 | 参数    | 类型   | 必填 | 说明      | 举例 |
 | ------- | ------       | ---- | --------- | ---- |
@@ -185,7 +153,101 @@ GET /server/gift/live/{live_id}
             {
                  "biz_id":"",  //交易ID，唯一标识一次礼物发送，业务方生成
                  "user_id":"", //发送礼物的用户ID
-                 "type":1,     //礼物类型，用户在礼物配置接口配置
+                  "live_id":""// 直播间ID
+                  "type":1,     //礼物类型，用户在礼物配置接口配置
+                 "gift_id":1, //礼物id，用户在礼物配置接口配置
+                 "amount":99,  //礼物金额
+                 "created_at":"2022-09-01 00:00:00", //发送时间
+            }
+        ]
+    }
+}
+```
+
+
+# 查看主播礼物列表
+查看直播间的礼物记录。只有主播才能查看。
+
+## 路径
+GET  /server/gift/list/anchor/{anchor_id}
+
+## 请求头
+| 参数           | 说明            | 举例              |
+|----           | ---            | ---               |
+| Authorization | 鉴权token |      |
+
+## Query 参数
+
+| 参数         | 类型      | 必填  | 说明   | 举例 |
+|------------|---------|-----|------| ---- |
+| page_num   | integer | 否   | 页码   |      |
+| page_size  | integer | 否   | 分页大小 |      |
+
+
+## 返回
+该接口正确处理请求时返回如下 JSON 数据
+```
+{
+    "request_id":"xxxxx", //请求ID
+    "code": 0,            //错误码：0，成功；其他，失败
+    "message": "success" //code 非0 时，错误原因描述
+    "data":{
+        "total_count":100, //总数
+        "page_total": 5,   //总页数
+        "end_page": false, //当前是否最后一页
+        "list":[
+            {
+                 "biz_id":"",  //交易ID，唯一标识一次礼物发送，业务方生成
+                 "user_id":"", //发送礼物的用户ID
+                  "live_id":""// 直播间ID
+                  "type":1,     //礼物类型，用户在礼物配置接口配置
+                 "gift_id":1, //礼物id，用户在礼物配置接口配置
+                 "amount":99,  //礼物金额
+                 "created_at":"2022-09-01 00:00:00", //发送时间
+            }
+        ]
+    }
+}
+```
+
+
+# 查看用户打赏礼物列表
+查看直播间的礼物记录。
+
+## 路径
+GET   /server/gift/list/user/{user_id}
+
+## 请求头
+| 参数           | 说明            | 举例              |
+|----           | ---            | ---               |
+| Authorization | 鉴权token |      |
+
+## Query 参数
+
+| 参数         | 类型      | 必填  | 说明   | 举例 |
+|------------|---------|-----|------| ---- |
+| page_num   | integer | 否   | 页码   |      |
+| page_size  | integer | 否   | 分页大小 |      |
+
+
+## 返回
+该接口正确处理请求时返回如下 JSON 数据
+```
+{
+    "request_id":"xxxxx", //请求ID
+    "code": 0,            //错误码：0，成功；其他，失败
+    "message": "success" //code 非0 时，错误原因描述
+    "data":{
+        "total_count":100, //总数
+        "page_total": 5,   //总页数
+        "end_page": false, //当前是否最后一页
+        "list":[
+            {
+                 "biz_id":"",  //交易ID，唯一标识一次礼物发送，业务方生成
+                 "user_id":"", //发送礼物的用户ID
+                  "live_id":""// 直播间ID
+                  "type":1,     //礼物类型，用户在礼物配置接口配置
+                 "gift_id":1, //礼物id，用户在礼物配置接口配置
                  "amount":99,  //礼物金额
                  "created_at":"2022-09-01 00:00:00", //发送时间
             }
