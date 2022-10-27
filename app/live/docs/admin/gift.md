@@ -42,13 +42,13 @@ POST /admin/gift/config
 删除指定的礼物配置。
 
 ## 路径
-DELETE /admin/gift/config/{type}
+DELETE /admin/gift/config/{gift_id}
 
 路径参数
 
 | 参数    | 类型       | 必填   | 说明   | 举例  |
 |-------|----------|  ----- |------|-----|
-| type  | integer  |  是 | 礼物类型 | 3   |
+| gift_id  | integer  |  是 | 礼物id | 3   |
 
 ## 请求头
 | 参数           | 说明            | 举例              |
@@ -73,7 +73,13 @@ DELETE /admin/gift/config/{type}
 查看所有的礼物配置。
 
 ## 路径
-GET /admin/gift/config
+GET /admin/gift/config/{type}
+
+路径参数
+
+| 参数   | 类型  | 必填 | 说明                    | 举例 |
+|------|-----| ---- |-----------------------| ---- |
+| type | int | 是   | 类型 ID，type==-1时表示全部类型 |      |
 
 ## 请求头
 | 参数           | 说明            | 举例              |
@@ -94,6 +100,7 @@ GET /admin/gift/config
     "data": [
         {
             "type": 1,          //礼物类型
+            "gift_id":3,        //礼物id
             "name": "红包",      //礼物名称
             "amount": 5,        //礼物金额，0 表示自定义金额,
             "img": "",          //礼物图片,
