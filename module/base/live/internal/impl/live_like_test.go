@@ -124,8 +124,8 @@ func TestService_cacheLike(t *testing.T) {
 
 	ctx := context.Background()
 	now := time.Now()
-	liveId1 := fmt.Sprintf("live_%d_1", now.Unix())
-	liveId2 := fmt.Sprintf("live_%d_2", now.Unix())
+	liveId1 := fmt.Sprintf("live_%d_1", now.UnixNano())
+	liveId2 := fmt.Sprintf("live_%d_2", now.UnixNano())
 
 	userId1 := "user_1"
 	userId2 := "user_2"
@@ -182,7 +182,7 @@ func TestService_getRoomLikes(t *testing.T) {
 
 	ctx := context.Background()
 	now := time.Now()
-	liveId1 := fmt.Sprintf("live_%d_1", now.Unix())
+	liveId1 := fmt.Sprintf("live_%d_1", now.UnixNano())
 
 	userId1 := "user_1"
 	userId2 := "user_2"

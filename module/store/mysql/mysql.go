@@ -108,7 +108,7 @@ func get(name string, xReqID ...string) *gorm.DB {
 	client := clientMap[name]
 
 	db := client.New()
-	db.LogMode(true)
+	//db.LogMode(true)
 	db.SetLogger(Logger{olog.New(os.Stdout, "", 0), reqID})
 	return db
 
