@@ -332,14 +332,14 @@ func TestService_flushCacheLikes(t *testing.T) {
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
-		Database: "live",
+		Database: "live_test",
 		Default:  "live",
 	}, &mysql.ConfigStructure{
 		Host:     "localhost",
 		Port:     3306,
 		Username: "root",
 		Password: "123456",
-		Database: "live",
+		Database: "live_test",
 		Default:  "live",
 		ReadOnly: true,
 	})
