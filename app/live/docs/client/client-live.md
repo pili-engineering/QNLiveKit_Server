@@ -612,7 +612,7 @@ GET /client/live/room/user_list
 用户对直播间进行点赞。只有加入直播间的用户才能对直播间进行点赞。
 
 ## 路径
-PUT /client/live/{live_id}/like
+PUT /client/live/room/{live_id}/like
 
 路径参数
 
