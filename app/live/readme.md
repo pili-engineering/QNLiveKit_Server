@@ -192,7 +192,7 @@ mysqls:
 * 互动直播服务使用mysql 进行业务数据存储。
 * 支持配置多个数据库，使用读写分离模式。
 
-## 2.3 面向服务的鉴权配置
+## 2.4 面向服务的鉴权配置
 ```
 mac_config:
   enable: true
@@ -203,7 +203,7 @@ mac_config:
 * 面向服务端的接口，使用 ak/sk 的鉴权方式。
 * enable：true，开启鉴权；false，关闭鉴权。如果互动直播服务，与需要调用互动直播服务接口的其他服务，在同一个安全局域网内，可以关闭服务端接口的鉴权。
 
-## 2.4 im_config
+## 2.5 im_config
 ```
 im_config:
   app_id: {{ im_app_id }}
@@ -214,7 +214,7 @@ im_config:
 * 互动直播服务，使用七牛IM 作为即时通信消息服务。
 * 参考 [IM服务接入指南](https://developer.qiniu.com/IM/8332/startim) 与 [IM服务端接入指南](https://developer.qiniu.com/IM/8102/im-service-integration-guide)
 
-## 2.5 rtc_config
+## 2.6 rtc_config
 ```
 rtc_config:
   app_id: {{ app_id }}
@@ -245,7 +245,7 @@ rtc_config:
 | 限时鉴权   | expiry        | 使用配置的key 鉴权。从【直播空间设置】获取key | 同上                              |
 | 限时鉴权SK | expiry_sk     | 使用RTC 用户的SK 鉴权。无需配置，留空。    | 同上                              |
 
-##Prometheus系统监控配置
+## 2.7 Prometheus系统监控配置
 ```
 prome_config:
   client_mode: {{client_mode}}
@@ -263,7 +263,7 @@ prome_config:
      job 抓取任务名称，同时会在对应抓取的指标中加了一个 label(job=job_name)
      interval_s 抓取任务时间间隔
 
-##cron_config
+##2.8 cron_config
 
 ```
 cron_config:
