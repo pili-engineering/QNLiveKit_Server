@@ -87,12 +87,11 @@ func initAllService() {
 	callback.InitService(config.AppConfig.Callback)
 	report.InitService()
 	trace.InitService(trace.Config{
-		IMAppID:    config.AppConfig.ImConfig.AppId,
-		RTCAppId:   config.AppConfig.RtcConfig.AppId,
-		PiliHub:    config.AppConfig.RtcConfig.Hub,
-		AccessKey:  config.AppConfig.RtcConfig.AccessKey,
-		SecretKey:  config.AppConfig.RtcConfig.SecretKey,
-		ReportHost: config.AppConfig.ReportHost,
+		IMAppID:   config.AppConfig.ImConfig.AppId,
+		RTCAppId:  config.AppConfig.RtcConfig.AppId,
+		PiliHub:   config.AppConfig.RtcConfig.Hub,
+		AccessKey: config.AppConfig.RtcConfig.AccessKey,
+		SecretKey: config.AppConfig.RtcConfig.SecretKey,
 	})
 	live.InitService(live.Config{
 		AccessKey: config.AppConfig.RtcConfig.AccessKey,

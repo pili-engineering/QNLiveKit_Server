@@ -224,9 +224,9 @@ func (c *CensorService) SearchCensorLive(ctx context.Context, isReview *int, pag
 	lives := make([]model.LiveEntity, 0)
 	var db2 *gorm.DB
 	if isReview == nil {
-		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count >= 0")
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count >= 0").Order("last_censor_time desc")
 	} else if *isReview == IsReviewNo {
-		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor)
+		db2 = db.Model(&model.LiveEntity{}).Where("unreview_censor_count > 0").Where("stop_reason != ?", model.LiveStopReasonCensor).Order("last_censor_time desc")
 	}
 	err = db2.Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
 	err = db2.Count(&totalCount).Error
