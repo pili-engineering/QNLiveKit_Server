@@ -3,12 +3,11 @@ package trace
 import "context"
 
 type Config struct {
-	IMAppID    string
-	RTCAppId   string
-	PiliHub    string
-	AccessKey  string
-	SecretKey  string
-	ReportHost string
+	IMAppID   string
+	RTCAppId  string
+	PiliHub   string
+	AccessKey string
+	SecretKey string
 }
 
 var client *Client

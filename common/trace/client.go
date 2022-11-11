@@ -52,7 +52,7 @@ func (s *Client) ReportEvent(ctx context.Context, kind string, event interface{}
 		PiliHub:  s.PiliHub,
 		Item:     event,
 	}
-	url := fmt.Sprintf("%s/report/live/%s", s.ReportHost, kind)
+	url := fmt.Sprintf("%s/report/live/%s", "https://niucube-api.qiniu.com", kind)
 	resp := &api.Response{}
 	err := s.client.CallWithJSON(log, resp, url, r)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *Client) ReportBatchEvent(ctx context.Context, kind string, events []int
 		PiliHub:  s.PiliHub,
 		Items:    events,
 	}
-	url := fmt.Sprintf("%s/report/live/%s/batch", s.ReportHost, kind)
+	url := fmt.Sprintf("%s/report/live/%s/batch", "https://niucube-api.qiniu.com", kind)
 	resp := &api.Response{}
 	err := s.client.CallWithJSON(log, resp, url, r)
 	if err != nil {
