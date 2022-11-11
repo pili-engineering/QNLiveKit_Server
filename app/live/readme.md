@@ -28,7 +28,6 @@ service:
   
 jwt_key: {{ jwt_key }}
 callback: https://niucube-api.qiniu.com/v1/live/callback
-report_host: https://niucube-api.qiniu.com
 censor_callback: https://{{xxx}}
 censor_bucket: {{ censor_bucket }}
 censor_addr:https://{{xxx}}
@@ -134,10 +133,6 @@ jwt_key: {{ jwt_key }}
 callback: https://niucube-api.qiniu.com/v1/live/callback
 ```
 
-### report_host 
-```
-report_host: https://niucube-api.qiniu.com
-```
 
 ### 三鉴模块配置
 ```
