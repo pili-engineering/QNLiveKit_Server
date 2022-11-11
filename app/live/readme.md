@@ -25,8 +25,18 @@ node_id: {{ nodeId }}
 service:
   host: {{ host }}
   port: {{ port }}
-
+  
 jwt_key: {{ jwt_key }}
+callback: https://niucube-api.qiniu.com/v1/live/callback
+report_host: https://niucube-api.qiniu.com
+censor_callback: https://{{xxx}}
+censor_bucket: {{ censor_bucket }}
+censor_addr:https://{{xxx}}
+gift_addr: https://{{xxx}}
+
+cache_config:
+  type: {{type}}
+  addr: {{host:ip}}
 
 mysqls:
   - host: 127.0.0.1
@@ -77,6 +87,19 @@ rtc_config:
   flv_play_url: https://{{xxx}}-hdl.com
   hls_play_url: https://{{xxx}}-hls.com
 
+prome_config:
+  client_mode: pusher
+  exporter_config:
+    listen_addr: ":9200"  
+  pusher_config:
+    url: "https://{{xxx}}"
+    job: live
+    instance: live_{{.node}}
+    interval_s: 10
+
+cron_config:
+  single_task_node: 1
+
 ```
 ## 2.1 基本配置
 ### nodeId
@@ -106,7 +129,43 @@ jwt_key: {{ jwt_key }}
 * 字符串
 * 用于客户端鉴权token 的加解密
 
-## 2.2 数据库配置
+###callback
+```
+callback: https://niucube-api.qiniu.com/v1/live/callback
+```
+
+### report_host 
+```
+report_host: https://niucube-api.qiniu.com
+```
+
+### 三鉴模块配置
+```
+censor_callback: https://{{xxx}}
+censor_bucket: {{ censor_bucket }}
+censor_addr: https://{{xxx}}
+```
+* censor_callback：AI审核结果回调地址，一般为项目部署地址
+* censor_bucket: AI审核疑似违规照片的存储bucket
+* censor_addr: bucket内存储文件的外链域名
+
+### gift_addr
+```
+gift_addr: https://{{xxx}}
+```
+* 支付模块，发送礼物请求该接口完成支付
+
+## 2.2 Redis 配置
+```
+cache_config:
+    type: {{type}}
+    addr: {{host:ip}}
+```
+
+* type为cluster时，为集群模式
+* type为 node时 ，单机模式
+
+## 2.3 数据库配置
 ```
 mysqls:
   - host: 127.0.0.1
@@ -133,7 +192,7 @@ mysqls:
 * 互动直播服务使用mysql 进行业务数据存储。
 * 支持配置多个数据库，使用读写分离模式。
 
-## 2.3 面向服务的鉴权配置
+## 2.4 面向服务的鉴权配置
 ```
 mac_config:
   enable: true
@@ -144,7 +203,7 @@ mac_config:
 * 面向服务端的接口，使用 ak/sk 的鉴权方式。
 * enable：true，开启鉴权；false，关闭鉴权。如果互动直播服务，与需要调用互动直播服务接口的其他服务，在同一个安全局域网内，可以关闭服务端接口的鉴权。
 
-## 2.4 im_config
+## 2.5 im_config
 ```
 im_config:
   app_id: {{ im_app_id }}
@@ -155,7 +214,7 @@ im_config:
 * 互动直播服务，使用七牛IM 作为即时通信消息服务。
 * 参考 [IM服务接入指南](https://developer.qiniu.com/IM/8332/startim) 与 [IM服务端接入指南](https://developer.qiniu.com/IM/8102/im-service-integration-guide)
 
-## 2.5 rtc_config
+## 2.6 rtc_config
 ```
 rtc_config:
   app_id: {{ app_id }}
@@ -180,8 +239,33 @@ rtc_config:
 * 直播相关地址配置，参考：[直播云](https://developer.qiniu.com/pili)
 * 直播推流鉴权说明：目前直播推流鉴权，支持三种方式：无鉴权，限时鉴权，限时鉴权SK，不同鉴权模式的配置方式如下
 
-鉴权模式 | security_type | publish_key | publish_expire_s
--------| --------------| ------------ | --------------
-无鉴权  |   none        | 无需指定，留空  | 过期时间秒。如：3600 表示 一小时后过期，推流URL 过期
-限时鉴权 |  expiry      | 使用配置的key 鉴权。从【直播空间设置】获取key | 同上
-限时鉴权SK | expiry_sk  | 使用RTC 用户的SK 鉴权。无需配置，留空。| 同上
+| 鉴权模式   | security_type | publish_key                | publish_expire_s                |
+|--------|---------------|----------------------------|---------------------------------|
+| 无鉴权    | none          | 无需指定，留空                    | 过期时间秒。如：3600 表示 一小时后过期，推流URL 过期 |
+| 限时鉴权   | expiry        | 使用配置的key 鉴权。从【直播空间设置】获取key | 同上                              |
+| 限时鉴权SK | expiry_sk     | 使用RTC 用户的SK 鉴权。无需配置，留空。    | 同上                              |
+
+## 2.7 Prometheus系统监控配置
+```
+prome_config:
+  client_mode: {{client_mode}}
+  exporter_config:
+    listen_addr: ":9200"  
+  pusher_config:
+    url: "https://{{xxx}}"
+    job: live
+    instance: live_{{.node}}
+    interval_s: 10
+```
+* client_mode 支持 pusher/exporter 两种
+  * pusher_config:
+     url 抓取任务读取数据 请求URI路径
+     job 抓取任务名称，同时会在对应抓取的指标中加了一个 label(job=job_name)
+     interval_s 抓取任务时间间隔
+
+##2.8 cron_config
+
+```
+cron_config:
+  single_task_node: 1
+```
