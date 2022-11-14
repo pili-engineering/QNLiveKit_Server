@@ -1,4 +1,5 @@
-#1. 项目编译运行
+# 1. 项目编译运行
+
 ## 1.1 项目编译
 * 本项目使用go 1.16 编译
 ```
@@ -17,7 +18,8 @@ go build
 ./live -f config.yaml 2>&1 > live.log &
 ```
 
-#2. 配置文件
+# 2. 配置文件
+
 * 互动直播使用 yaml 格式的配置文件，文件内容如下所示：
 ```
 node_id: {{ nodeId }}
@@ -128,37 +130,35 @@ jwt_key: {{ jwt_key }}
 * 字符串
 * 用于客户端鉴权token 的加解密
 
-###callback
+### callback
+
 ```
-callback: https://niucube-api.qiniu.com/v1/live/callback
+callback: {{ callback_addrs }}
 ```
 
+* 配置低代码服务的回调地址，该地址由业务服务来实现。
+* 低代码服务会将状态信息，通过回调的方式，通知给业务服务。
 
-### 三鉴模块配置
-```
-censor_callback: https://{{xxx}}
-censor_bucket: {{ censor_bucket }}
-censor_addr: https://{{xxx}}
-```
-* censor_callback：AI审核结果回调地址，一般为项目部署地址
-* censor_bucket: AI审核疑似违规照片的存储bucket
-* censor_addr: bucket内存储文件的外链域名
 
-### gift_addr
-```
-gift_addr: https://{{xxx}}
-```
-* 支付模块，发送礼物请求该接口完成支付
 
 ## 2.2 Redis 配置
 ```
 cache_config:
     type: {{type}}
-    addr: {{host:ip}}
+    addr: {{ip:port}}
+    addrs:
+    	- {{ip:port}}
+    	- {{ip:port}}
 ```
 
-* type为cluster时，为集群模式
-* type为 node时 ，单机模式
+低代码服务，使用redis 作为缓存。支持redis 单节点模式，与集群模式。
+
+* type，redis 模式，可选值如下
+  * node：单节点模式。
+  * cluster：集群模式
+
+* addr：配置type为node时，必须配置单节点redis 的地址。
+* addrs：配置type为cluster时，必须配置的redis集群地址列表。
 
 ## 2.3 数据库配置
 ```
@@ -252,15 +252,57 @@ prome_config:
     instance: live_{{.node}}
     interval_s: 10
 ```
-* client_mode 支持 pusher/exporter 两种
-  * pusher_config:
-     url 抓取任务读取数据 请求URI路径
-     job 抓取任务名称，同时会在对应抓取的指标中加了一个 label(job=job_name)
-     interval_s 抓取任务时间间隔
+低代码服务运行过程中，生成prometheus 监控数据指标。
 
-##2.8 cron_config
+支持两种方式的指标导出。
+
+* client_mode：指标导出模式配置，支持的模式如下
+  * exporter：exporter 模式，开启http 监听，由prometheus 服务来拉取。
+  * pusher：pusher模式，主动向prometheus-gateway 推送指标。
+* exporter_config：在client_mode 为 exporter 时，需要配置。
+  * listen_addr：监听的端口。
+* pusher_config:
+  * url：prometheus-gateway 的指标收集地址。
+  * job：任务名称
+  * instance：live 服务的实例ID。
+  * interval_s：推送间隔。单位：秒。
+
+## 2.8 cron_config
+
+live 服务，有一些后台任务运行。
 
 ```
 cron_config:
   single_task_node: 1
 ```
+
+* single_task_node：单任务运行节点的ID。有些任务，需要全局单线程执行，只有节点ID 等于 single_task_node 的节点，才会运行单线程的任务。
+
+
+
+### 2.9 三鉴模块配置
+
+live 服务，使用七牛的AI 审核功能，对直播内容进行内容审核。
+
+```
+censor_callback: https://{{host}}
+censor_bucket: {{ censor_bucket }}
+censor_addr: https://{{xxx}}
+```
+
+* censor_callback：AI审核结果回调地址，配置为项目的域名。
+* censor_bucket: AI审核疑似违规照片的存储bucket。
+* censor_addr: bucket内存储文件的外链域名。
+
+* 存储的bucket，与外链域名配置，参考 [对象存储使用](https://developer.qiniu.com/kodo/8452/kodo-console-guide)
+
+### 2.10 礼物模块配置
+
+live 服务，支持直播间礼物发送功能。
+
+```
+gift_addr: https://{{xxx}}
+```
+
+* gift_addr：礼物支付的回调接口。礼物发送之前，需要业务服务提供礼物支付功能。live 服务在发送礼物之前，回调该接口，完成实际支付。只有支付成功的礼物，才会被发送。
+
