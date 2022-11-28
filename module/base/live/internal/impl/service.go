@@ -511,6 +511,28 @@ func (s *Service) SearchLive(context context.Context, keyword string, flag, page
 	return
 }
 
+func (s *Service) listOnlineRooms(context context.Context) ([]string, error) {
+	log := logger.ReqLogger(context)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+	sql := "select live_id from live_entities where status = 1"
+
+	type result struct {
+		LiveId string `json:"live_id"`
+	}
+	liveIds := make([]result, 0)
+	if err := db.Raw(sql).Scan(&liveIds).Error; err != nil {
+		log.Errorf("listOnlineRooms error %v", err)
+		return nil, err
+	}
+
+	ret := make([]string, 0, len(liveIds))
+	for _, liveId := range liveIds {
+		ret = append(ret, liveId.LiveId)
+	}
+
+	return ret, nil
+}
+
 func (s *Service) updateLiveStatus(context context.Context, liveId string, status int) (err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLive(log.ReqID())

@@ -63,6 +63,8 @@ type IService interface {
 	AddLike(ctx context.Context, liveId string, userId string, count int64) (my, total int64, err error)
 
 	FlushCacheLikes(ctx context.Context)
+
+	KeepCacheLikes(ctx context.Context)
 }
 
 type CreateLiveRequest struct {
