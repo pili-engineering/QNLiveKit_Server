@@ -32,7 +32,7 @@ const (
 	liveLikeRoomsFmt = "like_rooms:%d"
 	liveLikeUsersFmt = "like_users:%s:%d"
 
-	liveLikeTTL          = 48 * time.Hour
+	liveLikeTTL          = 7 * 24 * time.Hour
 	liveLikeRoomsTTL     = time.Hour
 	liveLikeRoomUsersTTL = time.Hour
 )
@@ -324,4 +324,18 @@ func (s *Service) getRoomLikeUsers(ctx context.Context, now time.Time) (map[stri
 	}
 
 	return ret, nil
+}
+
+func (s *Service) KeepCacheLikes(ctx context.Context) {
+	log := logger.ReqLogger(ctx)
+	liveIds, err := s.listOnlineRooms(ctx)
+	if err != nil {
+		log.Errorf("listOnlineRooms error %v", err)
+		return
+	}
+
+	for _, liveId := range liveIds {
+		key := s.liveLikeKey(liveId)
+		cache.Client.Expire(key, liveLikeTTL)
+	}
 }

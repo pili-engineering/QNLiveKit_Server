@@ -105,6 +105,23 @@ func Run() {
 
 		go liveService.FlushCacheLikes(ctx)
 	}
+
+	c.AddFunc("0 0 0 * * *", func() {
+		if !isSingleTaskNode() {
+			return
+		}
+
+		now := time.Now()
+		nowStr := now.Format(timestamp.TimestampFormatLayout)
+
+		log := logger.New("KeepCacheLikes")
+		log.WithFields(map[string]interface{}{"start": nowStr})
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
+
+		liveService.KeepCacheLikes(ctx)
+	})
 	c.Start()
 }
 

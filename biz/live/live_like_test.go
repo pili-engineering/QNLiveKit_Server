@@ -358,3 +358,7 @@ func TestService_flushCacheLikes(t *testing.T) {
 	s := &Service{}
 	s.flushCacheLikes(context.Background(), from, to)
 }
+
+func TestService_KeepCacheLikes(t *testing.T) {
+
+}
