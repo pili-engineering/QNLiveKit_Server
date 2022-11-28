@@ -69,4 +69,13 @@ func RegisterCrons() {
 
 		impl.GetInstance().FlushCacheLikes(ctx)
 	})
+
+	cron.AddSingleTaskFunc("@every 1h", func() {
+		log := logger.New("KeepCacheLikes")
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, logger.LoggerCtxKey, log)
+
+		impl.GetInstance().KeepCacheLikes(ctx)
+	})
 }
