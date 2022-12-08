@@ -37,6 +37,7 @@ func RegisterRoutes() {
 	httpq.ClientHandle(http.MethodGet, "/gift/list/anchor", GiftController.ListGiftByAnchorId)
 	httpq.ClientHandle(http.MethodGet, "/gift/list/user", GiftController.ListGiftByUserId)
 	httpq.ClientHandle(http.MethodPost, "/gift/send", GiftController.SendGift)
+	httpq.Handle(http.MethodPost, "/manager/gift/test", GiftController.Test)
 }
 
 // GetGiftConfig 获取礼物配置
@@ -211,22 +212,20 @@ type SendResponse struct {
 	Data *impl.SendGiftResponse `json:"data"`
 }
 
-//// Test 用于测试的礼物支付
-//func (c *giftController) Test(ctx *gin.Context) {
-//	log := logger.ReqLogger(ctx)
-//	request := &impl.PayGiftRequest{}
-//	if err := ctx.BindJSON(request); err != nil {
-//		log.Errorf("bind request error %s", err.Error())
-//		ctx.AbortWithStatusJSON(http.StatusOK, rest.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, &impl.PayGiftResponse{
-//		Response: api.Response{
-//			RequestId: log.ReqID(),
-//			Code:      0,
-//			Message:   "success",
-//		},
-//		Status: model.SendGiftStatusSuccess,
-//	})
-//}
+// Test 用于测试的礼物支付
+func (c *giftController) Test(ctx *gin.Context) (interface{}, error) {
+	log := logger.ReqLogger(ctx)
+	request := &impl.PayGiftRequest{}
+	if err := ctx.BindJSON(request); err != nil {
+		log.Errorf("bind request error %s", err.Error())
+		return nil, rest.ErrBadRequest.WithMessage(err.Error())
+	}
+	res := &GiftPayTestResp{
+		Status: model.SendGiftStatusSuccess,
+	}
+	return res, nil
+}
+
+type GiftPayTestResp struct {
+	Status int `json:"status"`
+}

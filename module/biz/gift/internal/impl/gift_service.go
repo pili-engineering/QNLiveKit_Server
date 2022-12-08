@@ -61,7 +61,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		}
 		return nil, err
 	}
-
+	status := payResp.Data.Status
 	sResp := &SendGiftResponse{
 		LiveId:   req.LiveId,
 		UserId:   userId,
@@ -69,14 +69,14 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		GiftId:   req.GiftId,
 		Amount:   req.Amount,
 		AnchorId: liveEntity.AnchorId,
-		Status:   payResp.Status,
+		Status:   status,
 	}
-	err = s.UpdateGiftStatus(context, bizId, payResp.Status)
+	err = s.UpdateGiftStatus(context, bizId, status)
 	if err != nil {
 		log.Errorf("update gift status error %s", err.Error())
 		//该错误没有返回
 	}
-	if payResp.Status == model.SendGiftStatusFailure {
+	if status == model.SendGiftStatusFailure {
 		return sResp, ErrGiftPay
 	}
 	notifyItem := BroadcastGiftNotifyItem{
@@ -107,8 +107,14 @@ type PayGiftRequest struct {
 }
 
 type PayGiftResponse struct {
-	rest.Response
-	Status int
+	RequestId string          `json:"request_id"` //请求ID
+	Code      int             `json:"code"`       //错误码，0 成功，其他失败
+	Message   string          `json:"message"`    //错误信息
+	Data      GiftPayTestResp `json:"data"`
+}
+
+type GiftPayTestResp struct {
+	Status int `json:"status"`
 }
 
 type SendGiftResponse struct {
