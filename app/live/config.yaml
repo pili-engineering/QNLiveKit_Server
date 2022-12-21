@@ -6,6 +6,14 @@ service:
 
 jwt_key: {{ jwt_key }}
 callback:
+censor_callback: https://{{xxx}}
+censor_bucket: {{ censor_bucket }}
+censor_addr: https://{{xxx}}
+gift_addr: https://{{xxx}}
+
+cache_config:
+  type: {{type}}
+  addr: {{host:ip}}
 
 mysqls:
   - host: 127.0.0.1
@@ -55,3 +63,16 @@ rtc_config:
   rtmp_play_url: rtmp://{{xxx}}-rtmp.com
   flv_play_url: https://{{xxx}}-hdl.com
   hls_play_url: https://{{xxx}}-hls.com
+
+prome_config:
+  client_mode: pusher
+  exporter_config:
+    listen_addr: ":9200"
+  pusher_config:
+    url: "https://{{xxx}}"
+    job: live
+    instance: live_{{.node}}
+    interval_s: 10
+
+cron_config:
+  single_task_node: 1
