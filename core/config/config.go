@@ -55,7 +55,7 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	url := "http://127.0.0.1:8080" + "/v1/app/config/cache/" + appId
 	ret := &QiniuCinfig{}
 
-	fileName := "qiniuConfig" + appId
+	fileName := "qiniuConfig"
 	err = client.GetCall(log, ret, url)
 	var data []byte
 	if err != nil || ret.Code != 0 {
