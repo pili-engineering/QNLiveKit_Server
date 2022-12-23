@@ -1,14 +1,19 @@
 package config
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/qbox/livekit/utils/logger"
 )
 
 func TestLoadConfig(t *testing.T) {
 	path := "config.yaml"
-	c, err := LoadConfig(path)
+	ctx := context.Background()
+	log := logger.ReqLogger(ctx)
+	c, err := LoadConfig(log, path)
 	assert.Nil(t, err)
 	assert.NotNil(t, c)
 }
@@ -26,7 +31,9 @@ func TestConfig_Sub(t *testing.T) {
 		{"", "config.yaml", args{key: "service"}},
 	}
 	for _, tt := range tests {
-		c, _ := LoadConfig(tt.path)
+		ctx := context.Background()
+		log := logger.ReqLogger(ctx)
+		c, _ := LoadConfig(log, tt.path)
 		t.Run(tt.name, func(t *testing.T) {
 			assert.NotNil(t, c.Sub(tt.args.key), "Sub(%v)", tt.args.key)
 		})
@@ -35,7 +42,9 @@ func TestConfig_Sub(t *testing.T) {
 
 func TestConfig_Unmarshal(t *testing.T) {
 	path := "config.yaml"
-	c, _ := LoadConfig(path)
+	ctx := context.Background()
+	log := logger.ReqLogger(ctx)
+	c, _ := LoadConfig(log, path)
 
 	sub := c.Sub("service")
 	assert.NotNil(t, sub)
