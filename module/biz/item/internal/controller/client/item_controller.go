@@ -58,7 +58,7 @@ func RegisterRoutes() {
 	httpq.ClientHandle(http.MethodPost, "/item/demonstrate/:liveId/:itemId", ItemController.PostItemDemonstrate)
 	httpq.ClientHandle(http.MethodPost, "/item/demonstrate/start/:liveId/:itemId", ItemController.PostStartRecordDemonstrate)
 	httpq.ClientHandle(http.MethodDelete, "/item/demonstrate/:liveId", ItemController.DeleteItemDemonstrate)
-	httpq.ClientHandle(http.MethodGet, "/demonstrate/:liveId", ItemController.GetItemDemonstrate)
+	httpq.ClientHandle(http.MethodGet, "/item/demonstrate/:liveId", ItemController.GetItemDemonstrate)
 
 	httpq.ClientHandle(http.MethodGet, "/item/demonstrate/record/:liveId", ItemController.ListLiveRecordVideo)
 	httpq.ClientHandle(http.MethodGet, "/item/demonstrate/record/:liveId/:itemId", ItemController.ListrecordVideo)
