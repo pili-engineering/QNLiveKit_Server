@@ -39,9 +39,11 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 		return nil, fmt.Errorf("read config file %s error %v", path, err)
 	}
 
+	ak := v.GetString("account.access_key")
+	sk := v.GetString("account.secret_key")
 	mac := &qiniumac.Mac{
-		AccessKey: "ak",
-		SecretKey: []byte("sk"),
+		AccessKey: ak,
+		SecretKey: []byte(sk),
 	}
 	tr := qiniumac.NewTransport(mac, nil)
 	httpClient := &http.Client{
