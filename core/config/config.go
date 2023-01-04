@@ -41,6 +41,8 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 
 	ak := v.GetString("account.access_key")
 	sk := v.GetString("account.secret_key")
+	appId := v.GetString("admin.app_id")
+	adminUrl := v.GetString("admin.url")
 	mac := &qiniumac.Mac{
 		AccessKey: ak,
 		SecretKey: []byte(sk),
@@ -53,8 +55,7 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	client := &rpc.Client{
 		Client: httpClient,
 	}
-	appId := "appId"
-	url := "http://127.0.0.1:8080" + "/v1/app/config/cache/" + appId
+	url := adminUrl + "/v1/app/config/cache/" + appId
 	ret := &QiniuCinfig{}
 
 	fileName := "qiniuConfig"
