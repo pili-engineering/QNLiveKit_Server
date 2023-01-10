@@ -90,8 +90,8 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 	if str == "null" || str == "0" {
 		return nil
 	}
-
-	t.Time, err = dateparse.ParseAny(str)
+	timeZone := time.FixedZone("UTC", int(8*time.Hour/time.Second))
+	t.Time, err = dateparse.ParseIn(str, timeZone)
 	return err
 }
 
