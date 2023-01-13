@@ -47,7 +47,6 @@ PILI_PUB_KEY = {{ publish_key }}
  
 
 
-
 #2. 配置文件
 * 互动直播使用 yaml 格式的配置文件，文件内容如下所示：
 
@@ -139,7 +138,7 @@ prome:
 callback:
   addr: https://niucube-api.qiniu.com/v1/live/callback
 
-censor:
+kodo:
   callback: https://{{xxx}}
   bucket: {{ censor_bucket }}
   addr: https://{{xxx}}
@@ -218,17 +217,19 @@ auth:
 
 ### Redis配置
 ```yaml
-cache:
-  type: {{type}}
-  addr: {{host:ip}}
-  addrs:
-    - 127.0.0.1:7000
-    - 127.0.0.1:7001
-    - 127.0.0.1:7002
-    - 127.0.0.1:7003
-    - 127.0.0.1:7004
-    - 127.0.0.1:7005
+cache_config:
+    type: node
+    addr: {{ip:port}}
 ```
+或者
+```yaml
+cache_config:
+    type: cluster
+    addrs:
+    	- {{ip:port}}
+    	- {{ip:port}}
+```
+
 
 | 字段名   | 类型     | 示例           |  说明   |
 |-------|--------|--------------|-----|
@@ -369,10 +370,15 @@ cron:
 
 ###  Prometheus系统监控配置
 ```yaml
-prome:
-  client_mode: pusher
+prome_config:
+  client_mode: exporter
   exporter_config:
     listen_addr: ":9200"
+```
+或
+```yaml
+prome_config:
+  client_mode: pusher
   pusher_config:
     url: "https://{{xxx}}"
     job: live
@@ -403,7 +409,7 @@ callback:
 
 ### kodo配置（三鉴模块）- censor
 ```yaml
-censor:
+kodo:
   callback: https://{{xxx}}
   bucket: {{ censor_bucket }}
   addr: https://{{xxx}}
