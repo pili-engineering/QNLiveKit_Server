@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 
@@ -25,6 +26,28 @@ type QiniuCinfig struct {
 	Data      []byte `json:"data"`
 }
 
+type QiniuConfigReq struct {
+	Rtc  Rtc  `json:"rtc,omitempty"`
+	Pili Pili `json:"pili,omitempty"`
+	Kodo Kodo `json:"kodo,omitempty"`
+	Im   Im   `json:"im,omitempty"`
+}
+type Rtc struct {
+	AppId string `json:"app_id"`
+}
+
+type Pili struct {
+	Hub string `json:"hub"`
+}
+
+type Kodo struct {
+	Bucket string `json:"bucket"`
+}
+
+type Im struct {
+	AppId string `json:"app_id"`
+}
+
 func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -41,8 +64,18 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 
 	ak := v.GetString("account.access_key")
 	sk := v.GetString("account.secret_key")
-	appId := v.GetString("admin.app_id")
-	adminUrl := v.GetString("admin.url")
+
+	hub := v.GetString("pili.hub")
+	bucket := v.GetString("kodo.bucket")
+	rtc := v.GetString("rtc.app_id")
+	im := v.GetString("im.app_id")
+	req := &QiniuConfigReq{
+		Rtc:  Rtc{AppId: rtc},
+		Pili: Pili{Hub: hub},
+		Kodo: Kodo{Bucket: bucket},
+		Im:   Im{AppId: im},
+	}
+
 	mac := &qiniumac.Mac{
 		AccessKey: ak,
 		SecretKey: []byte(sk),
@@ -55,11 +88,11 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	client := &rpc.Client{
 		Client: httpClient,
 	}
-	url := adminUrl + "/v1/app/config/cache/" + appId
+	url := "https://live-admin.qiniu.com" + "/v1/app/config/cache"
 	ret := &QiniuCinfig{}
 
 	fileName := "qiniuConfig"
-	err = client.GetCall(log, ret, url)
+	err = client.CallWithJSON(log, ret, url, req)
 	var data []byte
 	if err != nil || ret.Code != 0 {
 		log.Errorf("read qiniu config file %s error %v", path, err)
@@ -70,20 +103,34 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	} else {
 		data = ret.Data
 	}
-	v.SetConfigType("yaml")
 
-	err = v.MergeConfig(bytes.NewBuffer(data))
+	vip := viper.New()
+	vip.SetConfigType("yaml")
+	err = vip.ReadConfig(bytes.NewBuffer(data))
 	if err != nil {
-		return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
+		return nil, err
 	}
-
 	err = ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
 		log.Errorf("write file fail error %v", err)
 	}
 
+	vip.SetConfigType("yaml")
+	split := strings.Split(path, "/")
+	leng := len(split[len(split)-1])
+	vip.SetConfigName(path[len(path)-leng : len(path)-5])
+	if len(split) == 1 {
+		vip.AddConfigPath(".")
+	} else {
+		vip.AddConfigPath(path[:len(path)-leng])
+	}
+	vip.MergeInConfig()
+	if err != nil {
+		return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
+	}
+
 	return &Config{
-		v,
+		vip,
 	}, nil
 }
 
