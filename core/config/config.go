@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/spf13/viper"
 
@@ -88,6 +87,7 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	client := &rpc.Client{
 		Client: httpClient,
 	}
+	//url := "http://127.0.0.1" + "/v1/app/config/cache"
 	url := "https://live-admin.qiniu.com" + "/v1/app/config/cache"
 	ret := &QiniuCinfig{}
 
@@ -104,33 +104,17 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 		data = ret.Data
 	}
 
-	vip := viper.New()
-	vip.SetConfigType("yaml")
-	err = vip.ReadConfig(bytes.NewBuffer(data))
+	v.SetConfigType("yaml")
+	err = v.MergeConfig(bytes.NewBuffer(data))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
 	}
 	err = ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
 		log.Errorf("write file fail error %v", err)
 	}
-
-	vip.SetConfigType("yaml")
-	split := strings.Split(path, "/")
-	leng := len(split[len(split)-1])
-	vip.SetConfigName(path[len(path)-leng : len(path)-5])
-	if len(split) == 1 {
-		vip.AddConfigPath(".")
-	} else {
-		vip.AddConfigPath(path[:len(path)-leng])
-	}
-	vip.MergeInConfig()
-	if err != nil {
-		return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
-	}
-
 	return &Config{
-		vip,
+		v,
 	}, nil
 }
 
