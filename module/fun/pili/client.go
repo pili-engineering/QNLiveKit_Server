@@ -47,7 +47,7 @@ type Service interface {
 	SaveStream(ctx context.Context, req *SaveStreamRequest, encodedStreamTitle string) (*SaveStreamResponse, error)
 }
 
-var service Service
+var service *QiniuClient
 
 func GetService() Service {
 	return service

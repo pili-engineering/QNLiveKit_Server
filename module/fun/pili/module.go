@@ -36,5 +36,10 @@ func (m *Module) PreStart() error {
 		return nil
 	}
 	trace.SetPiliHub(service.PiliHub())
-	return nil
+
+	return service.setupAccount()
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"account", "trace", "appinfo"}
 }

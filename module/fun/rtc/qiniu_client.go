@@ -12,6 +12,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -30,20 +31,8 @@ type QiniuClient struct {
 }
 
 func NewQiniuClient(conf Config) *QiniuClient {
-	mac := &qiniumac.Mac{
-		AccessKey: account.AccessKey(),
-		SecretKey: []byte(account.SecretKey()),
-	}
-	tr := qiniumac.NewTransport(mac, nil)
-
 	c := &QiniuClient{
 		AppId: conf.AppId,
-		Ak:    account.AccessKey(),
-		Sk:    account.SecretKey(),
-		client: &http.Client{
-			Transport: tr,
-			Timeout:   3 * time.Second,
-		},
 	}
 	return c
 }
@@ -56,6 +45,31 @@ type RoomAccess struct {
 	Permission string `json:"permission"`
 	//Privileges string `json:"privileges,omitempty"`
 	//Scenario   int    `json:"scenario,omitempty"`
+}
+
+func (c *QiniuClient) setupAccount() error {
+	// 未配置，不需要设置账号
+	if service == nil {
+		return nil
+	}
+
+	if account.AccessKey() == "" {
+		return fmt.Errorf("no account info")
+	}
+
+	service.Ak = account.AccessKey()
+	service.Sk = account.SecretKey()
+
+	mac := &qiniumac.Mac{
+		AccessKey: account.AccessKey(),
+		SecretKey: []byte(account.SecretKey()),
+	}
+	tr := qiniumac.NewTransport(mac, nil)
+	service.client = &http.Client{
+		Transport: tr,
+		Timeout:   3 * time.Second,
+	}
+	return nil
 }
 
 func (c *QiniuClient) RtcAppId() string {
