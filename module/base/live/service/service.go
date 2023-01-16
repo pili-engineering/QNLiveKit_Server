@@ -27,7 +27,7 @@ type IService interface {
 
 	LiveListAnchor(context context.Context, pageNum, pageSize int, anchorId string) (lives []model.LiveEntity, totalCount int, err error)
 
-	LiveList(context context.Context, pageNum, pageSize int) (lives []model.LiveEntity, totalCount int, err error)
+	LiveList(context context.Context, pageNum, pageSize, liveStatus int) (lives []model.LiveEntity, totalCount int, err error)
 
 	LiveUserList(context context.Context, liveId string, pageNum, pageSize int) (users []model.LiveRoomUserEntity, totalCount int, err error)
 
