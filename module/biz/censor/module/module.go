@@ -8,7 +8,7 @@ import (
 	"github.com/qbox/livekit/module/biz/censor/internal/impl"
 )
 
-const moduleName = "kodo"
+const moduleName = "censor"
 
 func init() {
 	application.RegisterModule(moduleName, &Module{})

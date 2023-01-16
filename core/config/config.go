@@ -26,10 +26,10 @@ type QiniuCinfig struct {
 }
 
 type QiniuConfigReq struct {
-	Rtc  Rtc  `json:"rtc,omitempty"`
-	Pili Pili `json:"pili,omitempty"`
-	Kodo Kodo `json:"kodo,omitempty"`
-	Im   Im   `json:"im,omitempty"`
+	Rtc    Rtc    `json:"rtc,omitempty"`
+	Pili   Pili   `json:"pili,omitempty"`
+	Censor Censor `json:"censor,omitempty"`
+	Im     Im     `json:"im,omitempty"`
 }
 type Rtc struct {
 	AppId string `json:"app_id"`
@@ -39,7 +39,7 @@ type Pili struct {
 	Hub string `json:"hub"`
 }
 
-type Kodo struct {
+type Censor struct {
 	Bucket string `json:"bucket"`
 }
 
@@ -62,19 +62,22 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	}
 
 	ak := v.GetString("account.access_key")
+	log.Info(ak)
 	sk := v.GetString("account.secret_key")
-
+	log.Info(sk)
 	hub := v.GetString("pili.hub")
-	bucket := v.GetString("kodo.bucket")
+	log.Info(hub)
+	bucket := v.GetString("censor.bucket")
+	log.Info(bucket)
 	rtc := v.GetString("rtc.app_id")
 	im := v.GetString("im.app_id")
 	req := &QiniuConfigReq{
-		Rtc:  Rtc{AppId: rtc},
-		Pili: Pili{Hub: hub},
-		Kodo: Kodo{Bucket: bucket},
-		Im:   Im{AppId: im},
+		Rtc:    Rtc{AppId: rtc},
+		Pili:   Pili{Hub: hub},
+		Censor: Censor{Bucket: bucket},
+		Im:     Im{AppId: im},
 	}
-
+	log.Info(req)
 	mac := &qiniumac.Mac{
 		AccessKey: ak,
 		SecretKey: []byte(sk),
@@ -87,7 +90,6 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	client := &rpc.Client{
 		Client: httpClient,
 	}
-	//url := "http://127.0.0.1" + "/v1/app/config/cache"
 	url := "https://live-admin.qiniu.com" + "/v1/app/config/cache"
 	ret := &QiniuCinfig{}
 
