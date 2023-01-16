@@ -37,7 +37,7 @@ type IService interface {
 
 	LiveListAnchor(context context.Context, pageNum, pageSize int, anchorId string) (lives []model.LiveEntity, totalCount int, err error)
 
-	LiveList(context context.Context, pageNum, pageSize int) (lives []model.LiveEntity, totalCount int, err error)
+	LiveList(context context.Context, pageNum, pageSize, liveStatus int) (lives []model.LiveEntity, totalCount int, err error)
 
 	LiveUserList(context context.Context, liveId string, pageNum, pageSize int) (users []model.LiveRoomUserEntity, totalCount int, err error)
 
@@ -318,12 +318,17 @@ func (s *Service) LiveListAnchor(context context.Context, pageNum, pageSize int,
 	return
 }
 
-func (s *Service) LiveList(context context.Context, pageNum, pageSize int) (lives []model.LiveEntity, totalCount int, err error) {
+func (s *Service) LiveList(context context.Context, pageNum, pageSize, liveStatus int) (lives []model.LiveEntity, totalCount int, err error) {
 	log := logger.ReqLogger(context)
 	db := mysql.GetLiveReadOnly(log.ReqID())
 	lives = make([]model.LiveEntity, 0)
-	err = db.Where("status = ? or status = ?", model.LiveStatusOn, model.LiveStatusPrepare).Order("status desc").Order("updated_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
-	err = db.Model(&model.LiveEntity{}).Where("status =  ? or status = ?", model.LiveStatusOn, model.LiveStatusPrepare).Count(&totalCount).Error
+	if liveStatus == -1 {
+		err = db.Where("status = ? or status = ?", model.LiveStatusOn, model.LiveStatusPrepare).Order("status desc").Order("updated_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
+		err = db.Model(&model.LiveEntity{}).Where("status =  ? or status = ?", model.LiveStatusOn, model.LiveStatusPrepare).Count(&totalCount).Error
+		return
+	}
+	err = db.Where("status = ?", liveStatus).Order("updated_at desc").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&lives).Error
+	err = db.Model(&model.LiveEntity{}).Where("status =  ? ", liveStatus).Count(&totalCount).Error
 	return
 }
 
