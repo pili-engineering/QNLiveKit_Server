@@ -40,6 +40,34 @@ type QiniuClient struct {
 }
 
 func NewQiniuClient(conf Config) *QiniuClient {
+	c := &QiniuClient{
+		Hub:            conf.Hub,
+		StreamPattern:  conf.StreamPattern,
+		PublishDomain:  conf.PublishDomain,
+		PlaybackUrl:    conf.PlayBackUrl,
+		RtmpPlayUrl:    conf.RtmpPlayUrl,
+		FlvPlayUrl:     conf.FlvPlayUrl,
+		HlsPlayUrl:     conf.HlsPlayUrl,
+		securityType:   conf.SecurityType,
+		publishKey:     conf.PublishKey,
+		publishExpireS: conf.PublishExpireS,
+	}
+	return c
+}
+
+func (c *QiniuClient) setupAccount() error {
+	// 未配置，不需要设置账号
+	if service == nil {
+		return nil
+	}
+
+	if account.AccessKey() == "" {
+		return fmt.Errorf("no account info")
+	}
+
+	service.Ak = account.AccessKey()
+	service.Sk = account.SecretKey()
+
 	mac := &qiniumac.Mac{
 		AccessKey: account.AccessKey(),
 		SecretKey: []byte(account.SecretKey()),
@@ -50,22 +78,9 @@ func NewQiniuClient(conf Config) *QiniuClient {
 		Header: nil,
 	}
 
-	c := &QiniuClient{
-		Hub:            conf.Hub,
-		Ak:             account.AccessKey(),
-		Sk:             account.SecretKey(),
-		StreamPattern:  conf.StreamPattern,
-		PublishDomain:  conf.PublishDomain,
-		PlaybackUrl:    conf.PlayBackUrl,
-		RtmpPlayUrl:    conf.RtmpPlayUrl,
-		FlvPlayUrl:     conf.FlvPlayUrl,
-		HlsPlayUrl:     conf.HlsPlayUrl,
-		securityType:   conf.SecurityType,
-		publishKey:     conf.PublishKey,
-		publishExpireS: conf.PublishExpireS,
-		client:         rpcClient,
-	}
-	return c
+	service.client = rpcClient
+
+	return nil
 }
 
 func (c *QiniuClient) PiliHub() string {

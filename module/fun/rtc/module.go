@@ -28,6 +28,7 @@ func (m *Module) Config(c *config.Config) error {
 
 	InitService(conf)
 	m.SetConfigSuccess()
+
 	return nil
 }
 
@@ -36,5 +37,10 @@ func (m *Module) PreStart() error {
 		return nil
 	}
 	trace.SetRtcAppId(service.RtcAppId())
-	return nil
+
+	return service.setupAccount()
+}
+
+func (m *Module) RequireModules() []string {
+	return []string{"account", "trace", "appinfo"}
 }

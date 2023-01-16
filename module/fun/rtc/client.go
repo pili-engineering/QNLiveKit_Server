@@ -19,7 +19,7 @@ type Service interface {
 	Online(userId, roomId string) bool
 }
 
-var service Service
+var service *QiniuClient
 
 func GetService() Service {
 	return service
