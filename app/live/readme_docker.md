@@ -43,9 +43,10 @@ PILI_PUB_KEY = {{ publish_key }}
 
 
 * 执行  `docker-compose --env-file live.env up`
-* 构建（重新构建）项目中的服务容器 `docker-compose build`
- 
-
+  自动完成包括构建镜像，（重新）创建服务，启动服务，并关联服务相关容器的一系列操作。
+* 修改后可执行 ` docker-compose --env-file  live.env up --build`。
+  如果不希望容器被停止并重新创建，可以使用 `docker-compose up --no-recreate`。这样将只会启动处于停止状态的容器，而忽略已经运行的服务。
+* `docker-compose down`停止和删除容器、网络、卷、镜像。
 
 #2. 配置文件
 * 互动直播使用 yaml 格式的配置文件，文件内容如下所示：
@@ -138,7 +139,7 @@ prome:
 callback:
   addr: https://niucube-api.qiniu.com/v1/live/callback
 
-kodo:
+censor:
   callback: https://{{xxx}}
   bucket: {{ censor_bucket }}
   addr: https://{{xxx}}
@@ -409,7 +410,7 @@ callback:
 
 ### kodo配置（三鉴模块）- censor
 ```yaml
-kodo:
+censor:
   callback: https://{{xxx}}
   bucket: {{ censor_bucket }}
   addr: https://{{xxx}}
