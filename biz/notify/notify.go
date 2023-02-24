@@ -3,7 +3,6 @@ package notify
 import (
 	"context"
 	"encoding/json"
-
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/common/api"
 	"github.com/qbox/livekit/common/im"
@@ -13,10 +12,11 @@ import (
 type ActionType string
 
 const (
-	ActionTypeCensorNotify ActionType = "censor_notify"
-	ActionTypeCensorStop   ActionType = "censor_stop"
-	ActionTypeLikeNotify   ActionType = "like_notify"
-	ActionTypeGiftNotify   ActionType = "gift_notify"
+	ActionTypeCensorNotify  ActionType = "censor_notify"
+	ActionTypeCensorStop    ActionType = "censor_stop"
+	ActionTypeLikeNotify    ActionType = "like_notify"
+	ActionTypeGiftNotify    ActionType = "gift_notify"
+	ActionTypeExtendsNotify ActionType = "pk_extends_notify" // 拓展字段更新
 )
 
 var actionTypeMap = map[ActionType]bool{
@@ -74,7 +74,6 @@ func SendNotifyToLive(ctx context.Context, user *model.LiveUserEntity, live *mod
 		Data:   data,
 	}
 	content, _ := json.Marshal(command)
-
 	err := im.GetService().SendCommandMessageToGroup(ctx, user.ImUserid, live.ChatId, string(content))
 	if err != nil {
 		log.Errorf("SendCommandMessageToGroup error %s", err.Error())
