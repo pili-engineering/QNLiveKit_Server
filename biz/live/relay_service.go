@@ -335,17 +335,18 @@ func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.Rel
 	}
 	// 通过用户的的id
 	// 要发送的房间，pk的两方房间
-	liveRoomUserEntities, err := GetService().FindLiveByUserId(ctx, initUserId)
+	liveRoomUserEntities, err := GetService().FindLiveByUserIdList(ctx, initUserId, relaySession.RecvUserId)
 	if err != nil {
 		log.Errorf("cannot queried the LiveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
 		return
 	}
+	updateFieldMap := getUpdateFieldMap(relaySession, oldRelaySession)
 	for _, entity := range *liveRoomUserEntities {
 		data := &extendNotifyData{
 			SID:           relaySession.SID,
 			InitRoomId:    relaySession.InitRoomId,
 			RecvRoomId:    relaySession.RecvRoomId,
-			UpdateExtends: getUpdateFieldMap(relaySession, oldRelaySession),
+			UpdateExtends: updateFieldMap,
 		}
 		err = notify.SendNotifyToLive(ctx, initUser, &entity, notify.ActionTypeExtendsNotify, data)
 		if err != nil {
