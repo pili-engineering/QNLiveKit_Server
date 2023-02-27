@@ -9,6 +9,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/core/rest"
@@ -242,4 +243,17 @@ func (s *UserService) createImUser(ctx context.Context, user *model.LiveUserEnti
 	s.UpdateUserInfo(ctx, &updateInfo)
 
 	return user, nil
+}
+
+// FindLiveByPkIdList 根据PK会话查找对应的直播间信息
+func (s *UserService) FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error) {
+	log := logger.ReqLogger(ctx)
+	if pkIdList == nil {
+		log.Errorf("pkIdList is empty")
+		return nil, errors.New("userId is empty")
+	}
+	db := mysql.GetLive(log.ReqID())
+	var liveList []model.LiveEntity
+	db.Model(&model.LiveEntity{}).Where("pk_id in (?)", pkIdList).Find(&liveList)
+	return &liveList, nil
 }

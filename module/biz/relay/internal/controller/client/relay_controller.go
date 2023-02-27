@@ -8,6 +8,7 @@
 package client
 
 import (
+	"github.com/qbox/livekit/module/base/callback"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -100,6 +101,13 @@ func (*relayController) PostRelayStart(ctx *gin.Context) (interface{}, error) {
 		RelayStatus: relaySession.Status,
 		RelayToken:  token,
 	}
+	// 跨房PK开始时需要进行回调
+	go func() {
+		err := callback.GetCallbackService().Do(ctx, callback.TypePKStarted, relaySession)
+		if err != nil {
+			log.Errorf("callback failed，errInfo：【%v】", err.Error())
+		}
+	}()
 	return &resp, nil
 }
 
@@ -173,7 +181,13 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("stop relay error %v", err)
 		return nil, err
 	}
-
+	// 跨房结束进行回调
+	go func() {
+		err := callback.GetCallbackService().Do(ctx, callback.TypePKStopped, uInfo)
+		if err != nil {
+			log.Errorf("callback failed，errInfo：【%v】", err.Error())
+		}
+	}()
 	return nil, nil
 }
 

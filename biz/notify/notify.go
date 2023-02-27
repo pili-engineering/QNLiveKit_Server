@@ -13,10 +13,11 @@ import (
 type ActionType string
 
 const (
-	ActionTypeCensorNotify ActionType = "censor_notify"
-	ActionTypeCensorStop   ActionType = "censor_stop"
-	ActionTypeLikeNotify   ActionType = "like_notify"
-	ActionTypeGiftNotify   ActionType = "gift_notify"
+	ActionTypeCensorNotify  ActionType = "censor_notify"
+	ActionTypeCensorStop    ActionType = "censor_stop"
+	ActionTypeLikeNotify    ActionType = "like_notify"
+	ActionTypeGiftNotify    ActionType = "gift_notify"
+	ActionTypeExtendsNotify ActionType = "pk_extends_notify" // 拓展字段更新
 )
 
 var actionTypeMap = map[ActionType]bool{
