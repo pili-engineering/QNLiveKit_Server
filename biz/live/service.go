@@ -78,8 +78,8 @@ type IService interface {
 	// KeepCacheLikes 将还在直播的直播间，点赞信息维持在缓存中
 	KeepCacheLikes(ctx context.Context)
 
-	// FindLiveByUserIdList 根据发起人查询其直播间
-	FindLiveByUserIdList(ctx context.Context, userId ...string) (liveRoomUser *[]model.LiveEntity, err error)
+	// FindLiveByPkIdList 根据PK会话查询直播间信息
+	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error)
 }
 
 type Service struct {
@@ -722,15 +722,15 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 	return my, total, nil
 }
 
-// FindLiveByUserIdList 根据用户的userId查找对应的直播间信息
-func (s *Service) FindLiveByUserIdList(ctx context.Context, userId ...string) (liveRoomUser *[]model.LiveEntity, err error) {
+// FindLiveByPkIdList 根据PK会话查找对应的直播间信息
+func (s *Service) FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error) {
 	log := logger.ReqLogger(ctx)
-	if userId == nil {
-		log.Errorf("userId is empty")
+	if pkIdList == nil {
+		log.Errorf("pkIdList is empty")
 		return nil, errors.New("userId is empty")
 	}
 	db := mysql.GetLive(log.ReqID())
 	var liveList []model.LiveEntity
-	db.Model(&model.LiveEntity{}).Where("anchor_id in (?)", userId).Find(&liveList)
+	db.Model(&model.LiveEntity{}).Where("pk_id in (?)", pkIdList).Find(&liveList)
 	return &liveList, nil
 }
