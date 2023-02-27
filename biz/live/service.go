@@ -77,6 +77,9 @@ type IService interface {
 
 	// KeepCacheLikes 将还在直播的直播间，点赞信息维持在缓存中
 	KeepCacheLikes(ctx context.Context)
+
+	// FindLiveByPkIdList 根据PK会话查询直播间信息
+	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error)
 }
 
 type Service struct {
@@ -458,9 +461,9 @@ func (s *Service) FindUserLive(context context.Context, liveId string, userInfo 
 	return
 }
 
-//只有用户在直播间，才能心跳
-//更新用户的心跳
-//如果用户是当前直播间的主播，更新直播间心跳
+// 只有用户在直播间，才能心跳
+// 更新用户的心跳
+// 如果用户是当前直播间的主播，更新直播间心跳
 func (s *Service) Heartbeat(context context.Context, liveId string, userId string) (*model.LiveEntity, error) {
 	log := logger.ReqLogger(context)
 
@@ -526,7 +529,7 @@ func (s *Service) getLive(ctx context.Context, liveId string) (*model.LiveEntity
 	return &live, err
 }
 
-//查询用户在直播间内的记录
+// 查询用户在直播间内的记录
 func (s *Service) getOrCreateLiveRoomUser(ctx context.Context, userId string) (*model.LiveRoomUserEntity, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
@@ -717,4 +720,17 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 	}
 
 	return my, total, nil
+}
+
+// FindLiveByPkIdList 根据PK会话查找对应的直播间信息
+func (s *Service) FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error) {
+	log := logger.ReqLogger(ctx)
+	if pkIdList == nil {
+		log.Errorf("pkIdList is empty")
+		return nil, errors.New("userId is empty")
+	}
+	db := mysql.GetLive(log.ReqID())
+	var liveList []model.LiveEntity
+	db.Model(&model.LiveEntity{}).Where("pk_id in (?)", pkIdList).Find(&liveList)
+	return &liveList, nil
 }

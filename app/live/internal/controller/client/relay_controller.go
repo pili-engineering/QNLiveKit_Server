@@ -8,6 +8,7 @@
 package client
 
 import (
+	"github.com/qbox/livekit/biz/callback"
 	"net/http"
 
 	"github.com/qbox/livekit/biz/live"
@@ -96,7 +97,6 @@ func (*relayController) PostRelayStart(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-
 	rtcClient := rtc.GetService()
 	token := rtcClient.GetRelayToken(uInfo.UserId, req.RecvRoomId)
 	resp := StartRelayResponse{
@@ -111,7 +111,13 @@ func (*relayController) PostRelayStart(ctx *gin.Context) {
 			RelayToken:  token,
 		},
 	}
-
+	// 跨房PK开始时需要进行回调
+	go func() {
+		err := callback.GetCallbackService().Do(ctx, callback.TypePKStarted, relaySession)
+		if err != nil {
+			log.Errorf("callback failed，errInfo：【%v】", err.Error())
+		}
+	}()
 	ctx.JSON(http.StatusOK, &resp)
 }
 
@@ -210,7 +216,13 @@ func (*relayController) PostRelayStop(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ErrorWithRequestId(log.ReqID(), err))
 		return
 	}
-
+	// 跨房结束进行回调
+	go func() {
+		err := callback.GetCallbackService().Do(ctx, callback.TypePKStopped, uInfo)
+		if err != nil {
+			log.Errorf("callback failed，errInfo：【%v】", err.Error())
+		}
+	}()
 	ctx.JSON(http.StatusOK, api.SuccessResponse(log.ReqID()))
 }
 

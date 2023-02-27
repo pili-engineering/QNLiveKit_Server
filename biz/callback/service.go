@@ -95,4 +95,6 @@ const (
 	TypeLiveStarted = "live_started"
 	TypeLiveStopped = "live_stopped"
 	TypeLiveDeleted = "live_deleted"
+	TypePKStarted   = "pk_started"
+	TypePKStopped   = "pk_stopped"
 )

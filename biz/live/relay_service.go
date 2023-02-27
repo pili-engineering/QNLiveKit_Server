@@ -9,7 +9,8 @@ package live
 
 import (
 	"context"
-
+	"github.com/qbox/livekit/biz/notify"
+	"github.com/qbox/livekit/biz/user"
 	"github.com/qbox/livekit/common/mysql"
 
 	"github.com/qbox/livekit/utils/uuid"
@@ -227,7 +228,7 @@ func (s *RelayService) StopRelay(ctx context.Context, userId string, sid string)
 	return nil
 }
 
-//更新跨房PK 会话的状态
+// 更新跨房PK 会话的状态
 func (s *RelayService) updateRelaySessionStatus(ctx context.Context, relaySession *model.RelaySession) error {
 	log := logger.ReqLogger(ctx)
 
@@ -245,9 +246,9 @@ func (s *RelayService) updateRelaySessionStatus(ctx context.Context, relaySessio
 	return nil
 }
 
-//获取用户当前的跨房房间，前提
-//1，用户当前正在直播
-//2，用户当前正在跨房
+// 获取用户当前的跨房房间，前提
+// 1，用户当前正在直播
+// 2，用户当前正在跨房
 func (s *RelayService) GetRelayRoom(ctx context.Context, userId string, sid string) (*model.RelaySession, string, error) {
 	log := logger.ReqLogger(ctx)
 
@@ -305,10 +306,76 @@ func (s *RelayService) updateRelayExtends(ctx context.Context, relaySession *mod
 	}
 
 	db := mysql.GetLive(log.ReqID())
+	// 查询出更新之前的值
+	oldRelaySession := &model.RelaySession{}
+	db.Model(&model.RelaySession{}).Where("id = ?", relaySession.ID).Find(oldRelaySession)
 	result := db.Model(relaySession).Update(updates)
 	if result.Error != nil {
 		log.Errorf("update relay session extends error %v", result.Error)
 		return result.Error
 	}
+	// 拓展字段更新完后的hook
+	go afterUpdateRelayExtendsHandler(ctx, relaySession, oldRelaySession)
 	return nil
+}
+
+// afterUpdateRelayExtendsHandler
+//
+//	@Description: 拓展字段更新完后的操作，将更新的字段发给双方房间
+//	@args ctx
+//	@args relaySession
+func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.RelaySession, oldRelaySession *model.RelaySession) {
+	log := logger.ReqLogger(ctx)
+	// 修改人的id
+	initUserId := relaySession.InitUserId
+	initUser, err := user.GetService().FindUser(ctx, initUserId)
+	if err != nil {
+		log.Errorf("cannot queried the userId【%v】，errInfo：【%v】", initUserId, err.Error())
+		return
+	}
+	// 通过用户的的id
+	// 要发送的房间，pk的两方房间
+	liveRoomUserEntities, err := GetService().FindLiveByPkIdList(ctx, relaySession.SID)
+	if err != nil {
+		log.Errorf("cannot queried the LiveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
+		return
+	}
+	data := &extendNotifyData{
+		SID:           relaySession.SID,
+		InitRoomId:    relaySession.InitRoomId,
+		RecvRoomId:    relaySession.RecvRoomId,
+		UpdateExtends: getUpdateFieldMap(relaySession, oldRelaySession),
+	}
+	for _, entity := range *liveRoomUserEntities {
+		err = notify.SendNotifyToLive(ctx, initUser, &entity, notify.ActionTypeExtendsNotify, data)
+		if err != nil {
+			log.Errorf("cannot send notify to liveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
+			return
+		}
+	}
+}
+
+// getUpdateFieldMap 返回更新了的字段
+func getUpdateFieldMap(newSession *model.RelaySession, oldSession *model.RelaySession) map[string]string {
+	if oldSession == nil {
+		return newSession.Extends
+	}
+	updateFieldMap := make(map[string]string)
+	// 返回空map。表示更新空值
+	if newSession == nil {
+		return updateFieldMap
+	}
+	for k, v := range newSession.Extends {
+		if oldSession.Extends[k] != v {
+			updateFieldMap[k] = v
+		}
+	}
+	return updateFieldMap
+}
+
+type extendNotifyData struct {
+	SID           string            `json:"sid"`          // PK 会话ID
+	InitRoomId    string            `json:"init_room_id"` // 发送发直播间ID
+	RecvRoomId    string            `json:"recv_room_id"` // 接收方直播间ID
+	UpdateExtends map[string]string `json:"extends"`      // 更新了的字段
 }
