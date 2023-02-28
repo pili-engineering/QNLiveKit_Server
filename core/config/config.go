@@ -62,15 +62,15 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	}
 
 	ak := v.GetString("account.access_key")
-	log.Info(ak)
 	sk := v.GetString("account.secret_key")
-	log.Info(sk)
 	hub := v.GetString("pili.hub")
-	log.Info(hub)
 	bucket := v.GetString("censor.bucket")
-	log.Info(bucket)
 	rtc := v.GetString("rtc.app_id")
 	im := v.GetString("im.app_id")
+	if ak == "" || sk == "" || hub == "" || rtc == "" || im == "" {
+		return nil, fmt.Errorf("config yaml not complete,lack of something")
+	}
+
 	req := &QiniuConfigReq{
 		Rtc:    Rtc{AppId: rtc},
 		Pili:   Pili{Hub: hub},
@@ -97,7 +97,7 @@ func LoadConfig(log *logger.Logger, path string) (*Config, error) {
 	err = client.CallWithJSON(log, ret, url, req)
 	var data []byte
 	if err != nil || ret.Code != 0 {
-		log.Errorf("read qiniu config file %s error %v", path, err)
+		log.Errorf("request to config server error %v", err)
 		data, err = ioutil.ReadFile(fileName)
 		if err != nil {
 			return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
