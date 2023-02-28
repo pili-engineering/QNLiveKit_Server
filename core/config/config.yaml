@@ -1,34 +1,66 @@
 node_id: 2
 
-service:
-  host: 127.0.0.1
-  port: 8099
-
 cron_config:
   single_task_node: 2
 
-jwt_key: jwtkey
+httpq:
+  addr: ":8080"
+
+mysql:
+  databases:
+    - host: 127.0.0.1
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+
+    - host: 127.0.0.1
+      port: 3306
+      username: root
+      password: 123456
+      max_idle_conns: 10
+      max_open_conns: 100
+      database: live
+      conn_max_life_time: 5
+      default: live
+      read_only: true
+
+
+cache:
+  type: node
+  addr: 127.0.0.1:6379
+
+gift:
+  gift_addr: xxxxxxxxx
+
 callback:
-report_host: https://niucube-api.qiniu.com
+  addr: xxxxxxxxx
 
-mysqls:
-  - host: 127.0.0.1
-    port: 3306
-    username: root
-    password: 123456
-    max_idle_conns: 10
-    max_open_conns: 100
-    database: live
-    conn_max_life_time: 5
-    default: live
+auth:
+  jwt_key: jwtkey
+  server:
+    enable: true
+    access_key: ak
+    secret_key: sk
 
-  - host: 127.0.0.1
-    port: 3306
-    username: root
-    password: 123456
-    max_idle_conns: 10
-    max_open_conns: 100
-    database: live
-    conn_max_life_time: 5
-    default: live
-    read_only: true
+account:
+  access_key: qiniu_ak
+  secret_key: qiniu_sk
+
+
+rtc:
+  app_id: xxxxxxxxx
+
+pili:
+  hub: xxxxxxxxx
+  room_token_expire_s: 3600
+  publish_expire_s: 3700
+  stream_pattern: qn_live_kit-%s
+
+im:
+  app_id: xxxxxxxxx
+
