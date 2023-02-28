@@ -28,7 +28,7 @@ func TestConfig_Sub(t *testing.T) {
 		args args
 	}{
 		{"", "config.yaml", args{key: "cron_config"}},
-		{"", "config.yaml", args{key: "service"}},
+		{"", "config.yaml", args{key: "httpq"}},
 	}
 	for _, tt := range tests {
 		ctx := context.Background()
@@ -46,17 +46,16 @@ func TestConfig_Unmarshal(t *testing.T) {
 	log := logger.ReqLogger(ctx)
 	c, _ := LoadConfig(log, path)
 
-	sub := c.Sub("service")
+	sub := c.Sub("httpq")
 	assert.NotNil(t, sub)
 
 	server := Server{}
 	err := sub.Unmarshal(&server)
 	assert.Nil(t, err)
-	assert.Equal(t, "127.0.0.1", server.Host)
-	assert.Equal(t, 8099, server.Port)
+
+	assert.Equal(t, ":8080", server.Addr)
 }
 
 type Server struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Addr string `mapstructure:"addr"`
 }
