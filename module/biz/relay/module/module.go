@@ -3,6 +3,7 @@ package module
 import (
 	"github.com/qbox/livekit/core/application"
 	"github.com/qbox/livekit/module/biz/relay/internal/controller/client"
+	"github.com/qbox/livekit/module/biz/relay/internal/controller/server"
 )
 
 const moduleName = "relay"
@@ -17,6 +18,7 @@ type Module struct {
 
 func (m *Module) PreStart() error {
 	client.RegisterRoutes()
+	server.RegisterRoutes()
 	return nil
 }
 
