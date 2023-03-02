@@ -116,9 +116,13 @@ func (c *CensorService) GetLiveCensorJobByLiveId(ctx context.Context, liveId str
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
 	m := &model.LiveCensor{}
-	err := db.Model(model.LiveCensor{}).First(m, "live_id = ?", liveId).Error
-	if err != nil {
-		return nil, err
+	result := db.Model(model.LiveCensor{}).First(m, "live_id = ?", liveId)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return nil, nil
+		} else {
+			return nil, result.Error
+		}
 	}
 	return m, nil
 }
@@ -130,7 +134,9 @@ func (c *CensorService) StopCensorJob(ctx context.Context, liveId string) error 
 		log.Errorf("GetLiveCensorJobByLiveId Error %v", err)
 		return err
 	}
-
+	if liveCensorJob == nil {
+		return nil
+	}
 	req := &JobCreateResponseData{
 		JobID: liveCensorJob.JobID,
 	}
