@@ -550,6 +550,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 	log := logger.ReqLogger(context)
 	pageNum := context.DefaultQuery("page_num", "1")
 	pageSize := context.DefaultQuery("page_size", "10")
+	liveStatus := context.DefaultQuery("live_status", "-1")
 	pageNumInt, err := strconv.Atoi(pageNum)
 	if err != nil {
 		log.Errorf("page num is not int, err: %v", err)
@@ -570,6 +571,27 @@ func (c *liveController) LiveList(context *gin.Context) {
 		})
 		return
 	}
+	liveStatusInt, err := strconv.Atoi(liveStatus)
+	if err != nil {
+		log.Errorf("live status is not int, err: %v", err)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "live status is not int",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+
+	if liveStatusInt > model.LiveStatusOff || liveStatusInt < -1 {
+		log.Errorf("live status is not right, live status: %v", liveStatusInt)
+		context.JSON(http.StatusBadRequest, api.Response{
+			Code:      http.StatusBadRequest,
+			Message:   "live status is not right",
+			RequestId: log.ReqID(),
+		})
+		return
+	}
+
 	if pageNumInt <= 0 || pageSizeInt <= 0 {
 		log.Errorf("page num or page size is not right, page num: %v, page size: %v", pageNumInt, pageSizeInt)
 		context.JSON(http.StatusBadRequest, api.Response{
@@ -579,7 +601,7 @@ func (c *liveController) LiveList(context *gin.Context) {
 		})
 		return
 	}
-	liveList, totalCount, err := live.GetService().LiveList(context, pageNumInt, pageSizeInt)
+	liveList, totalCount, err := live.GetService().LiveList(context, pageNumInt, pageSizeInt, liveStatusInt)
 	if err != nil {
 		log.Errorf("get live list failed, err: %v", err)
 		context.JSON(http.StatusInternalServerError, api.Response{
