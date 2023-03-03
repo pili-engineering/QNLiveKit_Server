@@ -79,6 +79,9 @@ func SendNotifyToLive(ctx context.Context, user *model.LiveUserEntity, live *mod
 	err := im.GetService().SendCommandMessageToGroup(ctx, user.ImUserid, live.ChatId, string(content))
 	if err != nil {
 		log.Errorf("SendCommandMessageToGroup error %s", err.Error())
+	} else {
+		log.Infof("SendCommandMessageToGroup success, ImUserid:【%v】| chatId【%v】| data【%v】",
+			user.ImUserid, live.ChatId, string(content))
 	}
 	return err
 }
