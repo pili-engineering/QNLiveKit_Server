@@ -326,16 +326,14 @@ func (s *RelayService) updateRelayExtends(ctx context.Context, relaySession *mod
 //	@args relaySession
 func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.RelaySession, oldRelaySession *model.RelaySession) {
 	log := logger.ReqLogger(ctx)
-	// 修改人的id
-	initUserId := relaySession.InitUserId
-	initUser, err := user.GetService().FindUser(ctx, initUserId)
+	liveUserEntityList, err := user.GetService().ListUser(ctx, []string{relaySession.InitUserId, relaySession.RecvUserId})
 	if err != nil {
-		log.Errorf("cannot queried the userId【%v】，errInfo：【%v】", initUserId, err.Error())
+		log.Errorf("cannot queried the relaySession【%v】，errInfo：【%v】", relaySession, err.Error())
 		return
 	}
 	// 通过用户的的id
 	// 要发送的房间，pk的两方房间
-	liveRoomUserEntities, err := GetService().FindLiveByPkIdList(ctx, relaySession.SID)
+	userId2LiveEntityMap, err := GetService().FindLiveByPkIdList(ctx, relaySession.SID)
 	if err != nil {
 		log.Errorf("cannot queried the LiveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
 		return
@@ -346,11 +344,16 @@ func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.Rel
 		RecvRoomId:    relaySession.RecvRoomId,
 		UpdateExtends: getUpdateFieldMap(relaySession, oldRelaySession),
 	}
-	for _, entity := range *liveRoomUserEntities {
-		err = notify.SendNotifyToLive(ctx, initUser, &entity, notify.ActionTypeExtendsNotify, data)
-		if err != nil {
-			log.Errorf("cannot send notify to liveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
-			return
+	for _, userEntity := range liveUserEntityList {
+		liveEntity, ok := userId2LiveEntityMap[userEntity.UserId]
+		if ok {
+			err = notify.SendNotifyToLive(ctx, userEntity, &liveEntity, notify.ActionTypeExtendsNotify, data)
+			if err != nil {
+				log.Errorf("cannot send notify, userEntity【%v】| LiveUserEntity【%v】| data【%v】| errInfo【%v】",
+					userEntity, liveEntity, data, err.Error())
+			}
+		} else {
+			log.Errorf("cannot find liveEntity, userEntity【%v】", userEntity)
 		}
 	}
 }
