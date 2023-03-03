@@ -180,7 +180,7 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 	relayService := relay.GetRelayService()
 	// 跨房结束进行回调
 	// 获取跨房信息
-	if session, err := relayService.GetRelaySession(ctx, id); err != nil {
+	if session, err := relayService.GetRelaySession(ctx, id); err == nil {
 		err = callback.GetCallbackService().Do(ctx, callback.TypePKStopped, session)
 		if err != nil {
 			log.Errorf("【pk_stopped】callback failed，data：【%v】errInfo：【%v】", session, err.Error())
