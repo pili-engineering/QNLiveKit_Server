@@ -103,9 +103,11 @@ func (*relayController) PostRelayStart(ctx *gin.Context) (interface{}, error) {
 	}
 	// 跨房PK开始时需要进行回调
 	go func() {
-		err := callback.GetCallbackService().Do(ctx, callback.TypePKStarted, relaySession)
+		err = callback.GetCallbackService().Do(ctx, callback.TypePKStarted, relaySession)
 		if err != nil {
-			log.Errorf("callback failed，errInfo：【%v】", err.Error())
+			log.Errorf("【pk_started】callback failed，errInfo：【%v】", err.Error())
+		} else {
+			log.Infof("【pk_started】callback success，data【%v】", relaySession)
 		}
 	}()
 	return &resp, nil
@@ -175,19 +177,23 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest.WithMessage("empty relay session id")
 	}
 	uInfo := auth.GetUserInfo(ctx)
-
 	relayService := relay.GetRelayService()
+	// 跨房结束进行回调
+	// 获取跨房信息
+	if session, err := relayService.GetRelaySession(ctx, id); err == nil {
+		err = callback.GetCallbackService().Do(ctx, callback.TypePKStopped, session)
+		if err != nil {
+			log.Errorf("【pk_stopped】callback failed，data：【%v】errInfo：【%v】", session, err.Error())
+		} else {
+			log.Infof("【pk_stopped】callback success，data【%v】", session)
+		}
+	} else {
+		log.Errorf("【pk_stopped】callback failed，session is empty, data：【%v】errInfo：【%v】", session, err.Error())
+	}
 	if err := relayService.StopRelay(ctx, uInfo.UserId, id); err != nil {
 		log.Errorf("stop relay error %v", err)
 		return nil, err
 	}
-	// 跨房结束进行回调
-	go func() {
-		err := callback.GetCallbackService().Do(ctx, callback.TypePKStopped, uInfo)
-		if err != nil {
-			log.Errorf("callback failed，errInfo：【%v】", err.Error())
-		}
-	}()
 	return nil, nil
 }
 

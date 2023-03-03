@@ -349,9 +349,10 @@ func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.Rel
 	for _, entity := range *liveRoomUserEntities {
 		err = notify.SendNotifyToLive(ctx, initUser, &entity, notify.ActionTypeExtendsNotify, data)
 		if err != nil {
-			log.Errorf("cannot send notify to liveRoom【%v】，errInfo：【%v】", relaySession.InitRoomId, err.Error())
+			log.Errorf("cannot send notify to data【%v】，errInfo：【%v】", data, err.Error())
 			return
 		}
+		log.Infof("【pk_extends_notify】send notify success, data:【%v】", data)
 	}
 }
 
