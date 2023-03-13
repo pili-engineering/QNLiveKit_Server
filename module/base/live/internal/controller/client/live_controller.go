@@ -360,6 +360,12 @@ func (c *liveController) LiveList(context *gin.Context) (interface{}, error) {
 			log.Errorf("get liveInfo info failed, err: %v", err)
 			continue
 		}
+		_, onlineCount, err := impl.GetInstance().LiveUserList(context, liveList[i].LiveId, 1, 10)
+		if err != nil {
+			log.Errorf("get online count (live user list) failed, err: %v", err)
+			return nil, err
+		}
+		liveInfo.OnlineCount = onlineCount
 		log.Infof("liveInfo: %v", liveInfo)
 		userEntity, err := user.GetService().FindUser(context, liveInfo.AnchorId)
 		if err != nil {
