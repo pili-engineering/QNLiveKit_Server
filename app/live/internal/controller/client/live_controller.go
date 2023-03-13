@@ -630,6 +630,12 @@ func (c *liveController) LiveList(context *gin.Context) {
 			continue
 		}
 		log.Infof("liveInfo: %v", liveInfo)
+		_, onlineCount, err := live.GetService().LiveUserList(context, liveList[i].LiveId, 1, 10)
+		if err != nil {
+			log.Errorf("get online count (live user list) failed, err: %v", err)
+			continue
+		}
+		liveInfo.OnlineCount = onlineCount
 		user, err := user2.GetService().FindUser(context, liveInfo.AnchorId)
 		log.Infof("user: %v", user)
 		if err != nil {
