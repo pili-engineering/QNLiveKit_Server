@@ -1,0 +1,1 @@
+{"id":"x","im":{"app_id":"x","endpoint":"x","token":"x"},"rtc":{"app_id":"x"},"pili":{"hub":"x","room_token_expire_s":3600,"playback_url":"x","stream_pattern":"qn_live_kit-%s","publish_url":"x","publish_domain":"x","rtmp_play_url":"x","flv_play_url":"x","hls_play_url":"x","security_type":"x","publish_key":"x","publish_expire_s":3600},"censor":{"bucket":"x","addr":"x"}}

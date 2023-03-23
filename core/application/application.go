@@ -32,7 +32,7 @@ func StartWithConfig(path string) error {
 		errCh <- fmt.Errorf("signal %s", sig)
 	}()
 
-	c, err := config.LoadConfig(path)
+	c, err := config.LoadConfig(log, path)
 	if err != nil {
 		return fmt.Errorf("load config file error %v", err)
 	}
