@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/core/rest"
@@ -74,6 +75,10 @@ func (c *CensorServiceImpl) GetCensorConfig(ctx context.Context) (*model.CensorC
 }
 
 func (c *CensorServiceImpl) CreateCensorJob(ctx context.Context, liveEntity *model.LiveEntity) error {
+	if c.Callback == "" {
+		log.Info("In qiniu config: censor-callback empty, cannot create censor job")
+		return nil
+	}
 	log := logger.ReqLogger(ctx)
 	config, err := c.GetCensorConfig(ctx)
 	if err != nil {
@@ -127,6 +132,10 @@ func (c *CensorServiceImpl) GetLiveCensorJobByLiveId(ctx context.Context, liveId
 }
 
 func (c *CensorServiceImpl) StopCensorJob(ctx context.Context, liveId string) error {
+	if c.Callback == "" {
+		log.Info("In qiniu config: censor-callback empty, don't need stop censor job")
+		return nil
+	}
 	log := logger.ReqLogger(ctx)
 	liveCensorJob, err := c.GetLiveCensorJobByLiveId(ctx, liveId)
 	if err != nil {
