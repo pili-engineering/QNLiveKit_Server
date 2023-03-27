@@ -55,11 +55,19 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 	err = rpc.DefaultClient.CallWithJSON(log, &payResp, url, payReq)
 	if err != nil {
 		log.Errorf("send gift error %s", err.Error())
+		err2 := s.UpdateGiftStatus(context, bizId, model.SendGiftStatusFailure)
+		if err2 != nil {
+			log.Errorf("update gift status error %s", err2.Error())
+		}
+		return nil, err
+	}
+	if payResp.Code != 0 {
+		log.Errorf("send gift request return code not 0 ")
 		err = s.UpdateGiftStatus(context, bizId, model.SendGiftStatusFailure)
 		if err != nil {
 			log.Errorf("update gift status error %s", err.Error())
 		}
-		return nil, err
+		return nil, ErrGiftPay
 	}
 	status := payResp.Data.Status
 	sResp := &SendGiftResponse{
@@ -76,7 +84,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		log.Errorf("update gift status error %s", err.Error())
 		//该错误没有返回
 	}
-	if status == model.SendGiftStatusFailure {
+	if status != model.SendGiftStatusSuccess {
 		return sResp, ErrGiftPay
 	}
 	notifyItem := BroadcastGiftNotifyItem{
