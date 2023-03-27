@@ -116,7 +116,7 @@ type PayGiftRequest struct {
 
 type PayGiftResponse struct {
 	api.Response
-	Status int
+	Status int `json:"status"`
 }
 
 type SendGiftResponse struct {
