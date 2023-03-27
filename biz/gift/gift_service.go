@@ -55,9 +55,9 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 	err = rpc.DefaultClient.CallWithJSON(log, &payResp, url, payReq)
 	if err != nil {
 		log.Errorf("send gift error %s", err.Error())
-		err = s.UpdateGiftStatus(context, bizId, model.SendGiftStatusFailure)
-		if err != nil {
-			log.Errorf("update gift status error %s", err.Error())
+		err2 := s.UpdateGiftStatus(context, bizId, model.SendGiftStatusFailure)
+		if err2 != nil {
+			log.Errorf("update gift status error %s", err2.Error())
 		}
 		return nil, err
 	}
