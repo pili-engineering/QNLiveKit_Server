@@ -254,11 +254,10 @@ func (c *giftController) SendGift(ctx *gin.Context) {
 	sendGift, err := gift.GetService().SendGift(ctx, request, uInfo.UserId)
 	if err != nil {
 		log.Errorf("Send Gift failed, err: %v", err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError,
-			&SendResponse{
-				Response: api.ErrorWithRequestId(log.ReqID(), err),
-				Data:     sendGift,
-			})
+		ctx.JSON(http.StatusOK, &SendResponse{
+			Response: api.ErrorWithRequestId(log.ReqID(), err),
+			Data:     sendGift,
+		})
 		return
 	}
 
@@ -295,13 +294,9 @@ func (c *giftController) Test(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-
-	ctx.JSON(http.StatusOK, &gift.PayGiftResponse{
-		Response: api.Response{
-			RequestId: log.ReqID(),
-			Code:      0,
-			Message:   "success",
-		},
-		Status: model.SendGiftStatusSuccess,
+	ctx.JSON(http.StatusOK, &api.Response{
+		RequestId: log.ReqID(),
+		Code:      0,
+		Message:   "success",
 	})
 }

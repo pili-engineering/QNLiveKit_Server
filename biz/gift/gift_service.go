@@ -50,7 +50,7 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		Amount:   req.Amount,
 		AnchorId: liveEntity.AnchorId,
 	}
-	payResp := PayGiftResponse{}
+	payResp := api.Response{}
 	url := s.GiftAddr
 	err = rpc.DefaultClient.CallWithJSON(log, &payResp, url, payReq)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		if err2 != nil {
 			log.Errorf("update gift status error %s", err2.Error())
 		}
-		return nil, err
+		return nil, api.ErrorGiftPayRequestBiz
 	}
 	if payResp.Code != 0 {
 		log.Errorf("send gift request return code not 0 ")
@@ -67,9 +67,10 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		if err != nil {
 			log.Errorf("update gift status error %s", err.Error())
 		}
-		return nil, api.ErrorGiftPayFromBiz
+		return nil, api.FailGiftResponse(payResp.Code, payResp.Message)
 	}
 
+	status := model.SendGiftStatusSuccess
 	sResp := &SendGiftResponse{
 		LiveId:   req.LiveId,
 		UserId:   userId,
@@ -77,15 +78,12 @@ func (s *Service) SendGift(context context.Context, req *SendGiftRequest, userId
 		GiftId:   req.GiftId,
 		Amount:   req.Amount,
 		AnchorId: liveEntity.AnchorId,
-		Status:   payResp.Status,
+		Status:   status,
 	}
-	err = s.UpdateGiftStatus(context, bizId, payResp.Status)
+	err = s.UpdateGiftStatus(context, bizId, status)
 	if err != nil {
 		log.Errorf("update gift status error %s", err.Error())
 		//该错误没有返回
-	}
-	if payResp.Status != model.SendGiftStatusSuccess {
-		return sResp, api.ErrorGiftPayFromBiz
 	}
 	notifyItem := BroadcastGiftNotifyItem{
 		LiveId: liveEntity.LiveId,
@@ -112,11 +110,6 @@ type PayGiftRequest struct {
 	AnchorId string `json:"anchor_id"`
 	GiftId   int    `json:"gift_id"`
 	Amount   int    `json:"amount"`
-}
-
-type PayGiftResponse struct {
-	api.Response
-	Status int `json:"status"`
 }
 
 type SendGiftResponse struct {

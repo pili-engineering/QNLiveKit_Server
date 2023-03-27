@@ -60,8 +60,8 @@ const (
 
 	ErrorCodeLoginWrong = 30001 //admin登录密码或用户名错误
 
-	ErrorCodeGiftPay        = 200002
-	ErrorCodeGiftPayFromBiz = 200003
+	ErrorCodeGiftPay           = 200002
+	ErrorCodeGiftPayRequestBiz = 200003
 )
 
 var ErrInvalidArgument = &Response{Code: ErrorCodeInvalidArgument, Message: "The arguments you provide is invalid."}
@@ -78,4 +78,15 @@ var ErrCodeLiveItemExceed = &Response{Code: ErrorCodeLiveItemExceed, Message: "i
 var ErrorLoginWrong = &Response{Code: ErrorCodeLoginWrong, Message: "username or password wrong，Login Failure"}
 
 var ErrorGiftPay = &Response{Code: ErrorCodeGiftPay, Message: "PayGift Failure: Internal error"}
-var ErrorGiftPayFromBiz = &Response{Code: ErrorCodeGiftPayFromBiz, Message: "PayGift Failure: Biz Server error"}
+
+var ErrorGiftPayRequestBiz = &Response{Code: ErrorCodeGiftPayRequestBiz, Message: "PayGift Failure: Request Biz Server Error"}
+
+func FailGiftResponse(code int, msg string) *Response {
+	if msg == "" {
+		msg = "PayGift Failure"
+	}
+	return &Response{
+		Code:    code,
+		Message: msg,
+	}
+}
