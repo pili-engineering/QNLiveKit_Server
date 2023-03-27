@@ -296,12 +296,13 @@ func (c *giftController) Test(ctx *gin.Context) {
 		return
 	}
 
+	data := gift.GiftPayTestResp{Status: model.SendGiftStatusSuccess}
 	ctx.JSON(http.StatusOK, &gift.PayGiftResponse{
 		Response: api.Response{
 			RequestId: log.ReqID(),
 			Code:      0,
 			Message:   "success",
 		},
-		Status: model.SendGiftStatusSuccess,
+		Data: data,
 	})
 }
