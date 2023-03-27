@@ -1,6 +1,11 @@
 package client
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/qbox/livekit/module/biz/relay"
+	"github.com/qbox/livekit/module/store/cache"
 	"math"
 	"net/http"
 	"strconv"
@@ -204,12 +209,65 @@ func (c *giftController) SendGift(ctx *gin.Context) (interface{}, error) {
 		Count:  request.Amount,
 	}
 	rService.UpdateSingleLive(ctx, statsSingleLiveEntity)
+	// 记录送礼的积分
+	sid, cacheErr := cache.Client.Get(fmt.Sprintf(model.PkIntegral, sendGift.AnchorId))
+	if cacheErr == nil && sid != "" {
+		// pk记录
+		KEY := fmt.Sprintf(model.PkIntegral, sid)
+		cache.Client.HIncrBy(KEY, sendGift.AnchorId, int64(sendGift.Amount))
+		// 更新拓展字段，添加积分信息
+		result, cacheErr := cache.Client.HGetAll(KEY)
+		if cacheErr == nil {
+			data, _ := json.Marshal(getPkIntegral(ctx, sid, result))
+			extends := model.Extends{"pkIntegral": string(data)}
+			relay.GetRelayService().UpdateRelayExtends(ctx, sid, extends)
+		} else {
+			log.Errorf("failed to query redis，error【%v】", cacheErr.Error())
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
 	return sendGift, nil
 }
 
 type SendResponse struct {
 	*rest.Response
 	Data *impl.SendGiftResponse `json:"data"`
+}
+
+// PkIntegral 记录pk过程中积分信息
+type PkIntegral struct {
+	RecvUserId string
+	RecvRoomId string
+	RecvScore  int
+	InitUserId string
+	InitRoomId string
+	InitScore  int
+}
+
+func getPkIntegral(ctx context.Context, sid string, scoreMap map[string]string) *PkIntegral {
+	// 查询pk会话信息
+	session, err := relay.GetRelayService().GetRelaySession(ctx, sid)
+	if err != nil || session == nil {
+		return nil
+	}
+	recvScore := 0
+	initScore := 0
+	if stringRecvScore, ok := scoreMap[session.RecvUserId]; ok && stringRecvScore != "" {
+		recvScore, err = strconv.Atoi(stringRecvScore)
+	}
+	if stringInitScore, ok := scoreMap[session.InitUserId]; ok && stringInitScore != "" {
+		recvScore, err = strconv.Atoi(stringInitScore)
+	}
+	return &PkIntegral{
+		RecvUserId: session.RecvUserId,
+		RecvRoomId: session.RecvRoomId,
+		RecvScore:  recvScore,
+		InitUserId: session.InitUserId,
+		InitRoomId: session.InitRoomId,
+		InitScore:  initScore,
+	}
 }
 
 // Test 用于测试的礼物支付

@@ -294,7 +294,6 @@ func (s *RelayService) UpdateRelayExtends(ctx context.Context, sid string, exten
 	}
 
 	relaySession.Extends = model.CombineExtends(relaySession.Extends, extends)
-
 	return s.updateRelayExtends(ctx, relaySession)
 }
 

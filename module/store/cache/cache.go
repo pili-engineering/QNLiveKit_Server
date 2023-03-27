@@ -173,3 +173,7 @@ func (c *Cache) SMembers(key string) ([]string, error) {
 func (c *Cache) SMembersCtx(ctx context.Context, key string) ([]string, error) {
 	return c.client.SMembers(ctx, key).Result()
 }
+
+func (c *Cache) HGetAll(key string) (result map[string]string, err error) {
+	return c.client.HGetAll(context.Background(), key).Result()
+}

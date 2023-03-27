@@ -44,3 +44,8 @@ const (
 	SendGiftStatusSuccess        //发送礼物成功
 	SendGiftStatusFailure        //发送礼物失败
 )
+
+// PkIntegral redis gift相关key
+const (
+	PkIntegral = "pkIntegral:%v" // 送礼积分key前缀，仅在直播中维护，直播结束会清理
+)

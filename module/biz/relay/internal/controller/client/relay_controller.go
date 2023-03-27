@@ -8,10 +8,11 @@
 package client
 
 import (
-	"github.com/qbox/livekit/module/base/callback"
-	"net/http"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/qbox/livekit/module/base/callback"
+	"github.com/qbox/livekit/module/store/cache"
+	"net/http"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/core/module/httpq"
@@ -110,6 +111,9 @@ func (*relayController) PostRelayStart(ctx *gin.Context) (interface{}, error) {
 			log.Infof("【pk_started】callback success，data【%v】", relaySession)
 		}
 	}()
+	// 将跨房双方信息缓存
+	cache.Client.Set(fmt.Sprintf(model.PkIntegral, relaySession.InitUserId), relaySession.SID, 0)
+	cache.Client.Set(fmt.Sprintf(model.PkIntegral, relaySession.RecvUserId), relaySession.SID, 0)
 	return &resp, nil
 }
 
@@ -180,7 +184,8 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 	relayService := relay.GetRelayService()
 	// 跨房结束进行回调
 	// 获取跨房信息
-	if session, err := relayService.GetRelaySession(ctx, id); err == nil {
+	session, err := relayService.GetRelaySession(ctx, id)
+	if err == nil {
 		err = callback.GetCallbackService().Do(ctx, callback.TypePKStopped, session)
 		if err != nil {
 			log.Errorf("【pk_stopped】callback failed，data：【%v】errInfo：【%v】", session, err.Error())
@@ -190,10 +195,16 @@ func (*relayController) PostRelayStop(ctx *gin.Context) (interface{}, error) {
 	} else {
 		log.Errorf("【pk_stopped】callback failed，session is empty, data：【%v】errInfo：【%v】", session, err.Error())
 	}
-	if err := relayService.StopRelay(ctx, uInfo.UserId, id); err != nil {
+	if err = relayService.StopRelay(ctx, uInfo.UserId, id); err != nil {
 		log.Errorf("stop relay error %v", err)
 		return nil, err
 	}
+	// 跨房结束删除送礼的积分记录值
+	if pkId, err := cache.Client.Get(fmt.Sprintf(model.PkIntegral, session.InitUserId)); err == nil {
+		cache.Client.Del(fmt.Sprintf(model.PkIntegral, pkId))
+	}
+	cache.Client.Del(fmt.Sprintf(model.PkIntegral, session.InitUserId))
+	cache.Client.Del(fmt.Sprintf(model.PkIntegral, session.RecvUserId))
 	return nil, nil
 }
 
