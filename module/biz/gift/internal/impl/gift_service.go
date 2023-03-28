@@ -26,7 +26,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 	liveEntity, err := live.GetService().LiveInfo(context, req.LiveId)
 	if err != nil {
 		log.Errorf("find live error %s", err.Error())
-		return nil, rest.ErrInternal
+		return nil, rest.ErrGiftPay
 	}
 	liveGift := &model.LiveGift{
 		LiveId:   req.LiveId,
@@ -39,7 +39,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 	err = SaveLiveGift(context, liveGift)
 	if err != nil {
 		log.Errorf("save live gift error %s", err.Error())
-		return nil, rest.ErrInternal
+		return nil, rest.ErrGiftPay
 	}
 
 	payReq := &PayGiftRequest{
@@ -59,7 +59,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		if err2 != nil {
 			log.Errorf("update gift status error %s", err2.Error())
 		}
-		return nil, err
+		return nil, rest.ErrGiftPay
 	}
 	if payResp.Code != 0 {
 		log.Errorf("send gift request return code not 0 ")
@@ -67,9 +67,9 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		if err != nil {
 			log.Errorf("update gift status error %s", err.Error())
 		}
-		return nil, ErrGiftPay
+		return nil, rest.ErrGiftPay.WithMessageAndCode(payResp.Code, payResp.Message, payResp.RequestId)
 	}
-	status := payResp.Data.Status
+	status := model.SendGiftStatusSuccess
 	sResp := &SendGiftResponse{
 		LiveId:   req.LiveId,
 		UserId:   userId,
@@ -84,9 +84,7 @@ func (s *ServiceImpl) SendGift(context context.Context, req *SendGiftRequest, us
 		log.Errorf("update gift status error %s", err.Error())
 		//该错误没有返回
 	}
-	if status != model.SendGiftStatusSuccess {
-		return sResp, ErrGiftPay
-	}
+
 	notifyItem := BroadcastGiftNotifyItem{
 		LiveId: liveEntity.LiveId,
 		UserId: userId,
@@ -115,14 +113,9 @@ type PayGiftRequest struct {
 }
 
 type PayGiftResponse struct {
-	RequestId string          `json:"request_id"` //请求ID
-	Code      int             `json:"code"`       //错误码，0 成功，其他失败
-	Message   string          `json:"message"`    //错误信息
-	Data      GiftPayTestResp `json:"data"`
-}
-
-type GiftPayTestResp struct {
-	Status int `json:"status"`
+	RequestId string `json:"request_id"` //请求ID
+	Code      int    `json:"code"`       //错误码，0 成功，其他失败
+	Message   string `json:"message"`    //错误信息
 }
 
 type SendGiftResponse struct {
