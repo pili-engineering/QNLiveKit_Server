@@ -2,8 +2,10 @@ package client
 
 import (
 	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -220,10 +222,14 @@ func (c *giftController) Test(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("bind request error %s", err.Error())
 		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
-	res := &GiftPayTestResp{
-		Status: model.SendGiftStatusSuccess,
+
+	rand.Seed(time.Now().Unix())
+	n := rand.Intn(2)
+	if n == 0 {
+		return nil, nil
+	} else {
+		return nil, rest.ErrGiftPay
 	}
-	return res, nil
 }
 
 type GiftPayTestResp struct {

@@ -48,6 +48,16 @@ func (e *Error) WithRequestId(requestId string) *Error {
 	return &e1
 }
 
+func (e *Error) WithMessageAndCode(code int, message string, requestId string) *Error {
+	e1 := *e
+	e1.Code = code
+	e1.RequestId = requestId
+	if message != "" {
+		e1.Message = message
+	}
+	return &e1
+}
+
 // 基础错误
 var ErrNotFound = &Error{StatusCode: http.StatusNotFound, Code: http.StatusNotFound, Message: http.StatusText(http.StatusNotFound)}
 var ErrBadRequest = &Error{StatusCode: http.StatusBadRequest, Code: http.StatusBadRequest, Message: http.StatusText(http.StatusBadRequest)}
@@ -58,3 +68,4 @@ var ErrInternal = &Error{StatusCode: http.StatusInternalServerError, Code: http.
 
 var ErrTokenExpired = &Error{StatusCode: http.StatusUnauthorized, Code: 499, Message: "Your token is expired"}
 var ErrAlreadyExist = &Error{StatusCode: http.StatusBadRequest, Code: 10001, Message: "Already existed"}
+var ErrGiftPay = &Error{StatusCode: http.StatusOK, Code: 20002, Message: "PayGift Failure"}
