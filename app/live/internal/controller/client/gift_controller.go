@@ -2,8 +2,10 @@ package client
 
 import (
 	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -294,9 +296,15 @@ func (c *giftController) Test(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusOK, api.ErrorWithRequestId(log.ReqID(), api.ErrInvalidArgument))
 		return
 	}
-	ctx.JSON(http.StatusOK, &api.Response{
-		RequestId: log.ReqID(),
-		Code:      0,
-		Message:   "success",
-	})
+	rand.Seed(time.Now().Unix())
+	n := rand.Intn(2)
+	resp := &api.Response{RequestId: log.ReqId()}
+	if n == 0 {
+		resp.Code = 0
+		resp.Message = "success"
+	} else {
+		resp.Code = 400001
+		resp.Message = "余额不足"
+	}
+	ctx.JSON(http.StatusOK, resp)
 }
