@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/qbox/livekit/module/base/callback"
 	"math"
 	"math/rand"
 	"net/http"
@@ -196,7 +197,7 @@ func (c *giftController) SendGift(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("Send Gift failed, err: %v", err)
 		return nil, err
 	}
-
+	go callback.GetCallbackService().Do(ctx, callback.TypeGiftSend, sendGift)
 	rService := stats.GetService()
 	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
 		LiveId: request.LiveId,

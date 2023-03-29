@@ -87,4 +87,5 @@ const (
 	TypeLiveDeleted = "live_deleted"
 	TypePKStarted   = "pk_started"
 	TypePKStopped   = "pk_stopped"
+	TypeGiftSend    = "gift_send" // 送出礼物会将送礼信息进行回调
 )
