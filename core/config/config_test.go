@@ -8,7 +8,8 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	path := "config.yaml"
-	c, err := LoadConfig(path)
+	path2 := "live.json"
+	c, err := LoadConfig(path, path2)
 	assert.Nil(t, err)
 	assert.NotNil(t, c)
 }
@@ -18,15 +19,16 @@ func TestConfig_Sub(t *testing.T) {
 		key string
 	}
 	tests := []struct {
-		name string
-		path string
-		args args
+		name  string
+		path  string
+		path2 string
+		args  args
 	}{
-		{"", "config.yaml", args{key: "cron_config"}},
-		{"", "config.yaml", args{key: "service"}},
+		{"", "config.yaml", "live.json", args{key: "im"}},
+		{"", "config.yaml", "live.json", args{key: "service"}},
 	}
 	for _, tt := range tests {
-		c, _ := LoadConfig(tt.path)
+		c, _ := LoadConfig(tt.path, tt.path2)
 		t.Run(tt.name, func(t *testing.T) {
 			assert.NotNil(t, c.Sub(tt.args.key), "Sub(%v)", tt.args.key)
 		})
@@ -35,7 +37,8 @@ func TestConfig_Sub(t *testing.T) {
 
 func TestConfig_Unmarshal(t *testing.T) {
 	path := "config.yaml"
-	c, _ := LoadConfig(path)
+	path2 := "live.json"
+	c, _ := LoadConfig(path, path2)
 
 	sub := c.Sub("service")
 	assert.NotNil(t, sub)
