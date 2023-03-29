@@ -87,4 +87,5 @@ const (
 	TypeLiveDeleted = "live_deleted"
 	TypePKStarted   = "pk_started"
 	TypePKStopped   = "pk_stopped"
+	TypePkIntegral  = "pk_integral" // pk过程中送出礼物会将积分信息进行回调
 )

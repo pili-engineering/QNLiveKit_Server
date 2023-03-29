@@ -51,6 +51,10 @@ type IRelayService interface {
 	//sid 跨房会话ID
 	GetRelaySession(ctx context.Context, sid string) (*model.RelaySession, error)
 
+	// GetRelaySessionByUserId 获取跨房会话
+	// UserId
+	GetRelaySessionByUserId(ctx context.Context, userId string) (*model.RelaySession, error)
+
 	//停止跨房
 	//appId
 	//userId 上报用户ID
@@ -68,6 +72,23 @@ type IRelayService interface {
 }
 
 type RelayService struct {
+}
+
+func (s *RelayService) GetRelaySessionByUserId(ctx context.Context, userId string) (*model.RelaySession, error) {
+	log := logger.ReqLogger(ctx)
+	db := mysql.GetLiveReadOnly(log.ReqID())
+	relaySession := model.RelaySession{}
+	result := db.First(&relaySession, "( init_user_id = ? or recv_user_id = ? ) and status = ?", userId, userId, model.RelaySessionStatusSuccess)
+	if result.Error != nil {
+		if result.RecordNotFound() {
+			return nil, rest.ErrNotFound
+		} else {
+			log.Errorf("find relay session error %v", result.Error)
+			return nil, rest.ErrInternal
+		}
+	}
+
+	return &relaySession, nil
 }
 
 func (s *RelayService) StartRelay(ctx context.Context, params *StartRelayParams) (*model.RelaySession, error) {

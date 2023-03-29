@@ -1,6 +1,8 @@
 package client
 
 import (
+	"github.com/qbox/livekit/module/base/callback"
+	"github.com/qbox/livekit/module/biz/relay"
 	"math"
 	"math/rand"
 	"net/http"
@@ -196,7 +198,7 @@ func (c *giftController) SendGift(ctx *gin.Context) (interface{}, error) {
 		log.Errorf("Send Gift failed, err: %v", err)
 		return nil, err
 	}
-
+	go callback.GetCallbackService().Do(ctx, callback.TypePkIntegral, getPkIntegral(ctx, sendGift.AnchorId, sendGift.Amount))
 	rService := stats.GetService()
 	statsSingleLiveEntity := &model.StatsSingleLiveEntity{
 		LiveId: request.LiveId,
@@ -207,6 +209,31 @@ func (c *giftController) SendGift(ctx *gin.Context) (interface{}, error) {
 	}
 	rService.UpdateSingleLive(ctx, statsSingleLiveEntity)
 	return sendGift, nil
+}
+
+func getPkIntegral(ctx *gin.Context, anchorId string, amount int) interface{} {
+	log := logger.ReqLogger(ctx)
+	pkIntegral := &PkIntegralVO{}
+	// 1. 查询当前用户是否正在pk
+	session, err := relay.GetRelayService().GetRelaySessionByUserId(ctx, anchorId)
+	if err == nil {
+		// 在pk
+		pkIntegral.Sid = session.SID
+	} else {
+		log.Error(err.Error())
+	}
+	pkIntegral.UserId = anchorId
+	pkIntegral.Amount = amount
+	pkIntegral.IsInitUser = session.InitUserId == anchorId
+	return pkIntegral
+}
+
+// PkIntegralVO 记录pk过程中积分信息
+type PkIntegralVO struct {
+	Sid        string
+	UserId     string
+	Amount     int
+	IsInitUser bool // 当前记录的User是否为pk发起方
 }
 
 type SendResponse struct {
