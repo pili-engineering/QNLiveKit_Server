@@ -20,6 +20,9 @@ func StartWithConfig(path string, path2 string) error {
 	if len(path) == 0 {
 		return fmt.Errorf("empty config path")
 	}
+	if len(path2) == 0 {
+		return fmt.Errorf("empty config path2")
+	}
 
 	ctx := context.Background()
 	log := logger.ReqLogger(ctx)
