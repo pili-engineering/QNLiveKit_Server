@@ -32,9 +32,10 @@ import (
 )
 
 var confPath = flag.String("f", "", "live -f /path/to/config")
+var confPath2 = flag.String("e", "", "live -e /path/to/config")
 
 func main() {
 	flag.Parse()
-	err := application.StartWithConfig(*confPath)
+	err := application.StartWithConfig(*confPath, *confPath2)
 	log.Println("application exit ", err.Error())
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	Callback string `mapstructure:"callback" validate:"nonzero"`
+	Callback string `mapstructure:"callback" validate:"-"`
 	Bucket   string `mapstructure:"bucket" validate:"nonzero"`
 	Addr     string `mapstructure:"addr" validate:"nonzero"`
 }

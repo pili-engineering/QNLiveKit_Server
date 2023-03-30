@@ -14,11 +14,14 @@ import (
 	"github.com/qbox/livekit/utils/logger"
 )
 
-func StartWithConfig(path string) error {
+func StartWithConfig(path string, path2 string) error {
 	rand.Seed(time.Now().UnixNano())
 
 	if len(path) == 0 {
 		return fmt.Errorf("empty config path")
+	}
+	if len(path2) == 0 {
+		return fmt.Errorf("empty config path2")
 	}
 
 	ctx := context.Background()
@@ -32,7 +35,7 @@ func StartWithConfig(path string) error {
 		errCh <- fmt.Errorf("signal %s", sig)
 	}()
 
-	c, err := config.LoadConfig(path)
+	c, err := config.LoadConfig(path, path2)
 	if err != nil {
 		return fmt.Errorf("load config file error %v", err)
 	}

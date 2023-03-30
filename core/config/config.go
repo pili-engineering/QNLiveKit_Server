@@ -11,7 +11,7 @@ type Config struct {
 	v *viper.Viper
 }
 
-func LoadConfig(path string) (*Config, error) {
+func LoadConfig(path string, path2 string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open config file %s error %v", path, err)
@@ -24,6 +24,17 @@ func LoadConfig(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read config file %s error %v", path, err)
 	}
+
+	f2, err := os.Open(path2)
+	if err != nil {
+		return nil, fmt.Errorf("open qiniu config file %s error %v", path, err)
+	}
+	defer f2.Close()
+	err = v.MergeConfig(f2)
+	if err != nil {
+		return nil, fmt.Errorf("MergeConfig %s error %v", path, err)
+	}
+
 	return &Config{
 		v,
 	}, nil
