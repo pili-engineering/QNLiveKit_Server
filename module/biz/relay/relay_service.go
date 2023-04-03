@@ -370,9 +370,11 @@ func afterUpdateRelayExtendsHandler(ctx context.Context, relaySession *model.Rel
 		if ok {
 			err = notify.SendNotifyToLive(ctx, userEntity, liveEntity, notify.ActionTypeExtendsNotify, data)
 			if err != nil {
-				log.Errorf("cannot send notify, LiveUserEntity【%v】|data【%v】|errInfo【%v】", userEntity, data, err.Error())
+				log.Errorf("cannot send notify, userEntity【%v】| LiveUserEntity【%v】| data【%v】| errInfo【%v】",
+					userEntity, liveEntity, data, err.Error())
 			} else {
-				log.Infof("【pk_extends_notify】send notify success, LiveUserEntity【%v】| data:【%v】", userEntity, data)
+				log.Infof("【pk_extends_notify】send notify success, userEntity【%v】| LiveUserEntity【%v】| data:【%v】",
+					userEntity, liveEntity, data)
 			}
 		} else {
 			log.Errorf("cannot find liveEntity, userEntity【%v】", userEntity)

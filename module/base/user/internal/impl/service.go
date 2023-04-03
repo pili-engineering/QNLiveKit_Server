@@ -256,7 +256,7 @@ func (s *UserService) FindLiveByPkIdList(ctx context.Context, pkIdList ...string
 	var liveList []model.LiveEntity
 	db.Model(&model.LiveEntity{}).Where("pk_id in (?)", pkIdList).Find(&liveList)
 	if liveList == nil {
-		return nil, nil
+		return nil, errors.New("cannot find Live")
 	}
 	// 组装成map返回 k：userId v：v
 	m := make(map[string]*model.LiveEntity)
