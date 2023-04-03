@@ -1,14 +1,11 @@
 package client
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/qbox/livekit/module/base/callback"
 	"math"
-	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/gin-gonic/gin"
 
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/core/module/httpq"
@@ -224,13 +221,10 @@ func (c *giftController) Test(ctx *gin.Context) (interface{}, error) {
 		return nil, rest.ErrBadRequest.WithMessage(err.Error())
 	}
 
-	rand.Seed(time.Now().Unix())
-	n := rand.Intn(2)
-	if n == 0 {
-		return nil, nil
-	} else {
-		return nil, rest.ErrGiftPay
+	res := &GiftPayTestResp{
+		Status: model.SendGiftStatusSuccess,
 	}
+	return res, nil
 }
 
 type GiftPayTestResp struct {
