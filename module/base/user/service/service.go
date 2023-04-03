@@ -14,5 +14,5 @@ type IUserService interface {
 	CreateUser(ctx context.Context, user *model.LiveUserEntity) error
 	UpdateUserInfo(ctx context.Context, user *model.LiveUserEntity) error
 	// FindLiveByPkIdList 根据PK会话查询直播间信息
-	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser map[string]*model.LiveEntity, err error)
+	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser map[string]model.LiveEntity, err error)
 }
