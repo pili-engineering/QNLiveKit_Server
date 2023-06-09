@@ -79,7 +79,7 @@ type IService interface {
 	KeepCacheLikes(ctx context.Context)
 
 	// FindLiveByPkIdList 根据PK会话查询直播间信息
-	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error)
+	FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser map[string]model.LiveEntity, err error)
 }
 
 type Service struct {
@@ -728,14 +728,22 @@ func (s *Service) AddLike(ctx context.Context, liveId string, userId string, cou
 }
 
 // FindLiveByPkIdList 根据PK会话查找对应的直播间信息
-func (s *Service) FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (liveRoomUser *[]model.LiveEntity, err error) {
+func (s *Service) FindLiveByPkIdList(ctx context.Context, pkIdList ...string) (userId2LiveEntityMap map[string]model.LiveEntity, err error) {
 	log := logger.ReqLogger(ctx)
-	if pkIdList == nil {
+	if pkIdList == nil || len(pkIdList) == 0 {
 		log.Errorf("pkIdList is empty")
 		return nil, errors.New("userId is empty")
 	}
 	db := mysql.GetLive(log.ReqID())
 	var liveList []model.LiveEntity
 	db.Model(&model.LiveEntity{}).Where("pk_id in (?)", pkIdList).Find(&liveList)
-	return &liveList, nil
+	if liveList == nil {
+		return nil, errors.New("cannot find Live")
+	}
+	// 组装成map返回 k：userId v：v
+	m := make(map[string]model.LiveEntity)
+	for _, liveEntity := range liveList {
+		m[liveEntity.AnchorId] = liveEntity
+	}
+	return m, nil
 }
