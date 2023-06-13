@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/qbox/livekit/biz/mic"
 	"github.com/qbox/livekit/biz/model"
 	"github.com/qbox/livekit/biz/user"
@@ -18,6 +19,8 @@ func RegisterMicRoutes(group *gin.RouterGroup) {
 	{
 		liveGroup.POST("/", MicController.UpMic)
 		liveGroup.DELETE("/", MicController.DownMic)
+		liveGroup.POST("/up", MicController.UpMic)
+		liveGroup.POST("/down", MicController.DownMic)
 		liveGroup.GET("/room/list/:live_id", MicController.GetMicList)
 		liveGroup.PUT("/extension", MicController.UpdateMicExtends)
 		liveGroup.PUT("/switch", MicController.SwitchMic)
