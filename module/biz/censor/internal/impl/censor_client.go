@@ -66,7 +66,7 @@ func (c *CensorClient) JobCreate(ctx context.Context, liveEntity *model.LiveEnti
 	resp := &JobCreateResponse{}
 	err := c.client.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
-		log.Errorf("create censor job %s", err.Error())
+		log.Errorf("create censor job error %s", err.Error())
 		return nil, err
 	}
 	return resp, nil
