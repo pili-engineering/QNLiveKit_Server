@@ -66,7 +66,7 @@ func (c *CensorClient) JobCreate(ctx context.Context, liveEntity *model.LiveEnti
 	resp := &JobCreateResponse{}
 	err := c.client.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("create censor job %s", err)
 		return nil, err
 	}
 	return resp, nil
@@ -79,6 +79,7 @@ func (c *CensorClient) JobClose(ctx context.Context, req *JobCreateResponseData)
 	resp := &rest.Response{}
 	err := c.client.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
+		log.Errorf("close censor job error %s", err.Error())
 		return err
 	}
 	return nil
@@ -89,6 +90,7 @@ func (c *CensorClient) JobQuery(ctx context.Context, req *JobQueryRequest, resp 
 	reqUrl := "http://ai.qiniuapi.com/v3/live/censor/query"
 	err := c.client.CallWithJSON(log, resp, reqUrl, req)
 	if err != nil {
+		log.Errorf("query censor job error %s", err.Error())
 		return err
 	}
 	return nil
