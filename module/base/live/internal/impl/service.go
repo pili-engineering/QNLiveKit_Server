@@ -73,9 +73,8 @@ func (s *Service) CreateLive(context context.Context, req *service.CreateLiveReq
 	}
 	err = db.Create(live).Error
 	if err == nil {
-		err = censor.GetService().CreateCensorJob(context, live)
-		if err != nil {
-			log.Errorf("create censor job  failed, err: %v", err)
+		if censorError := censor.GetService().CreateCensorJob(context, live); censorError != nil {
+			log.Errorf("create censor job  failed, err: %v", censorError)
 		}
 		go callback.GetCallbackService().Do(context, callback.TypeLiveCreated, live)
 	}
@@ -188,10 +187,8 @@ func (s *Service) StopLive(context context.Context, liveId string, anchorId stri
 		go callback.GetCallbackService().Do(context, callback.TypeLiveStopped, body)
 	}
 
-	err = censor.GetService().StopCensorJob(context, liveId)
-	if err != nil {
-		log.Errorf("stop censor job failed, err: %v", err)
-		return err
+	if censorErr := censor.GetService().StopCensorJob(context, liveId); censorErr != nil {
+		log.Errorf("stop censor job failed, err: %s", censorErr.Error())
 	}
 	return
 }
@@ -392,9 +389,9 @@ func (s *Service) FindUserLive(context context.Context, liveId string, userInfo 
 	return
 }
 
-//只有用户在直播间，才能心跳
-//更新用户的心跳
-//如果用户是当前直播间的主播，更新直播间心跳
+// 只有用户在直播间，才能心跳
+// 更新用户的心跳
+// 如果用户是当前直播间的主播，更新直播间心跳
 func (s *Service) Heartbeat(context context.Context, liveId string, userId string) (*model.LiveEntity, error) {
 	log := logger.ReqLogger(context)
 
@@ -460,7 +457,7 @@ func (s *Service) getLive(ctx context.Context, liveId string) (*model.LiveEntity
 	return &live, err
 }
 
-//查询用户在直播间内的记录
+// 查询用户在直播间内的记录
 func (s *Service) getOrCreateLiveRoomUser(ctx context.Context, userId string) (*model.LiveRoomUserEntity, error) {
 	log := logger.ReqLogger(ctx)
 	db := mysql.GetLive(log.ReqID())
